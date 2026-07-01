@@ -1,0 +1,50 @@
+{
+  "name": "dragons-alliance-ide",
+  "version": "0.1.0",
+  "description": "Dragons Alliance IDE — native terminal/agent IDE for Claude Code",
+  "main": "./out/main/index.js",
+  "author": "Dragons Alliance",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "postinstall": "chmod +x node_modules/node-pty/prebuilds/darwin-*/spawn-helper || true",
+    "dist": "electron-vite build && electron-builder --mac"
+  },
+  "dependencies": {
+    "node-pty": "^1.0.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "@monaco-editor/react": "^4.7.0",
+    "@tanstack/react-query": "^5.101.2",
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-web-links": "^0.12.0",
+    "@xterm/addon-webgl": "^0.19.0",
+    "@xterm/xterm": "^6.0.0",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^3.1.0",
+    "monaco-editor": "^0.55.1",
+    "motion": "^12.42.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "typescript": "~5.9.0",
+    "vite": "^6.0.0"
+  },
+  "build": {
+    "appId": "com.dragonsalliance.ide",
+    "productName": "Dragons Alliance IDE",
+    "directories": { "output": "release", "buildResources": "build" },
+    "afterPack": "build/after-pack.cjs",
+    "npmRebuild": false,
+    "files": ["out/**/*", "package.json"],
+    "mac": { "category": "public.app-category.developer-tools", "target": ["dmg"], "icon": "build/icon.icns" },
+    "asarUnpack": ["**/node_modules/node-pty/**"]
+  }
+}

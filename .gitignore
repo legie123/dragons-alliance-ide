@@ -1,0 +1,27 @@
+# deps
+node_modules/
+
+# electron build output (keep build/ — holds icon + after-pack.cjs source)
+release/
+out/
+dist/
+*.tsbuildinfo
+
+# generated
+graphify-out/
+.claude-flow/
+
+# env & secrets
+.env*
+!.env.example
+
+# os / logs
+.DS_Store
+*.log
+
+# local db + tooling state (audit cleanup)
+*.db
+*.sqlite
+*.sqlite3
+.swarm/
+.claude-flow/
