@@ -6,7 +6,7 @@ import { fetchSessions, gradeColor, human, idleLabel } from "../api";
 import type { Session } from "../api";
 import { AgentTranscript } from "../components/AgentTranscript";
 
-export function AgentsView() {
+export function AgentsView({ onOpenFile }: { onOpenFile?: (p: string) => void }) {
   const { data } = useQuery({
     queryKey: ["sessions", 240],
     queryFn: () => fetchSessions(240),
@@ -63,9 +63,7 @@ export function AgentsView() {
         })}
       </div>
 
-      <AgentTranscript file={selectedFile} title={selected?.title} />
-
-      <div className="mc-mission-slot" />
+      <AgentTranscript file={selectedFile} title={selected?.title} onOpenFile={onOpenFile} />
     </div>
   );
 }

@@ -43,7 +43,9 @@ function Sparkline({ events }: { events: TranscriptEvent[] }) {
   );
 }
 
-function EventRow({ ev }: { ev: TranscriptEvent }) {
+const FILE_TOOLS = new Set(["Read", "Edit", "Write", "NotebookEdit"]);
+
+function EventRow({ ev, onOpenFile }: { ev: TranscriptEvent; onOpenFile?: (p: string) => void }) {
   const badge =
     typeof ev.tokens === "number" ? (
       <span className="mc-ev-tok">{human(ev.tokens)}</span>
@@ -59,11 +61,22 @@ function EventRow({ ev }: { ev: TranscriptEvent }) {
     );
   }
   if (ev.kind === "tool") {
+    // Synergy: a file tool-call's target opens straight in the Code editor —
+    // click what the agent touched to jump to it (monitor → edit).
+    const openable = !!(onOpenFile && ev.tool && FILE_TOOLS.has(ev.tool) && ev.target?.startsWith("/"));
     return (
       <div className="mc-ev mc-ev-tool">
         <span className="mc-tool-ic">{toolIcon(ev.tool)}</span>
         <b className="mc-ev-toolname">{ev.tool}</b>
-        {ev.target && <span className="mc-ev-target">{ev.target}</span>}
+        {ev.target && (
+          openable ? (
+            <span className="mc-ev-target open" title="open in Code" onClick={() => onOpenFile!(ev.target!)}>
+              {ev.target} ↗
+            </span>
+          ) : (
+            <span className="mc-ev-target">{ev.target}</span>
+          )
+        )}
         {badge}
       </div>
     );
@@ -84,7 +97,7 @@ function EventRow({ ev }: { ev: TranscriptEvent }) {
   );
 }
 
-export function AgentTranscript({ file, title }: { file: string | null; title?: string }) {
+export function AgentTranscript({ file, title, onOpenFile }: { file: string | null; title?: string; onOpenFile?: (p: string) => void }) {
   const { data } = useQuery({
     queryKey: ["transcript", file],
     queryFn: () => fetchTranscript(file!, 100),
@@ -119,7 +132,7 @@ export function AgentTranscript({ file, title }: { file: string | null; title?: 
         {events.length === 0 ? (
           <div className="mc-hint">no recent activity</div>
         ) : (
-          events.map((ev, i) => <EventRow key={`${ev.ts}-${i}`} ev={ev} />)
+          events.map((ev, i) => <EventRow key={`${ev.ts}-${i}`} ev={ev} onOpenFile={onOpenFile} />)
         )}
       </div>
     </div>

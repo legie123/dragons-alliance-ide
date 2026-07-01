@@ -103,7 +103,7 @@ export default function App() {
         </div>
         {view === "agents" && (
           <div className="mc-shell">
-            <AgentsView />
+            <AgentsView onOpenFile={goOpenFile} />
             <MissionBar projects={projects} />
           </div>
         )}
