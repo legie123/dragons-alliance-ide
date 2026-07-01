@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
@@ -36,6 +36,7 @@ export const TerminalPane = forwardRef<PaneHandle, {
   const hostRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
+  const [focused, setFocused] = useState(false);
 
   useImperativeHandle(ref, () => ({
     setMirror(on: boolean, scope: string = "all") {
@@ -106,6 +107,14 @@ export const TerminalPane = forwardRef<PaneHandle, {
       xtermRef.current = xt;
       fitRef.current = fit;
 
+      // reflect real terminal focus in the UI (focus ring) so you always know
+      // which pane your keystrokes go to.
+      const tarea = hostRef.current.querySelector(".xterm-helper-textarea");
+      if (tarea) {
+        tarea.addEventListener("focus", () => setFocused(true));
+        tarea.addEventListener("blur", () => setFocused(false));
+      }
+
       // double rAF then fit (layout settled)
       requestAnimationFrame(() => requestAnimationFrame(() => safeFit()));
 
@@ -159,14 +168,23 @@ export const TerminalPane = forwardRef<PaneHandle, {
 
   useEffect(() => {
     if (active) {
-      const t = setTimeout(() => { safeFit(); xtermRef.current?.focus(); }, 70);
+      // Re-fit on activation. Auto-focus ONLY workers (not the master) so a
+      // freshly-launched claude grabs focus and the master never silently steals
+      // keystrokes out from under a worker in grid mode. Click-to-focus (below)
+      // is the authoritative way to move focus to any pane, including master.
+      const t = setTimeout(() => { safeFit(); if (!isMaster) xtermRef.current?.focus(); }, 70);
       return () => clearTimeout(t);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
+  // Clicking anywhere in the pane focuses ITS terminal, so keystrokes always go
+  // where you clicked (the padding around xterm previously ate the click and
+  // focus stayed on the wrong terminal — you'd "type into the void").
+  const focusMe = () => xtermRef.current?.focus();
+
   return (
-    <div className={`term-pane${isMaster ? " master" : ""}`}>
+    <div className={`term-pane${isMaster ? " master" : ""}${focused ? " focused" : ""}`} onMouseDown={focusMe}>
       <div className="term-head">
         <span className={`tdot tdot-${term.cmd}`} />
         <span className="tname">
@@ -175,7 +193,7 @@ export const TerminalPane = forwardRef<PaneHandle, {
         <span className="tcwd">{term.cwd.replace(/^\/Users\/[^/]+/, "~")}</span>
         {!isMaster && <button className="tx" onClick={onClose} title="kill terminal">✕</button>}
       </div>
-      <div className="term-body" ref={hostRef} />
+      <div className="term-body" ref={hostRef} onMouseDown={focusMe} />
     </div>
   );
 });

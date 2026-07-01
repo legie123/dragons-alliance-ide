@@ -23,6 +23,7 @@ export const CH = {
   // data
   PROJECTS_LIST: "projects:list",
   SESSIONS_LIST: "sessions:list",
+  SESSIONS_TRANSCRIPT: "sessions:transcript",
   HOST_INFO: "host:info",
   // window controls (frameless titlebar)
   WIN_MIN: "win:minimize",
@@ -47,11 +48,24 @@ export type Project = {
 
 export type Session = {
   id: string; model: string; title: string; cwd: string; cwd_full?: string; branch: string;
+  file?: string;   // absolute path to the source .jsonl transcript (for live streaming)
   ctx: number; out: number; win: number;
   capacity: number; meaningful: number; understanding: number; freshness: number;
   score: number; idle_min: number; assistants: number; users: number; tools: number; mtime: number;
 };
 export type SessionsPayload = { now: number; active_min: number; live: number; sessions: Session[] };
+
+// One rendered event in an agent's live transcript (Mission-Control).
+export type TranscriptEvent = {
+  role: "user" | "assistant";
+  ts: number;                 // epoch ms (0 if unknown)
+  kind: "prompt" | "text" | "tool" | "thinking";
+  text?: string;              // prompt / assistant text / thinking summary
+  tool?: string;              // tool name (Read/Edit/Bash/…)
+  target?: string;            // tool's primary target (file path / command / query)
+  tokens?: number;            // output tokens for this assistant turn (if known)
+};
+export type Transcript = { file: string; events: TranscriptEvent[] };
 
 export type HostInfo = { shell: string; home: string; cwd: string; projects: string[] };
 
@@ -78,7 +92,10 @@ export interface DaiApi {
     walk(root: string, limit?: number): Promise<{ root: string; files: string[] }>;
   };
   projects: { list(): Promise<Project[]> };
-  sessions: { list(activeMin: number): Promise<SessionsPayload> };
+  sessions: {
+    list(activeMin: number): Promise<SessionsPayload>;
+    transcript(file: string, limit?: number): Promise<Transcript>;
+  };
   host: { info(): Promise<HostInfo> };
   win: { minimize(): void; maxToggle(): void; close(): void };
 }

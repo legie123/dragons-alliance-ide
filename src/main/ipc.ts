@@ -5,7 +5,7 @@ import { ipcMain, BrowserWindow } from "electron";
 import os from "node:os";
 import { CH } from "../shared/ipc";
 import { fsList, fsRead, fsWrite, fsWalk } from "./fs";
-import { collect } from "./sessions";
+import { collect, getTranscript } from "./sessions";
 import { listProjects, enrichProjects } from "./projects";
 
 type LiveTerm = { id: string; cwd: string; is_master: boolean };
@@ -35,6 +35,7 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
       sessions,
     };
   });
+  ipcMain.handle(CH.SESSIONS_TRANSCRIPT, (_e, { file, limit }) => getTranscript(file, limit));
   ipcMain.handle(CH.HOST_INFO, () => ({
     shell: process.env.SHELL || "/bin/zsh",
     home: os.homedir(),

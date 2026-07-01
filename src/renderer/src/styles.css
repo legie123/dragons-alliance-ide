@@ -44,6 +44,84 @@ body { color: var(--text); }
 }
 .viewswitch button.active { color: #fff; border-color: var(--accent); background: rgba(124,140,255,0.16); box-shadow: 0 0 16px rgba(124,140,255,0.18); }
 
+/* ---------- Agent Mission-Control ---------- */
+.mc-shell { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.mc-view { flex: 1; min-height: 0; display: grid; grid-template-columns: 300px 1fr; gap: 12px; }
+
+/* left: live agent list */
+.mc-list { display: flex; flex-direction: column; min-height: 0;
+  background: var(--panel); border: 1px solid var(--panel-border); border-radius: 14px; overflow: hidden; }
+.mc-list-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 8px; }
+.mc-list-title { font-size: 11px; font-weight: 750; letter-spacing: 0.14em; color: var(--muted); }
+.mc-list-count { font-size: 11px; color: var(--faint); background: rgba(255,255,255,0.05); border-radius: 6px; padding: 1px 7px; }
+.mc-agent-row {
+  text-align: left; width: calc(100% - 16px); margin: 2px 8px; padding: 9px 11px; cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-radius: 10px;
+  display: flex; flex-direction: column; gap: 4px; color: var(--text);
+}
+.mc-agent-row:hover { background: rgba(255,255,255,0.04); }
+.mc-agent-row.sel { background: rgba(124,140,255,0.14); border-color: rgba(124,140,255,0.3); }
+.mc-agent-row1 { display: flex; align-items: center; gap: 8px; }
+.mc-agent-dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+.mc-agent-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.mc-agent-model { font-size: 10px; color: #c4b5fd; background: rgba(167,139,250,0.12); border-radius: 5px; padding: 1px 6px; flex: 0 0 auto; }
+.mc-agent-row2 { display: flex; align-items: center; gap: 8px; padding-left: 15px; font-size: 10.5px; font-variant-numeric: tabular-nums; }
+.mc-agent-score { font-weight: 700; }
+.mc-agent-ctx { color: var(--muted); }
+.mc-agent-idle { color: var(--faint); margin-left: auto; }
+
+/* right: live transcript */
+.mc-transcript { display: flex; flex-direction: column; min-height: 0;
+  background: #0a0c12; border: 1px solid var(--panel-border); border-radius: 14px; overflow: hidden; }
+.mc-transcript-head { display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--panel-border); min-height: 42px; }
+.mc-transcript-title { font-size: 13px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-spark { margin-left: auto; opacity: 0.8; }
+.mc-transcript-empty, .mc-hint { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--faint); font-size: 13px; padding: 40px; text-align: center; }
+.mc-feed { flex: 1; overflow: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; }
+.mc-ev { display: flex; align-items: baseline; gap: 8px; padding: 3px 6px; border-radius: 6px; line-height: 1.4; }
+.mc-ev-pfx { flex: 0 0 auto; font-size: 10px; }
+.mc-ev-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mc-ev-tok { margin-left: auto; flex: 0 0 auto; font-size: 10px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.mc-ev-prompt { background: rgba(124,140,255,0.1); }
+.mc-ev-prompt .mc-ev-pfx { color: var(--accent); font-weight: 700; }
+.mc-ev-prompt .mc-ev-txt { color: #cdd6f4; font-weight: 550; }
+.mc-ev-text .mc-ev-txt { color: var(--muted); }
+.mc-ev-tool { }
+.mc-tool-ic { flex: 0 0 auto; width: 15px; text-align: center; color: #93c5fd; }
+.mc-ev-toolname { color: #93c5fd; font-weight: 650; flex: 0 0 auto; }
+.mc-ev-target { color: var(--faint); font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-ev-thinking { opacity: 0.5; font-style: italic; }
+.mc-ev-thinking .mc-ev-txt { color: var(--faint); }
+
+/* mission bar */
+.mc-mission {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: rgba(124,140,255,0.07); border: 1px solid rgba(124,140,255,0.22);
+  border-radius: 12px; padding: 9px 12px;
+}
+.mc-mission-label { font-size: 12px; font-weight: 650; color: #a9b4ff; white-space: nowrap; }
+.mc-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.mc-chip { background: rgba(255,255,255,0.05); border: 1px solid var(--panel-border); color: var(--muted);
+  border-radius: 999px; padding: 3px 10px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+.mc-chip:hover { color: #fff; border-color: var(--accent); }
+.mc-mission-input { flex: 1; min-width: 180px; background: #0a0c12; border: 1px solid var(--panel-border);
+  color: var(--text); border-radius: 9px; padding: 9px 12px; font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
+.mc-mission-input:focus { outline: none; border-color: var(--accent); }
+.mc-send { background: linear-gradient(135deg, #7c8cff, #6d7cf0); color: #fff; border: none; border-radius: 9px;
+  padding: 9px 16px; font-size: 13px; font-weight: 650; cursor: pointer; box-shadow: 0 4px 14px rgba(124,140,255,0.3); }
+.mc-flash { font-size: 12px; color: #34d399; font-weight: 650; white-space: nowrap; }
+.mc-launch { position: relative; }
+.mc-launch-btn { background: rgba(167,139,250,0.14); border: 1px solid rgba(167,139,250,0.3); color: #e9e6ff;
+  border-radius: 9px; padding: 8px 13px; font-size: 12px; font-weight: 650; cursor: pointer; white-space: nowrap; }
+.mc-launch-menu { position: absolute; bottom: 44px; left: 0; z-index: 30; width: 240px; max-height: 320px; overflow: auto;
+  background: #11151f; border: 1px solid var(--panel-border); border-radius: 12px; padding: 7px; box-shadow: 0 18px 50px rgba(0,0,0,0.6); }
+.mc-launch-all { padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 650; color: #a9b4ff; }
+.mc-launch-all:hover { background: rgba(124,140,255,0.14); }
+.mc-launch-sep { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--faint); padding: 8px 10px 4px; }
+.mc-launch-row { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+.mc-launch-row:hover { background: rgba(124,140,255,0.14); }
+
 /* ---------- ⌘K command palette ---------- */
 .cmdk-btn {
   background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border);
@@ -213,8 +291,14 @@ button.primary:hover { filter: brightness(1.08); }
 .term-pane {
   flex: 1; display: flex; flex-direction: column; min-height: 0; min-width: 0;
   background: #0a0c12; border: 1px solid var(--panel-border);
-  border-radius: 14px; overflow: hidden;
+  border-radius: 14px; overflow: hidden; transition: border-color .12s, box-shadow .12s;
 }
+/* the terminal your keystrokes go to — clear focus ring */
+.term-pane.focused {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 22px rgba(124,140,255,0.22);
+}
+.term-pane.focused .term-head { background: rgba(124,140,255,0.1); }
 .term-head {
   flex: 0 0 auto; height: 38px;
   display: flex; align-items: center; gap: 9px;

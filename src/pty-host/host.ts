@@ -111,7 +111,12 @@ function create(opts: TermOpts): void {
   const shellEnv = process.env.SHELL || "/bin/zsh";
   const shell = existsSync(shellEnv) ? shellEnv : "/bin/zsh"; // fall back if $SHELL is bogus
   const args =
-    opts.cmd === "claude" ? ["-l", "-c", "claude || exec /bin/zsh -l"] : ["-l"];
+    // `exec claude` (no `|| zsh` fallback): a login shell sets up PATH then is
+    // REPLACED by claude, so when claude exits the PTY exits and the session is
+    // reaped. The old `|| exec zsh` degraded a crashed claude into a live login
+    // shell that still matched the "claude" broadcast filter → mission prompts
+    // would run as shell commands. This closes that path.
+    opts.cmd === "claude" ? ["-l", "-c", "exec claude"] : ["-l"];
 
   let proc: nodePty.IPty;
   try {

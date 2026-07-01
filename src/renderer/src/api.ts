@@ -10,6 +10,8 @@ import type {
   ProjectSession as IpcProjectSession,
   FsEntry as IpcFsEntry,
   FsList as IpcFsList,
+  Transcript as IpcTranscript,
+  TranscriptEvent as IpcTranscriptEvent,
 } from "@shared/ipc";
 
 export type Session = IpcSession;
@@ -17,6 +19,13 @@ export type Payload = SessionsPayload;
 
 export async function fetchSessions(active: number): Promise<Payload> {
   return window.dai.sessions.list(active);
+}
+
+// ---- agent transcript (Mission-Control live view) ----
+export type Transcript = IpcTranscript;
+export type TranscriptEvent = IpcTranscriptEvent;
+export async function fetchTranscript(file: string, limit?: number): Promise<Transcript> {
+  return window.dai.sessions.transcript(file, limit);
 }
 
 export type Host = HostInfo;

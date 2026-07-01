@@ -58,8 +58,11 @@ const dai: DaiApi = {
     attach(id) { return request<{ buffer: ArrayBuffer }>((rid) => ({ t: "attach", rid, id })) as any; },
     detach(id) { post({ t: "detach", id }); },
     write(id, data) {
-      const buf = enc.encode(data);
-      post({ t: "input", id, data: buf.buffer }, [buf.buffer]);
+      // NOTE: do NOT transfer the ArrayBuffer — Electron's MessagePortMain (host
+      // side) nulls a message that carries a transfer list, so `ev.data` arrives
+      // null and the keystroke never reaches the PTY (you'd "type into the void").
+      // Keystrokes are tiny, so send the bytes by structured-clone copy instead.
+      post({ t: "input", id, data: enc.encode(data).buffer });
     },
     resize(id, cols, rows) { post({ t: "resize", id, cols, rows }); },
     kill(id) { post({ t: "kill", id }); },
@@ -77,7 +80,10 @@ const dai: DaiApi = {
     walk: (root, limit) => ipcRenderer.invoke(CH.FS_WALK, { root, limit }),
   },
   projects: { list: () => ipcRenderer.invoke(CH.PROJECTS_LIST) },
-  sessions: { list: (activeMin) => ipcRenderer.invoke(CH.SESSIONS_LIST, activeMin) },
+  sessions: {
+    list: (activeMin) => ipcRenderer.invoke(CH.SESSIONS_LIST, activeMin),
+    transcript: (file, limit) => ipcRenderer.invoke(CH.SESSIONS_TRANSCRIPT, { file, limit }),
+  },
   host: { info: () => ipcRenderer.invoke(CH.HOST_INFO) },
   win: {
     minimize: () => ipcRenderer.send(CH.WIN_MIN),
