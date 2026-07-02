@@ -39,6 +39,7 @@ type Session = {
   mirror: boolean;
   mirror_scope: string; // "all" or a project key (as returned by projectOf)
   mirror_ids?: string[]; // explicit target terminals (overrides scope when set)
+  channel?: string | null; // peer-mesh channel: input co-types to all peers sharing it
   buffer: string; // rolling scrollback, replayed on attach
   unacked: number; // bytes of output the renderer hasn't confirmed flushed
   paused: boolean; // node-pty paused because unacked crossed HIGH_WATER
@@ -197,6 +198,17 @@ function safeWrite(s: Session, data: string | Buffer): boolean {
  *  Writes go straight to the target PTY (never back through the input path),
  *  so a mirror-enabled target never re-fans — no feedback loop. We mirror only
  *  STDIN, never OUTPUT, which would form an infinite echo. */
+/** Peer-mesh: co-type input to every OTHER terminal sharing source's channel.
+ *  Writes go straight to each peer's PTY (never back through input), so there is
+ *  no feedback loop even though the mesh is bidirectional. */
+function fanChannel(source: Session, data: Buffer): void {
+  if (!source.channel) return;
+  for (const s of registry.values()) {
+    if (s.id === source.id) continue;
+    if (s.channel && s.channel === source.channel) safeWrite(s, data);
+  }
+}
+
 function fanOut(source: Session, data: Buffer): void {
   const ids = source.mirror_ids; // explicit target allowlist (pick 1/2/all)
   for (const s of registry.values()) {
@@ -257,6 +269,13 @@ function onRendererMsg(ev: { data: ToHost; ports?: Electron.MessagePortMain[] })
       const data = Buffer.from(new Uint8Array(m.data));
       safeWrite(s, data);
       if (s.mirror) fanOut(s, data); // master stdin mirroring
+      fanChannel(s, data);           // peer-mesh co-typing (open channel)
+      break;
+    }
+
+    case "channel": {
+      const s = registry.get(m.id);
+      if (s) s.channel = m.channel;
       break;
     }
 

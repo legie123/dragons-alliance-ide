@@ -507,6 +507,32 @@ button.primary:hover { filter: brightness(1.08); }
 }
 .ide-toolbar, .master-zone .master-bar { flex: 0 0 auto; }
 
+/* NEON when a terminal is synced to master — the whole pane lights up in its
+   element colour (crystal in the bar + the terminal itself, both together) */
+.term-pane.lit {
+  border-color: var(--el, var(--accent));
+  box-shadow: 0 0 0 1px var(--el, var(--accent)),
+              0 0 22px var(--el-glow, rgba(212,175,55,0.5)),
+              inset 0 0 26px color-mix(in srgb, var(--el, #d4af37) 10%, transparent);
+  animation: paneneon 2.4s ease-in-out infinite;
+}
+.term-pane.lit .term-head { background: color-mix(in srgb, var(--el, #d4af37) 14%, transparent); }
+@keyframes paneneon {
+  0%, 100% { box-shadow: 0 0 0 1px var(--el, var(--accent)), 0 0 18px var(--el-glow, rgba(212,175,55,0.45)), inset 0 0 22px color-mix(in srgb, var(--el, #d4af37) 8%, transparent); }
+  50%      { box-shadow: 0 0 0 1px var(--el, var(--accent)), 0 0 34px var(--el-glow, rgba(212,175,55,0.7)),  inset 0 0 30px color-mix(in srgb, var(--el, #d4af37) 14%, transparent); }
+}
+/* open channel — a gold interconnect ring + link badge */
+.term-pane.channel { border-color: #d4af37; box-shadow: 0 0 0 1px rgba(212,175,55,0.6), 0 0 16px rgba(212,175,55,0.28); }
+.term-pane.lit.channel { box-shadow: 0 0 0 1px var(--el, #d4af37), 0 0 26px var(--el-glow), 0 0 0 3px rgba(212,175,55,0.25); }
+.tchan { flex: 0 0 auto; font-size: 11px; filter: drop-shadow(0 0 4px rgba(212,175,55,0.7)); }
+
+/* Channel toggle button */
+.chanbtn { background: rgba(212,175,55,0.08); border: 1px solid var(--panel-border); color: var(--muted);
+  border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 650; cursor: pointer; white-space: nowrap; }
+.chanbtn.on { color: #fff; border-color: #d4af37; background: rgba(212,175,55,0.2);
+  box-shadow: 0 0 14px rgba(212,175,55,0.35); }
+.chan-picker { background: rgba(212,175,55,0.06); }
+
 /* elemental crystal — dim by default, glows + pulses when lit (synced to master) */
 .crystal { flex: 0 0 auto; filter: saturate(0.7) brightness(0.8); opacity: 0.7; transition: all .2s; }
 .crystal.lit { filter: saturate(1.2) brightness(1.15) drop-shadow(0 0 5px var(--cr-glow)); opacity: 1;

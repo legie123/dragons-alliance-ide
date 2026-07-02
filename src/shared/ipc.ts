@@ -116,6 +116,7 @@ export interface DaiApi {
     resize(id: string, cols: number, rows: number): void;
     kill(id: string): void;
     setMirror(id: string, on: boolean, scope?: string, ids?: string[]): void;
+    setChannel(id: string, channel: string | null): void;
     list(): Promise<TermInfo[]>;
     broadcast(data: string, enter: boolean, ids?: string[]): Promise<{ sent: number }>;
     ack(id: string, bytes: number): void;                        // flow control: renderer flushed N bytes

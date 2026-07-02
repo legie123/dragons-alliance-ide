@@ -14,6 +14,7 @@ export type ToHost =
   | { t: "resize"; id: string; cols: number; rows: number }
   | { t: "kill"; id: string }
   | { t: "mirror"; id: string; on: boolean; scope: string; ids?: string[] }
+  | { t: "channel"; id: string; channel: string | null } // peer-mesh: terminals sharing a channel co-type
   | { t: "list"; rid: number }                           // → res TermInfo[]
   | { t: "broadcast"; rid: number; data: string; enter: boolean; ids?: string[] } // → res {sent}
   | { t: "ack"; id: string; bytes: number };             // flow control: renderer flushed N bytes

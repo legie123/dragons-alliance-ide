@@ -32,10 +32,11 @@ export const TerminalPane = forwardRef<PaneHandle, {
   isMaster?: boolean;
   active: boolean;
   element?: import("../elements").Element; // elemental crystal identity
-  lit?: boolean;                            // crystal glows when linked to master
+  lit?: boolean;                            // synced to master → neon glow (crystal + pane)
+  inChannel?: boolean;                      // part of an open peer-mesh channel
   onClose: () => void;
   onStatus?: (s: "open" | "closed") => void;
-}>(function TerminalPane({ term, isMaster, active, element, lit, onClose, onStatus }, ref) {
+}>(function TerminalPane({ term, isMaster, active, element, lit, inChannel, onClose, onStatus }, ref) {
   const hostRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
@@ -186,8 +187,15 @@ export const TerminalPane = forwardRef<PaneHandle, {
   // focus stayed on the wrong terminal — you'd "type into the void").
   const focusMe = () => xtermRef.current?.focus();
 
+  const paneStyle = element
+    ? { ["--el" as any]: element.color, ["--el-glow" as any]: element.glow }
+    : undefined;
   return (
-    <div className={`term-pane${isMaster ? " master" : ""}${focused ? " focused" : ""}`} onMouseDown={focusMe}>
+    <div
+      className={`term-pane${isMaster ? " master" : ""}${focused ? " focused" : ""}${lit ? " lit" : ""}${inChannel ? " channel" : ""}`}
+      style={paneStyle}
+      onMouseDown={focusMe}
+    >
       <div className="term-head">
         {element ? (
           <Crystal el={element} lit={!!lit} size={16} />
@@ -197,6 +205,7 @@ export const TerminalPane = forwardRef<PaneHandle, {
         <span className="tname">
           {isMaster ? "MASTER" : element ? element.name : term.cmd === "claude" ? "claude" : "zsh"}
         </span>
+        {inChannel && <span className="tchan" title="interconnected — co-typing channel">🔗</span>}
         <span className="tcwd">{term.cwd.replace(/^\/Users\/[^/]+/, "~")}</span>
         {!isMaster && <button className="tx" onClick={onClose} title="kill terminal">✕</button>}
       </div>

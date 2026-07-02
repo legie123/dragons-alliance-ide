@@ -29,6 +29,8 @@ export function TerminalsView() {
   const [layout, setLayout] = useState<"grid" | "focus" | "quad">("grid");
   const [sync, setSync] = useState(false);
   const [linkedIds, setLinkedIds] = useState<string[]>([]); // terminals linked to master (empty = whole scope)
+  const [channelOn, setChannelOn] = useState(false);        // open peer-mesh channel between terminals
+  const [channelIds, setChannelIds] = useState<string[]>([]); // terminals in the open channel (empty = all visible)
   const [menuOpen, setMenuOpen] = useState(false);
   const [bmsg, setBmsg] = useState("");
   const [flash, setFlash] = useState("");
@@ -89,6 +91,21 @@ export function TerminalsView() {
   function toggleLink(id: string) {
     setLinkedIds((cur) => cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]);
   }
+  function toggleChannel(id: string) {
+    setChannelIds((cur) => cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]);
+  }
+
+  // Push the open-channel membership to the host. When the channel is on, every
+  // member shares channel "mesh" → typing in any one co-types into all of them.
+  useEffect(() => {
+    const vis = activeProject ? workers.filter((w) => projOf(w.cwd) === activeProject) : workers;
+    const members = channelOn ? (channelIds.length ? channelIds : vis.map((w) => w.id)) : [];
+    const set = new Set(members);
+    for (const w of workers) {
+      try { window.dai.term.setChannel(w.id, set.has(w.id) ? "mesh" : null); } catch { /* host busy */ }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelOn, channelIds, workers, activeProject]);
 
   function add(cmd: string) {
     const cwd = activeProject || host?.home || "~";
@@ -145,6 +162,8 @@ export function TerminalsView() {
   const showId = activeWorker && visibleWorkers.some((w) => w.id === activeWorker)
     ? activeWorker : visibleWorkers[0]?.id ?? null;
   const activeName = activeProject ? projects.find((p) => p.path === activeProject)?.name : "all";
+  const inChannel = (id: string) =>
+    channelOn && (channelIds.length === 0 ? visibleWorkers.some((w) => w.id === id) : channelIds.includes(id));
 
   return (
     <div className="ide-pro">
@@ -187,6 +206,25 @@ export function TerminalsView() {
               <span className="lp-count">{linkedIds.length === 0 ? visibleWorkers.length : linkedIds.length} linked</span>
             </div>
           )}
+          {channelOn && visibleWorkers.length > 0 && (
+            <div className="link-picker chan-picker">
+              <span className="lp-label">🔗 open channel:</span>
+              {visibleWorkers.map((w, i) => {
+                const on = inChannel(w.id);
+                const el = elementFor(i);
+                return (
+                  <button key={w.id} className={`lp-chip${on ? " on" : ""}`} onClick={() => toggleChannel(w.id)}
+                    style={on ? { ["--el" as any]: el.color } : undefined}
+                    title={`${el.name} — ${on ? "in channel" : "not in channel"}`}>
+                    <Crystal el={el} lit={on} size={14} /> {el.name}
+                  </button>
+                );
+              })}
+              <span className="lp-sep" />
+              <button className="lp-quick" onClick={() => setChannelIds([])}>all</button>
+              <span className="lp-count">{(channelIds.length === 0 ? visibleWorkers.length : channelIds.length)} interconnected · type in any → all</span>
+            </div>
+          )}
           <div className={`master-pane-host${sync ? " linked" : ""}`}>
             {master && (
               <TerminalPane ref={masterRef} term={master} isMaster active
@@ -221,6 +259,10 @@ export function TerminalsView() {
                 <button key={n} className="qo-btn" onClick={() => openN(n)}>{n}</button>
               ))}
             </div>
+            <button className={`chanbtn${channelOn ? " on" : ""}`} onClick={() => setChannelOn((c) => !c)}
+              title="open a live channel between terminals — type in any, it co-types into all">
+              🔗 Channel {channelOn ? "ON" : "OFF"}
+            </button>
             {layout === "focus" && (
               <div className="tabs">
                 {visibleWorkers.map((t) => (
@@ -246,6 +288,7 @@ export function TerminalsView() {
             <div key={t.id} className="pane-wrap" style={{ display: layout === "grid" || layout === "quad" || t.id === showId ? "flex" : "none" }}>
               <TerminalPane term={t} active={layout === "grid" || layout === "quad" || t.id === showId}
                 element={elementFor(i)} lit={sync && (linkedIds.length === 0 || linkedIds.includes(t.id))}
+                inChannel={inChannel(t.id)}
                 onClose={() => closeWorker(t.id)} onStatus={(s) => setStatus((p) => ({ ...p, [t.id]: s }))} />
             </div>
           ))}

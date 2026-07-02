@@ -67,6 +67,7 @@ const dai: DaiApi = {
     resize(id, cols, rows) { post({ t: "resize", id, cols, rows }); },
     kill(id) { post({ t: "kill", id }); },
     setMirror(id, on, scope = "all", ids) { post({ t: "mirror", id, on, scope, ids }); },
+    setChannel(id, channel) { post({ t: "channel", id, channel }); },
     list() { return request((rid) => ({ t: "list", rid })); },
     broadcast(data, enter, ids) { return request((rid) => ({ t: "broadcast", rid, data, enter, ids })); },
     ack(id, bytes) { post({ t: "ack", id, bytes }); },
