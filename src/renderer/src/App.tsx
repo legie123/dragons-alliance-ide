@@ -4,8 +4,10 @@ import { TitleBar } from "./components/TitleBar";
 import { TerminalsView } from "./views/TerminalsView";
 import { MetricsView } from "./views/MetricsView";
 import { AgentsView } from "./views/AgentsView";
+import { RadarView } from "./views/RadarView";
 import { MissionBar } from "./components/MissionBar";
 import { CommandPalette } from "./components/CommandPalette";
+import { PhoneConnect } from "./components/PhoneConnect";
 import { EcosystemBar } from "./components/EcosystemBar";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects } from "./api";
@@ -13,12 +15,13 @@ import { fetchHost, fetchProjects } from "./api";
 // Monaco is ~5MB — keep it out of the initial bundle, load only when Code opens.
 const CodeView = lazy(() => import("./views/CodeView").then((m) => ({ default: m.CodeView })));
 
-type View = "ide" | "agents" | "code" | "metrics";
+type View = "ide" | "agents" | "radar" | "code" | "metrics";
 export type OpenFileSignal = { path: string; n: number } | null;
 
 export default function App() {
   const [view, setView] = useState<View>("ide");
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [phoneOpen, setPhoneOpen] = useState(false);
   const [openFile, setOpenFile] = useState<OpenFileSignal>(null);
   const nonce = useRef(0);
   const { data: host } = useQuery({ queryKey: ["host"], queryFn: fetchHost, refetchInterval: false });
@@ -31,13 +34,13 @@ export default function App() {
     else setTimeout(warm, 2000);
   }, []);
 
-  // ⌘K / Ctrl-K toggles the command palette globally.
+  // ⌘K palette + ⌘J phone-connect — global toggles.
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setPaletteOpen((o) => !o);
-      }
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const k = e.key.toLowerCase();
+      if (k === "k") { e.preventDefault(); setPaletteOpen((o) => !o); }
+      else if (k === "j") { e.preventDefault(); setPhoneOpen((o) => !o); }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
@@ -54,8 +57,11 @@ export default function App() {
     return registerProvider("app", (): Cmd[] => [
       { id: "view:ide", title: "Go to Terminals", category: "View", icon: "⌘", run: () => setView("ide") },
       { id: "view:agents", title: "Go to Agents (Mission-Control)", category: "View", icon: "🤖", run: () => setView("agents") },
+      { id: "view:radar", title: "Go to GitHub Radar", category: "View", icon: "📡", run: () => setView("radar") },
       { id: "view:code", title: "Go to Code", category: "View", icon: "⌗", run: () => setView("code") },
       { id: "view:metrics", title: "Go to Metrics", category: "View", icon: "📊", run: () => setView("metrics") },
+      { id: "radar:refresh", title: "Radar: refresh scan (github-radar)", category: "Action", icon: "📡", run: () => { setView("radar"); window.dai.radar.refresh(); } },
+      { id: "action:phone", title: "Connect from phone (code + communicate)", subtitle: "⌘J", category: "Action", icon: "📱", run: () => setPhoneOpen(true) },
     ]);
   }, []);
 
@@ -93,8 +99,10 @@ export default function App() {
           <div className="viewswitch">
             <button className={view === "ide" ? "active" : ""} onClick={() => setView("ide")}>⌘ Terminals</button>
             <button className={view === "agents" ? "active" : ""} onClick={() => setView("agents")}>🤖 Agents</button>
+            <button className={view === "radar" ? "active" : ""} onClick={() => setView("radar")}>📡 Radar</button>
             <button className={view === "code" ? "active" : ""} onClick={() => setView("code")}>⌗ Code</button>
             <button className={view === "metrics" ? "active" : ""} onClick={() => setView("metrics")}>📊 Metrics</button>
+            <button className="phone-btn-top" onClick={() => setPhoneOpen(true)} title="Connect from phone — code &amp; communicate (⌘J)">📱 Phone</button>
             <button className="cmdk-btn" onClick={() => setPaletteOpen(true)} title="Command palette (⌘K)">⌘K</button>
           </div>
         </div>
@@ -110,6 +118,7 @@ export default function App() {
             <MissionBar projects={projects} />
           </div>
         )}
+        {view === "radar" && <RadarView />}
         {view === "code" && (
           <Suspense fallback={<div className="empty">loading editor…</div>}>
             <CodeView openFile={openFile} />
@@ -123,6 +132,7 @@ export default function App() {
       </div>
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} roots={roots} onOpenFile={goOpenFile} />
+      <PhoneConnect open={phoneOpen} onClose={() => setPhoneOpen(false)} projects={projects} />
     </>
   );
 }

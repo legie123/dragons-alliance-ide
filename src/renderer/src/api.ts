@@ -33,6 +33,15 @@ export async function fetchHost(): Promise<Host> {
   return window.dai.host.info();
 }
 
+// ---- github radar ----
+export type { RadarStatus, RadarSection, RepoItem } from "@shared/ipc";
+export async function fetchRadar() { return window.dai.radar.status(); }
+export function refreshRadar() { window.dai.radar.refresh(); }
+
+// ---- agent health (self-repair) ----
+export type { AgentHealth, AgentProblem } from "@shared/ipc";
+export async function fetchAgentHealth(file: string) { return window.dai.sessions.health(file); }
+
 // ---- ecosystem tools (live indicators) ----
 export type { ToolStatus } from "@shared/ipc";
 export async function fetchTools() {

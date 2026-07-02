@@ -26,11 +26,16 @@ export const CH = {
   SESSIONS_TRANSCRIPT: "sessions:transcript",
   TOOLS_STATUS: "tools:status",
   TOOLS_ACTION: "tools:action",
+  RADAR_STATUS: "radar:status",
+  RADAR_REFRESH: "radar:refresh",
+  AGENT_HEALTH: "agent:health",
   HOST_INFO: "host:info",
   // window controls (frameless titlebar)
   WIN_MIN: "win:minimize",
   WIN_MAXTOGGLE: "win:maxtoggle",
   WIN_CLOSE: "win:close",
+  // shell
+  SHELL_OPEN: "shell:open",   // open an external URL in the default browser
 } as const;
 
 // ---- types ----
@@ -45,6 +50,7 @@ export type ProjectSession = { score: number; title: string; ctx: number; model:
 export type Project = {
   path: string; name: string; type: string;
   branch: string | null; dirty: number;
+  remote: string | null;   // GitHub web URL (https://github.com/<owner>/<repo>) or null if no origin
   terminals: string[]; session: ProjectSession | null;
 };
 
@@ -70,6 +76,27 @@ export type TranscriptEvent = {
 export type Transcript = { file: string; events: TranscriptEvent[] };
 
 export type HostInfo = { shell: string; home: string; cwd: string; projects: string[] };
+
+// GitHub Radar — hot repos by lens (from ~/code/github-radar/last-run.json).
+export type RepoItem = {
+  full_name: string; url: string; stars: number; lang: string | null;
+  desc: string; topics: string[]; pushed?: string; velocity?: number; // stars/day if derivable
+};
+export type RadarSection = { lens: string; repos: RepoItem[] };
+export type RadarStatus = {
+  scannedAt: string; mode: string; total: number; fresh: number;
+  sections: RadarSection[]; available: boolean;
+};
+
+// Agent health — goal attainment + detected problems from the live transcript.
+export type AgentProblem = { kind: "tool-error" | "bash-fail" | "stall" | "repeat-error"; detail: string; ts: number };
+export type AgentHealth = {
+  goalPct: number;                                    // 0..100
+  status: "working" | "stalled" | "error" | "done" | "idle";
+  problems: AgentProblem[];
+  lastActivityMs: number;
+  cwd_full?: string;                                  // for terminal targeting (autopilot)
+};
 
 // Ecosystem super-tool live status (real signals — running proc / launchd / recent write).
 export type ToolStatus = {
@@ -105,10 +132,13 @@ export interface DaiApi {
   sessions: {
     list(activeMin: number): Promise<SessionsPayload>;
     transcript(file: string, limit?: number): Promise<Transcript>;
+    health(file: string): Promise<AgentHealth>;
   };
+  radar: { status(): Promise<RadarStatus>; refresh(): void };
   host: { info(): Promise<HostInfo> };
   tools: { status(): Promise<ToolStatus[]>; action(id: string): void };
   win: { minimize(): void; maxToggle(): void; close(): void };
+  shell: { open(url: string): void };
 }
 
 declare global {

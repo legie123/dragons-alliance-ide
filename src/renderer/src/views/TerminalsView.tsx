@@ -16,7 +16,7 @@ export function TerminalsView() {
   const [workers, setWorkers] = useState<Term[]>([]);
   const [activeWorker, setActiveWorker] = useState<string | null>(null);
   const [activeProject, setActiveProject] = useState<string | null>(null); // null = All
-  const [layout, setLayout] = useState<"grid" | "focus">("grid");
+  const [layout, setLayout] = useState<"grid" | "focus" | "quad">("grid");
   const [sync, setSync] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [bmsg, setBmsg] = useState("");
@@ -80,6 +80,11 @@ export function TerminalsView() {
     setActiveWorker(t.id);
     setMenuOpen(false);
   }
+  // spawn zsh workers into the active project until the current view has 4
+  function fillToFour() {
+    const need = 4 - visibleWorkers.length;
+    for (let i = 0; i < need; i++) add("shell");
+  }
   function closeWorker(id: string) {
     window.dai.term.kill(id);
     setWorkers((p) => p.filter((t) => t.id !== id));
@@ -108,6 +113,7 @@ export function TerminalsView() {
       { id: "t:sync", title: s.sync ? "Master sync — turn OFF" : "Master sync — turn ON", category: "Action", icon: "📡", run: () => s.setSync(!s.sync) },
       { id: "t:grid", title: "Layout: grid", category: "Action", icon: "▦", run: () => s.setLayout("grid") },
       { id: "t:focus", title: "Layout: focus", category: "Action", icon: "▭", run: () => s.setLayout("focus") },
+      { id: "t:quad", title: "Layout: quad (2×2)", category: "Action", icon: "⊞", run: () => s.setLayout("quad") },
       { id: "t:all", title: "Workspace: All projects", category: "Project", icon: "⌘", run: () => s.setActiveProject(null) },
       ...s.projects.map((p: any): Cmd => ({ id: "t:proj:" + p.path, title: "Workspace: " + p.name, subtitle: tilde(p.path), category: "Project", icon: "📁", run: () => s.setActiveProject(p.path) })),
       ...s.workers.map((w: Term): Cmd => ({ id: "t:foc:" + w.id, title: "Focus terminal: " + (w.cmd === "claude" ? "claude" : "zsh"), subtitle: tilde(w.cwd), category: "Terminal", icon: "⌘", run: () => { s.setActiveWorker(w.id); s.setLayout("focus"); } })),
@@ -166,7 +172,11 @@ export function TerminalsView() {
             <div className="seg">
               <button className={layout === "grid" ? "active" : ""} onClick={() => setLayout("grid")}>▦ grid</button>
               <button className={layout === "focus" ? "active" : ""} onClick={() => setLayout("focus")}>▭ focus</button>
+              <button className={layout === "quad" ? "active" : ""} onClick={() => setLayout("quad")}>⊞ quad</button>
             </div>
+            {visibleWorkers.length < 4 && (
+              <button className="fill4" onClick={fillToFour}>Fill to 4</button>
+            )}
             {layout === "focus" && (
               <div className="tabs">
                 {visibleWorkers.map((t) => (
@@ -183,11 +193,11 @@ export function TerminalsView() {
         </div>
 
         {/* WORKERS */}
-        <div className={layout === "grid" ? "term-grid" : "term-focus"}>
+        <div className={layout === "grid" ? "term-grid" : layout === "quad" ? "term-quad" : "term-focus"}>
           {visibleWorkers.length === 0 && <div className="empty">no workers in {activeProject ? activeName : "any project"} — click + Worker</div>}
-          {visibleWorkers.map((t) => (
-            <div key={t.id} className="pane-wrap" style={{ display: layout === "grid" || t.id === showId ? "flex" : "none" }}>
-              <TerminalPane term={t} active={layout === "grid" || t.id === showId}
+          {(layout === "quad" ? visibleWorkers.slice(0, 4) : visibleWorkers).map((t) => (
+            <div key={t.id} className="pane-wrap" style={{ display: layout === "grid" || layout === "quad" || t.id === showId ? "flex" : "none" }}>
+              <TerminalPane term={t} active={layout === "grid" || layout === "quad" || t.id === showId}
                 onClose={() => closeWorker(t.id)} onStatus={(s) => setStatus((p) => ({ ...p, [t.id]: s }))} />
             </div>
           ))}

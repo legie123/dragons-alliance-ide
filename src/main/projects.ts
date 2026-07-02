@@ -87,9 +87,23 @@ export function detectType(p: string): string {
   return "dir";
 }
 
-type GitInfo = { branch: string | null; dirty: number };
+type GitInfo = { branch: string | null; dirty: number; remote: string | null };
 const _GIT_CACHE = new Map<string, { ts: number; info: GitInfo }>(); // path -> (ts, info)
-const NO_GIT: GitInfo = { branch: null, dirty: 0 };
+const NO_GIT: GitInfo = { branch: null, dirty: 0, remote: null };
+
+/** Normalize a git origin URL to its https web form, or null if not a recognizable
+ *  GitHub/host URL. Handles scp-style (git@host:owner/repo.git) and https/ssh URLs. */
+function toWebUrl(raw: string): string | null {
+  const u = raw.trim();
+  if (!u) return null;
+  // scp-style: git@github.com:owner/repo(.git)
+  const scp = u.match(/^[^@]+@([^:]+):(.+?)(?:\.git)?$/);
+  if (scp) return `https://${scp[1]}/${scp[2]}`;
+  // ssh://git@host/owner/repo(.git) or https://host/owner/repo(.git)
+  const url = u.match(/^(?:ssh|git|https?):\/\/(?:[^@/]+@)?([^/]+)\/(.+?)(?:\.git)?$/);
+  if (url) return `https://${url[1]}/${url[2]}`;
+  return null;
+}
 
 /** Async git state (8s-cached). Skips non-repos via a cheap `.git` stat so the
  *  bulk of projects never spawn git at all (measured: 9 sync calls = 553ms; this
@@ -103,12 +117,18 @@ export async function gitInfo(p: string): Promise<GitInfo> {
     _GIT_CACHE.set(p, { ts: now, info: NO_GIT });
     return NO_GIT;
   }
-  const info: GitInfo = { branch: null, dirty: 0 };
+  const info: GitInfo = { branch: null, dirty: 0, remote: null };
   try {
     const b = await execFileP("git", ["-C", p, "rev-parse", "--abbrev-ref", "HEAD"], { timeout: 1500 });
     info.branch = b.stdout.trim();
     const s = await execFileP("git", ["-C", p, "status", "--porcelain"], { timeout: 1500 });
     info.dirty = s.stdout.split("\n").filter((l) => l.trim()).length;
+    // origin remote → web URL (null if no origin configured). Own try so a
+    // missing remote doesn't wipe branch/dirty already resolved above.
+    try {
+      const r = await execFileP("git", ["-C", p, "remote", "get-url", "origin"], { timeout: 1500 });
+      info.remote = toWebUrl(r.stdout);
+    } catch { /* no origin remote */ }
   } catch {
     // git unavailable / detached / timeout — leave defaults
   }
@@ -177,6 +197,7 @@ export async function enrichProjects(
       type: detectType(p),
       branch: gi.branch,
       dirty: gi.dirty,
+      remote: gi.remote,
       terminals: tids,
       session: sess
         ? { score: sess.score, title: sess.title, ctx: sess.ctx, model: sess.model, idle_min: sess.idle_min }

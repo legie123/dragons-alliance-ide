@@ -83,6 +83,11 @@ const dai: DaiApi = {
   sessions: {
     list: (activeMin) => ipcRenderer.invoke(CH.SESSIONS_LIST, activeMin),
     transcript: (file, limit) => ipcRenderer.invoke(CH.SESSIONS_TRANSCRIPT, { file, limit }),
+    health: (file) => ipcRenderer.invoke(CH.AGENT_HEALTH, file),
+  },
+  radar: {
+    status: () => ipcRenderer.invoke(CH.RADAR_STATUS),
+    refresh: () => ipcRenderer.send(CH.RADAR_REFRESH),
   },
   host: { info: () => ipcRenderer.invoke(CH.HOST_INFO) },
   tools: {
@@ -93,6 +98,9 @@ const dai: DaiApi = {
     minimize: () => ipcRenderer.send(CH.WIN_MIN),
     maxToggle: () => ipcRenderer.send(CH.WIN_MAXTOGGLE),
     close: () => ipcRenderer.send(CH.WIN_CLOSE),
+  },
+  shell: {
+    open: (url) => ipcRenderer.send(CH.SHELL_OPEN, url),
   },
 };
 

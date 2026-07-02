@@ -8,8 +8,10 @@ import path from "node:path";
 import { CH } from "../shared/ipc";
 import { fsList, fsRead, fsWrite, fsWalk } from "./fs";
 import { collect, getTranscript } from "./sessions";
+import { agentHealth } from "./agenthealth";
 import { listProjects, enrichProjects } from "./projects";
 import { probeTools } from "./tools";
+import { radarStatus, refreshRadar } from "./radar";
 
 type LiveTerm = { id: string; cwd: string; is_master: boolean };
 
@@ -39,7 +41,10 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
     };
   });
   ipcMain.handle(CH.SESSIONS_TRANSCRIPT, (_e, { file, limit }) => getTranscript(file, limit));
+  ipcMain.handle(CH.AGENT_HEALTH, (_e, file: string) => agentHealth(file));
   ipcMain.handle(CH.TOOLS_STATUS, () => probeTools());
+  ipcMain.handle(CH.RADAR_STATUS, () => radarStatus());
+  ipcMain.on(CH.RADAR_REFRESH, () => refreshRadar());
   ipcMain.on(CH.TOOLS_ACTION, (_e, id: string) => {
     const HOME = os.homedir();
     if (id === "open-obsidian") {
@@ -55,6 +60,14 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
     cwd: os.homedir(),
     projects: listProjects(),
   }));
+
+  // ---- shell: open external URL (http/https only — never file:// or app schemes) ----
+  ipcMain.on(CH.SHELL_OPEN, (_e, url: string) => {
+    try {
+      const u = new URL(String(url));
+      if (u.protocol === "http:" || u.protocol === "https:") shell.openExternal(u.href);
+    } catch { /* malformed url — ignore */ }
+  });
 
   // ---- window controls (frameless titlebar) ----
   ipcMain.on(CH.WIN_MIN, () => mainWin?.minimize());
