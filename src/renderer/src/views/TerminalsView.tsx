@@ -4,6 +4,8 @@ import { TerminalPane, PaneHandle } from "../components/TerminalPane";
 import { ProjectRail } from "../components/ProjectRail";
 import { broadcast, fetchHost, fetchTerms, fetchProjects, Term } from "../api";
 import { registerProvider, Cmd } from "../palette";
+import { elementFor } from "../elements";
+import { Crystal } from "../components/Crystal";
 
 let SEQ = 1;
 const newId = () => `t${Date.now().toString(36)}${SEQ++}`;
@@ -95,11 +97,11 @@ export function TerminalsView() {
     setActiveWorker(t.id);
     setMenuOpen(false);
   }
-  // spawn zsh workers into the active project until the current view has 4
-  function fillToFour() {
-    const need = 4 - visibleWorkers.length;
+  // open (at least) N terminals in the active project and show them as tiles
+  function openN(n: number) {
+    const need = n - visibleWorkers.length;
     for (let i = 0; i < need; i++) add("shell");
-    setLayout("quad"); // switch to the 2×2 so you immediately see all 4
+    setLayout("quad");
   }
   function closeWorker(id: string) {
     window.dai.term.kill(id);
@@ -169,10 +171,12 @@ export function TerminalsView() {
               <span className="lp-label">link to master:</span>
               {visibleWorkers.map((w, i) => {
                 const on = linkedIds.length === 0 || linkedIds.includes(w.id);
+                const el = elementFor(i);
                 return (
                   <button key={w.id} className={`lp-chip${on ? " on" : ""}`} onClick={() => toggleLink(w.id)}
-                    title={w.cwd.replace(/^\/Users\/[^/]+/, "~")}>
-                    <span className={`tdot tdot-${w.cmd}`} />{i + 1}·{w.cmd === "claude" ? "claude" : "zsh"}
+                    style={on ? { ["--el" as any]: el.color } : undefined}
+                    title={`${el.name} · ${w.cwd.replace(/^\/Users\/[^/]+/, "~")} — ${on ? "linked" : "not linked"}`}>
+                    <Crystal el={el} lit={on} size={14} /> {el.name}
                   </button>
                 );
               })}
@@ -209,9 +213,14 @@ export function TerminalsView() {
               <button className={layout === "focus" ? "active" : ""} onClick={() => setLayout("focus")}>▭ focus</button>
               <button className={layout === "quad" ? "active" : ""} onClick={() => setLayout("quad")}>⊞ tiles</button>
             </div>
-            {visibleWorkers.length < 4 && (
-              <button className="fill4" onClick={fillToFour}>⊞ Open 4 terminals</button>
-            )}
+            <button className="addterm" onClick={() => add("shell")} disabled={visibleWorkers.length >= 8}
+              title={visibleWorkers.length >= 8 ? "max 8 terminals" : "add a terminal"}>+ Add</button>
+            <div className="quickopen">
+              <span className="qo-label">open</span>
+              {[2, 4, 6, 8].map((n) => (
+                <button key={n} className="qo-btn" onClick={() => openN(n)}>{n}</button>
+              ))}
+            </div>
             {layout === "focus" && (
               <div className="tabs">
                 {visibleWorkers.map((t) => (
@@ -233,9 +242,10 @@ export function TerminalsView() {
           style={layout === "quad" ? { gridTemplateColumns: `repeat(${tileCols(visibleWorkers.length)}, minmax(0, 1fr))` } : undefined}
         >
           {visibleWorkers.length === 0 && <div className="empty">no workers in {activeProject ? activeName : "any project"} — click + Worker</div>}
-          {(layout === "quad" ? visibleWorkers.slice(0, 8) : visibleWorkers).map((t) => (
+          {(layout === "quad" ? visibleWorkers.slice(0, 8) : visibleWorkers).map((t, i) => (
             <div key={t.id} className="pane-wrap" style={{ display: layout === "grid" || layout === "quad" || t.id === showId ? "flex" : "none" }}>
               <TerminalPane term={t} active={layout === "grid" || layout === "quad" || t.id === showId}
+                element={elementFor(i)} lit={sync && (linkedIds.length === 0 || linkedIds.includes(t.id))}
                 onClose={() => closeWorker(t.id)} onStatus={(s) => setStatus((p) => ({ ...p, [t.id]: s }))} />
             </div>
           ))}

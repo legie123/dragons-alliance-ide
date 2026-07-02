@@ -5,6 +5,7 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { WebglAddon } from "@xterm/addon-webgl";
 import "@xterm/xterm/css/xterm.css";
 import { Term } from "../api";
+import { Crystal } from "./Crystal";
 
 const THEME = {
   background: "#0a0c12",
@@ -30,9 +31,11 @@ export const TerminalPane = forwardRef<PaneHandle, {
   term: Term;
   isMaster?: boolean;
   active: boolean;
+  element?: import("../elements").Element; // elemental crystal identity
+  lit?: boolean;                            // crystal glows when linked to master
   onClose: () => void;
   onStatus?: (s: "open" | "closed") => void;
-}>(function TerminalPane({ term, isMaster, active, onClose, onStatus }, ref) {
+}>(function TerminalPane({ term, isMaster, active, element, lit, onClose, onStatus }, ref) {
   const hostRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
@@ -186,9 +189,13 @@ export const TerminalPane = forwardRef<PaneHandle, {
   return (
     <div className={`term-pane${isMaster ? " master" : ""}${focused ? " focused" : ""}`} onMouseDown={focusMe}>
       <div className="term-head">
-        <span className={`tdot tdot-${term.cmd}`} />
+        {element ? (
+          <Crystal el={element} lit={!!lit} size={16} />
+        ) : (
+          <span className={`tdot tdot-${term.cmd}`} />
+        )}
         <span className="tname">
-          {isMaster ? "MASTER" : term.cmd === "claude" ? "claude" : "zsh"}
+          {isMaster ? "MASTER" : element ? element.name : term.cmd === "claude" ? "claude" : "zsh"}
         </span>
         <span className="tcwd">{term.cwd.replace(/^\/Users\/[^/]+/, "~")}</span>
         {!isMaster && <button className="tx" onClick={onClose} title="kill terminal">✕</button>}
