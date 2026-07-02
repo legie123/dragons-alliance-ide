@@ -84,6 +84,7 @@ export function TerminalsView() {
   function fillToFour() {
     const need = 4 - visibleWorkers.length;
     for (let i = 0; i < need; i++) add("shell");
+    setLayout("quad"); // switch to the 2×2 so you immediately see all 4
   }
   function closeWorker(id: string) {
     window.dai.term.kill(id);
@@ -175,7 +176,7 @@ export function TerminalsView() {
               <button className={layout === "quad" ? "active" : ""} onClick={() => setLayout("quad")}>⊞ quad</button>
             </div>
             {visibleWorkers.length < 4 && (
-              <button className="fill4" onClick={fillToFour}>Fill to 4</button>
+              <button className="fill4" onClick={fillToFour}>⊞ Open 4 terminals</button>
             )}
             {layout === "focus" && (
               <div className="tabs">
