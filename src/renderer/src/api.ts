@@ -42,6 +42,19 @@ export function refreshRadar() { window.dai.radar.refresh(); }
 export type { AgentHealth, AgentProblem } from "@shared/ipc";
 export async function fetchAgentHealth(file: string) { return window.dai.sessions.health(file); }
 
+// ---- per-terminal session join (info bar) ----
+export type { TermSession } from "@shared/ipc";
+export async function fetchTermSession(cwd: string) { return window.dai.sessions.session(cwd); }
+// good/great/max from the model tier (deterministic, honest).
+export function modelGrade(model: string): "good" | "great" | "max" | null {
+  const m = (model || "").toLowerCase();
+  if (m.includes("opus")) return "max";
+  if (m.includes("sonnet")) return "great";
+  if (m.includes("haiku") || m.includes("fable")) return "good";
+  return null;
+}
+export const MODEL_KEYS = ["opus", "sonnet", "haiku", "fable"] as const;
+
 // ---- ecosystem tools (live indicators) ----
 export type { ToolStatus } from "@shared/ipc";
 export async function fetchTools() {

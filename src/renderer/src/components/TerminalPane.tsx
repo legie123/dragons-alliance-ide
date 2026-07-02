@@ -4,7 +4,8 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { WebglAddon } from "@xterm/addon-webgl";
 import "@xterm/xterm/css/xterm.css";
-import { Term } from "../api";
+import { useQuery } from "@tanstack/react-query";
+import { Term, fetchTermSession, modelGrade, MODEL_KEYS, human, broadcast } from "../api";
 import { Crystal } from "./Crystal";
 
 const THEME = {
@@ -41,6 +42,28 @@ export const TerminalPane = forwardRef<PaneHandle, {
   const xtermRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
   const [focused, setFocused] = useState(false);
+
+  // per-terminal live session (only claude terminals own a claude session)
+  const { data: sess } = useQuery({
+    queryKey: ["termsess", term.id, term.cwd],
+    queryFn: () => fetchTermSession(term.cwd),
+    enabled: term.cmd === "claude",
+    refetchInterval: 3000,
+  });
+
+  // model switch: label as "switching…" until the next poll re-reads the transcript.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [switching, setSwitching] = useState<string | null>(null);
+  const switchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (switchTimer.current) clearTimeout(switchTimer.current); }, []);
+  const pickModel = (name: string) => {
+    broadcast("/model " + name, true, [term.id]);
+    setMenuOpen(false);
+    setSwitching(name);
+    if (switchTimer.current) clearTimeout(switchTimer.current);
+    switchTimer.current = setTimeout(() => setSwitching(null), 4000);
+  };
+  const grade = sess ? modelGrade(sess.model) : null;
 
   useImperativeHandle(ref, () => ({
     setMirror(on: boolean, scope: string = "all", ids?: string[]) {
@@ -209,6 +232,39 @@ export const TerminalPane = forwardRef<PaneHandle, {
         <span className="tcwd">{term.cwd.replace(/^\/Users\/[^/]+/, "~")}</span>
         {!isMaster && <button className="tx" onClick={onClose} title="kill terminal">✕</button>}
       </div>
+      {term.cmd === "claude" ? (
+        <div className="term-infobar">
+          <span className="ti-agent claude">⬖ claude</span>
+          {sess ? (
+            <>
+              <span className="ti-model">{sess.model}</span>
+              <span className="ti-tok">{human(sess.ctx)}</span>
+              <span className="ti-cap">{sess.capacity.toFixed(0) + "%"}</span>
+              {grade && <span className={`ti-grade ti-grade-${grade}`}>{grade}</span>}
+              {sess.ambiguous && (
+                <span className="ti-ambiguous" title="2+ claude sessions share this cwd — can't be sure which">· ambiguous</span>
+              )}
+            </>
+          ) : (
+            <span className="ti-none">no live session</span>
+          )}
+          {switching && <span className="ti-switching">switching → {switching}…</span>}
+          <span className="ti-modelbtn-wrap">
+            <button className="ti-modelbtn" onClick={() => setMenuOpen((o) => !o)} title="switch model for this terminal">model ▾</button>
+            {menuOpen && (
+              <div className="ti-modelmenu">
+                {MODEL_KEYS.map((name) => (
+                  <button key={name} className="ti-modelrow" onClick={() => pickModel(name)}>{name}</button>
+                ))}
+              </div>
+            )}
+          </span>
+        </div>
+      ) : (
+        <div className="term-infobar">
+          <span className="ti-agent">⌘ shell</span>
+        </div>
+      )}
       <div className="term-body" ref={hostRef} onMouseDown={focusMe} />
     </div>
   );

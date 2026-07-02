@@ -114,6 +114,42 @@ export const ProjectRail = memo(function ProjectRail({
                   <span className="pr-idle">idle</span>
                 )}
               </div>
+              {p.session && (
+                <div className="pr-bars">
+                  <div
+                    className="pr-bar-row"
+                    title="grounding — share of work on grounded context (cache-read), a proxy, not literal comprehension"
+                  >
+                    <span className="pr-bar-label">grd</span>
+                    <span className="pr-bar">
+                      <span
+                        className="pr-bar-fill"
+                        style={{
+                          width: p.session.understanding + "%",
+                          background: gradeColor(p.session.understanding),
+                        }}
+                      />
+                    </span>
+                    <span className="pr-bar-val">{p.session.understanding.toFixed(0)}</span>
+                  </div>
+                  <div
+                    className="pr-bar-row"
+                    title="goal progress — TodoWrite completion or tool-success, a heuristic"
+                  >
+                    <span className="pr-bar-label">goal</span>
+                    <span className="pr-bar">
+                      <span
+                        className="pr-bar-fill"
+                        style={{
+                          width: p.session.goalPct + "%",
+                          background: gradeColor(p.session.goalPct),
+                        }}
+                      />
+                    </span>
+                    <span className="pr-bar-val">{p.session.goalPct.toFixed(0)}</span>
+                  </div>
+                </div>
+              )}
               {active && <motion.span layoutId="pr-active" className="pr-active-bar" />}
             </motion.button>
           );

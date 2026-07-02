@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { CH } from "../shared/ipc";
 import { fsList, fsRead, fsWrite, fsWalk } from "./fs";
-import { collect, getTranscript } from "./sessions";
+import { collect, getTranscript, sessionForTerm } from "./sessions";
 import { agentHealth } from "./agenthealth";
 import { listProjects, enrichProjects } from "./projects";
 import { probeTools } from "./tools";
@@ -42,6 +42,7 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
   });
   ipcMain.handle(CH.SESSIONS_TRANSCRIPT, (_e, { file, limit }) => getTranscript(file, limit));
   ipcMain.handle(CH.AGENT_HEALTH, (_e, file: string) => agentHealth(file));
+  ipcMain.handle(CH.TERM_SESSION, (_e, cwd: string) => sessionForTerm(cwd));
   ipcMain.handle(CH.TOOLS_STATUS, () => probeTools());
   ipcMain.handle(CH.RADAR_STATUS, () => radarStatus());
   ipcMain.on(CH.RADAR_REFRESH, () => refreshRadar());

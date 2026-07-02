@@ -24,6 +24,7 @@ export const CH = {
   PROJECTS_LIST: "projects:list",
   SESSIONS_LIST: "sessions:list",
   SESSIONS_TRANSCRIPT: "sessions:transcript",
+  TERM_SESSION: "term:session",
   TOOLS_STATUS: "tools:status",
   TOOLS_ACTION: "tools:action",
   RADAR_STATUS: "radar:status",
@@ -46,7 +47,7 @@ export type AttachResult = { buffer: ArrayBuffer | string };  // scrollback repl
 export type FsEntry = { name: string; path: string; type: "dir" | "file"; hidden: boolean; size: number };
 export type FsList = { path: string; parent: string | null; entries: FsEntry[] };
 
-export type ProjectSession = { score: number; title: string; ctx: number; model: string; idle_min: number };
+export type ProjectSession = { score: number; title: string; ctx: number; model: string; idle_min: number; understanding: number; goalPct: number };
 export type Project = {
   path: string; name: string; type: string;
   branch: string | null; dirty: number;
@@ -59,8 +60,14 @@ export type Session = {
   file?: string;   // absolute path to the source .jsonl transcript (for live streaming)
   ctx: number; out: number; win: number;
   capacity: number; meaningful: number; understanding: number; freshness: number;
-  score: number; idle_min: number; assistants: number; users: number; tools: number; mtime: number;
+  score: number; goalPct: number; idle_min: number; assistants: number; users: number; tools: number; mtime: number;
 };
+
+// Per-terminal session join (info bar): the claude session owning a terminal's cwd.
+export type TermSession = {
+  model: string; ctx: number; out: number; capacity: number; score: number;
+  goalPct: number; understanding: number; ambiguous: boolean;
+} | null;
 export type SessionsPayload = { now: number; active_min: number; live: number; sessions: Session[] };
 
 // One rendered event in an agent's live transcript (Mission-Control).
@@ -134,6 +141,7 @@ export interface DaiApi {
     list(activeMin: number): Promise<SessionsPayload>;
     transcript(file: string, limit?: number): Promise<Transcript>;
     health(file: string): Promise<AgentHealth>;
+    session(cwd: string): Promise<TermSession>;
   };
   radar: { status(): Promise<RadarStatus>; refresh(): void };
   host: { info(): Promise<HostInfo> };

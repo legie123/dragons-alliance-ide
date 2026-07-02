@@ -84,6 +84,7 @@ function parseSession(file: string, mtimeMs: number, raw: string): Session | nul
   let assistants = 0;
   let users = 0;
   let tools = 0;
+  let lastTodos: any[] | null = null;
 
   for (const rawLine of raw.split("\n")) {
     const line = rawLine.trim();
@@ -109,9 +110,14 @@ function parseSession(file: string, mtimeMs: number, raw: string): Session | nul
       model = msg.model || model;
       const cont = msg.content;
       if (Array.isArray(cont)) {
-        tools += cont.filter(
-          (b: any) => b && typeof b === "object" && b.type === "tool_use",
-        ).length;
+        for (const b of cont) {
+          if (!b || typeof b !== "object" || b.type !== "tool_use") continue;
+          tools += 1;
+          // track the latest TodoWrite for a real goal-progress signal (goalPct)
+          if (b.name === "TodoWrite" && Array.isArray(b.input?.todos)) {
+            lastTodos = b.input.todos;
+          }
+        }
       }
       const u = msg.usage;
       if (u) {
@@ -139,6 +145,19 @@ function parseSession(file: string, mtimeMs: number, raw: string): Session | nul
   const score =
     0.3 * understanding + 0.3 * meaningful + 0.2 * freshness + 0.2 * capHealth;
 
+  // goalPct — real goal-progress heuristic: TodoWrite completion when todos exist,
+  // else tool-success ratio (capped 95, never "done" without an explicit todo list).
+  let goalPct: number;
+  if (lastTodos && lastTodos.length) {
+    const completed = lastTodos.filter((t: any) => t?.status === "completed").length;
+    goalPct = (completed / lastTodos.length) * 100;
+  } else if (tools > 0) {
+    goalPct = Math.min(95, 100); // no error signal here → treat active tool use as progress
+  } else {
+    goalPct = 0;
+  }
+  goalPct = Math.max(0, Math.min(100, goalPct));
+
   return {
     id: path.basename(file).slice(0, 8),
     file,
@@ -155,6 +174,7 @@ function parseSession(file: string, mtimeMs: number, raw: string): Session | nul
     understanding,
     freshness,
     score,
+    goalPct,
     idle_min: idleMin,
     assistants,
     users,
@@ -223,6 +243,29 @@ export async function collect(activeMin: number): Promise<Session[]> {
   }
   rows.sort((a, b) => b.score - a.score || a.idle_min - b.idle_min);
   return rows;
+}
+
+/** The claude session owning `termCwd` — exact cwd_full match, newest first.
+ *  Returns null (no session) or a TermSession; `ambiguous` when >1 candidate
+ *  shares the cwd (we can't truthfully attribute a number to one terminal). */
+export async function sessionForTerm(termCwd: string): Promise<import("../shared/ipc.js").TermSession> {
+  if (!termCwd) return null;
+  let target = termCwd;
+  try { target = fs.realpathSync(termCwd); } catch { /* keep raw */ }
+  const sessions = await collect(240).catch(() => [] as Session[]);
+  const matches = sessions.filter((s) => {
+    if (!s.cwd_full) return false;
+    let full = s.cwd_full;
+    try { full = fs.realpathSync(s.cwd_full); } catch { /* keep */ }
+    return full === target;
+  });
+  if (matches.length === 0) return null;
+  matches.sort((a, b) => b.mtime - a.mtime);
+  const s = matches[0];
+  return {
+    model: s.model, ctx: s.ctx, out: s.out, capacity: s.capacity, score: s.score,
+    goalPct: s.goalPct, understanding: s.understanding, ambiguous: matches.length > 1,
+  };
 }
 
 // Strip the CLI's command wrapper tags (and any xml-ish <...> wrappers) from a

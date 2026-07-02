@@ -507,6 +507,39 @@ button.primary:hover { filter: brightness(1.08); }
 }
 .ide-toolbar, .master-zone .master-bar { flex: 0 0 auto; }
 
+/* per-terminal info bar (agent / model / tokens / grade / model-switch) */
+.term-infobar { flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+  padding: 4px 12px; font-size: 10.5px; border-bottom: 1px solid var(--panel-border);
+  background: rgba(0,0,0,0.22); color: var(--muted); min-height: 24px; }
+.ti-agent { font-weight: 700; color: var(--faint); letter-spacing: 0.03em; flex: 0 0 auto; }
+.ti-agent.claude { color: #c4b5fd; }
+.ti-model { color: var(--text); font-weight: 600; }
+.ti-tok, .ti-cap { color: var(--muted); font-variant-numeric: tabular-nums; }
+.ti-grade { font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; font-size: 9.5px;
+  padding: 1px 6px; border-radius: 5px; }
+.ti-grade-good  { color: #4ade80; background: rgba(74,222,128,0.14); }
+.ti-grade-great { color: #38bdf8; background: rgba(56,189,248,0.14); }
+.ti-grade-max   { color: #d4af37; background: rgba(212,175,55,0.16); }
+.ti-ambiguous, .ti-none { color: var(--faint); font-style: italic; }
+.ti-switching { color: #fbbf24; font-weight: 650; }
+.ti-modelbtn-wrap { position: relative; margin-left: auto; }
+.ti-modelbtn { background: rgba(212,175,55,0.1); border: 1px solid var(--panel-border); color: #e9dcae;
+  border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 650; cursor: pointer; }
+.ti-modelbtn:hover { border-color: var(--accent); }
+.ti-modelmenu { position: absolute; top: 22px; right: 0; z-index: 40; min-width: 110px;
+  background: #14100f; border: 1px solid var(--panel-border); border-radius: 8px; padding: 4px;
+  box-shadow: 0 12px 34px rgba(0,0,0,0.6); }
+.ti-modelrow { padding: 5px 9px; border-radius: 6px; font-size: 11px; cursor: pointer; color: var(--muted); }
+.ti-modelrow:hover { background: rgba(212,175,55,0.14); color: #fff; }
+
+/* rail per-project metric bars — grounding + goal */
+.pr-bars { display: flex; flex-direction: column; gap: 3px; margin-top: 5px; padding-left: 15px; }
+.pr-bar-row { display: flex; align-items: center; gap: 6px; }
+.pr-bar-label { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); width: 26px; flex: 0 0 auto; }
+.pr-bar { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06); overflow: hidden; }
+.pr-bar-fill { height: 100%; border-radius: 2px; transition: width .4s ease; }
+.pr-bar-val { font-size: 8.5px; color: var(--faint); font-variant-numeric: tabular-nums; width: 22px; text-align: right; flex: 0 0 auto; }
+
 /* NEON when a terminal is synced to master — the whole pane lights up in its
    element colour (crystal in the bar + the terminal itself, both together) */
 .term-pane.lit {

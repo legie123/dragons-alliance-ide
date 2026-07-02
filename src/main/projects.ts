@@ -200,7 +200,8 @@ export async function enrichProjects(
       remote: gi.remote,
       terminals: tids,
       session: sess
-        ? { score: sess.score, title: sess.title, ctx: sess.ctx, model: sess.model, idle_min: sess.idle_min }
+        ? { score: sess.score, title: sess.title, ctx: sess.ctx, model: sess.model, idle_min: sess.idle_min,
+            understanding: sess.understanding, goalPct: sess.goalPct }
         : null,
     });
   }

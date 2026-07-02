@@ -85,6 +85,7 @@ const dai: DaiApi = {
     list: (activeMin) => ipcRenderer.invoke(CH.SESSIONS_LIST, activeMin),
     transcript: (file, limit) => ipcRenderer.invoke(CH.SESSIONS_TRANSCRIPT, { file, limit }),
     health: (file) => ipcRenderer.invoke(CH.AGENT_HEALTH, file),
+    session: (cwd) => ipcRenderer.invoke(CH.TERM_SESSION, cwd),
   },
   radar: {
     status: () => ipcRenderer.invoke(CH.RADAR_STATUS),
