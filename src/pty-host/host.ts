@@ -38,6 +38,7 @@ type Session = {
   is_master: boolean;
   mirror: boolean;
   mirror_scope: string; // "all" or a project key (as returned by projectOf)
+  mirror_ids?: string[]; // explicit target terminals (overrides scope when set)
   buffer: string; // rolling scrollback, replayed on attach
   unacked: number; // bytes of output the renderer hasn't confirmed flushed
   paused: boolean; // node-pty paused because unacked crossed HIGH_WATER
@@ -197,10 +198,13 @@ function safeWrite(s: Session, data: string | Buffer): boolean {
  *  so a mirror-enabled target never re-fans — no feedback loop. We mirror only
  *  STDIN, never OUTPUT, which would form an infinite echo. */
 function fanOut(source: Session, data: Buffer): void {
+  const ids = source.mirror_ids; // explicit target allowlist (pick 1/2/all)
   for (const s of registry.values()) {
     if (s.id === source.id) continue;
-    if (source.mirror_scope !== "all" && projectOf(s.cwd) !== source.mirror_scope) {
-      continue;
+    if (ids && ids.length) {
+      if (!ids.includes(s.id)) continue; // only the chosen terminals
+    } else if (source.mirror_scope !== "all" && projectOf(s.cwd) !== source.mirror_scope) {
+      continue; // fall back to project scope when no explicit ids
     }
     safeWrite(s, data); // per-target guard: one dead PTY won't abort the rest
   }
@@ -281,6 +285,7 @@ function onRendererMsg(ev: { data: ToHost; ports?: Electron.MessagePortMain[] })
       if (!s) break;
       s.mirror = m.on;
       s.mirror_scope = m.scope;
+      s.mirror_ids = m.ids; // explicit target terminals (pick 1/2/all), or undefined
       break;
     }
 

@@ -20,7 +20,7 @@ const THEME = {
 };
 
 export type PaneHandle = {
-  setMirror: (on: boolean, scope?: string) => void;
+  setMirror: (on: boolean, scope?: string, ids?: string[]) => void;
   focus: () => void;
   fit: () => void;
   clear: () => void;
@@ -39,8 +39,8 @@ export const TerminalPane = forwardRef<PaneHandle, {
   const [focused, setFocused] = useState(false);
 
   useImperativeHandle(ref, () => ({
-    setMirror(on: boolean, scope: string = "all") {
-      window.dai.term.setMirror(term.id, on, scope);
+    setMirror(on: boolean, scope: string = "all", ids?: string[]) {
+      window.dai.term.setMirror(term.id, on, scope, ids);
     },
     focus() { xtermRef.current?.focus(); },
     fit() { safeFit(); },

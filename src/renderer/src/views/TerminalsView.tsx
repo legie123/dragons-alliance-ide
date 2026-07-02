@@ -8,6 +8,14 @@ import { registerProvider, Cmd } from "../palette";
 let SEQ = 1;
 const newId = () => `t${Date.now().toString(36)}${SEQ++}`;
 
+/** Column count for the tiles layout so 1..8 terminals stay balanced + fit. */
+function tileCols(n: number): number {
+  if (n <= 1) return 1;
+  if (n <= 4) return 2;   // 2, 3-4 → 2 columns
+  if (n <= 6) return 3;   // 5-6   → 3 columns
+  return 4;               // 7-8   → 4 columns
+}
+
 export function TerminalsView() {
   const { data: host } = useQuery({ queryKey: ["host"], queryFn: fetchHost, refetchInterval: false });
   const { data: projects = [] } = useQuery({ queryKey: ["projects"], queryFn: fetchProjects, refetchInterval: 4000 });
@@ -18,6 +26,7 @@ export function TerminalsView() {
   const [activeProject, setActiveProject] = useState<string | null>(null); // null = All
   const [layout, setLayout] = useState<"grid" | "focus" | "quad">("grid");
   const [sync, setSync] = useState(false);
+  const [linkedIds, setLinkedIds] = useState<string[]>([]); // terminals linked to master (empty = whole scope)
   const [menuOpen, setMenuOpen] = useState(false);
   const [bmsg, setBmsg] = useState("");
   const [flash, setFlash] = useState("");
@@ -64,14 +73,20 @@ export function TerminalsView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [host]);
 
-  // keep master mirror scope in sync with active project + sync toggle
+  // keep the master mirror in sync with the toggle + scope + explicit link picks.
+  // linkedIds non-empty → master drives ONLY those terminals; empty → whole scope.
   useEffect(() => {
     if (master) {
-      const t = setTimeout(() => masterRef.current?.setMirror(sync, scope), 250);
+      const ids = linkedIds.length ? linkedIds : undefined;
+      const t = setTimeout(() => masterRef.current?.setMirror(sync, scope, ids), 250);
       return () => clearTimeout(t);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [master, sync, scope]);
+  }, [master, sync, scope, linkedIds]);
+
+  function toggleLink(id: string) {
+    setLinkedIds((cur) => cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]);
+  }
 
   function add(cmd: string) {
     const cwd = activeProject || host?.home || "~";
@@ -114,7 +129,7 @@ export function TerminalsView() {
       { id: "t:sync", title: s.sync ? "Master sync — turn OFF" : "Master sync — turn ON", category: "Action", icon: "📡", run: () => s.setSync(!s.sync) },
       { id: "t:grid", title: "Layout: grid", category: "Action", icon: "▦", run: () => s.setLayout("grid") },
       { id: "t:focus", title: "Layout: focus", category: "Action", icon: "▭", run: () => s.setLayout("focus") },
-      { id: "t:quad", title: "Layout: quad (2×2)", category: "Action", icon: "⊞", run: () => s.setLayout("quad") },
+      { id: "t:quad", title: "Layout: tiles (adaptive up to 8)", category: "Action", icon: "⊞", run: () => s.setLayout("quad") },
       { id: "t:all", title: "Workspace: All projects", category: "Project", icon: "⌘", run: () => s.setActiveProject(null) },
       ...s.projects.map((p: any): Cmd => ({ id: "t:proj:" + p.path, title: "Workspace: " + p.name, subtitle: tilde(p.path), category: "Project", icon: "📁", run: () => s.setActiveProject(p.path) })),
       ...s.workers.map((w: Term): Cmd => ({ id: "t:foc:" + w.id, title: "Focus terminal: " + (w.cmd === "claude" ? "claude" : "zsh"), subtitle: tilde(w.cwd), category: "Terminal", icon: "⌘", run: () => { s.setActiveWorker(w.id); s.setLayout("focus"); } })),
@@ -140,7 +155,7 @@ export function TerminalsView() {
             <div className="mb-left">
               <span className="crown">🜲</span>
               <span className="mb-title">MASTER TERMINAL</span>
-              <span className="mb-sub">{layout === "quad" ? "hidden in quad · switch to grid to drive" : `drives ${scope === "all" ? "every terminal" : `· ${activeName}`} live when synced`}</span>
+              <span className="mb-sub">{layout === "quad" ? "master hidden in tiles · use grid to drive" : `drives ${scope === "all" ? "every terminal" : `· ${activeName}`} live when synced`}</span>
             </div>
             <div className="mb-right">
               <button className={`syncbtn${sync ? " on" : ""}`} onClick={() => setSync((s) => !s)}>
@@ -149,6 +164,25 @@ export function TerminalsView() {
               </button>
             </div>
           </div>
+          {sync && visibleWorkers.length > 0 && (
+            <div className="link-picker">
+              <span className="lp-label">link to master:</span>
+              {visibleWorkers.map((w, i) => {
+                const on = linkedIds.length === 0 || linkedIds.includes(w.id);
+                return (
+                  <button key={w.id} className={`lp-chip${on ? " on" : ""}`} onClick={() => toggleLink(w.id)}
+                    title={w.cwd.replace(/^\/Users\/[^/]+/, "~")}>
+                    <span className={`tdot tdot-${w.cmd}`} />{i + 1}·{w.cmd === "claude" ? "claude" : "zsh"}
+                  </button>
+                );
+              })}
+              <span className="lp-sep" />
+              <button className="lp-quick" onClick={() => setLinkedIds([])}>all</button>
+              <button className="lp-quick" onClick={() => setLinkedIds(visibleWorkers.slice(0, 1).map((w) => w.id))}>1</button>
+              <button className="lp-quick" onClick={() => setLinkedIds(visibleWorkers.slice(0, 2).map((w) => w.id))}>2</button>
+              <span className="lp-count">{linkedIds.length === 0 ? visibleWorkers.length : linkedIds.length} linked</span>
+            </div>
+          )}
           <div className={`master-pane-host${sync ? " linked" : ""}`}>
             {master && (
               <TerminalPane ref={masterRef} term={master} isMaster active
@@ -173,7 +207,7 @@ export function TerminalsView() {
             <div className="seg">
               <button className={layout === "grid" ? "active" : ""} onClick={() => setLayout("grid")}>▦ grid</button>
               <button className={layout === "focus" ? "active" : ""} onClick={() => setLayout("focus")}>▭ focus</button>
-              <button className={layout === "quad" ? "active" : ""} onClick={() => setLayout("quad")}>⊞ quad</button>
+              <button className={layout === "quad" ? "active" : ""} onClick={() => setLayout("quad")}>⊞ tiles</button>
             </div>
             {visibleWorkers.length < 4 && (
               <button className="fill4" onClick={fillToFour}>⊞ Open 4 terminals</button>
@@ -193,10 +227,13 @@ export function TerminalsView() {
           </div>
         </div>
 
-        {/* WORKERS */}
-        <div className={layout === "grid" ? "term-grid" : layout === "quad" ? "term-quad" : "term-focus"}>
+        {/* WORKERS — tiles adapt 1..8 (columns from count) and always fit the viewport */}
+        <div
+          className={layout === "grid" ? "term-grid" : layout === "quad" ? "term-tiles" : "term-focus"}
+          style={layout === "quad" ? { gridTemplateColumns: `repeat(${tileCols(visibleWorkers.length)}, minmax(0, 1fr))` } : undefined}
+        >
           {visibleWorkers.length === 0 && <div className="empty">no workers in {activeProject ? activeName : "any project"} — click + Worker</div>}
-          {(layout === "quad" ? visibleWorkers.slice(0, 4) : visibleWorkers).map((t) => (
+          {(layout === "quad" ? visibleWorkers.slice(0, 8) : visibleWorkers).map((t) => (
             <div key={t.id} className="pane-wrap" style={{ display: layout === "grid" || layout === "quad" || t.id === showId ? "flex" : "none" }}>
               <TerminalPane term={t} active={layout === "grid" || layout === "quad" || t.id === showId}
                 onClose={() => closeWorker(t.id)} onStatus={(s) => setStatus((p) => ({ ...p, [t.id]: s }))} />

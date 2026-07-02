@@ -13,7 +13,7 @@ export type ToHost =
   | { t: "input"; id: string; data: ArrayBuffer }        // keystrokes/paste (transferable)
   | { t: "resize"; id: string; cols: number; rows: number }
   | { t: "kill"; id: string }
-  | { t: "mirror"; id: string; on: boolean; scope: string }
+  | { t: "mirror"; id: string; on: boolean; scope: string; ids?: string[] }
   | { t: "list"; rid: number }                           // → res TermInfo[]
   | { t: "broadcast"; rid: number; data: string; enter: boolean; ids?: string[] } // → res {sent}
   | { t: "ack"; id: string; bytes: number };             // flow control: renderer flushed N bytes
