@@ -6,6 +6,7 @@ import { MetricsView } from "./views/MetricsView";
 import { AgentsView } from "./views/AgentsView";
 import { MissionBar } from "./components/MissionBar";
 import { CommandPalette } from "./components/CommandPalette";
+import { EcosystemBar } from "./components/EcosystemBar";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects } from "./api";
 
@@ -97,6 +98,8 @@ export default function App() {
             <button className="cmdk-btn" onClick={() => setPaletteOpen(true)} title="Command palette (⌘K)">⌘K</button>
           </div>
         </div>
+
+        <EcosystemBar />
 
         <div style={{ display: view === "ide" ? "flex" : "none", flex: 1, minHeight: 0, flexDirection: "column" }}>
           <TerminalsView />

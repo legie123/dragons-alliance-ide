@@ -24,6 +24,8 @@ export const CH = {
   PROJECTS_LIST: "projects:list",
   SESSIONS_LIST: "sessions:list",
   SESSIONS_TRANSCRIPT: "sessions:transcript",
+  TOOLS_STATUS: "tools:status",
+  TOOLS_ACTION: "tools:action",
   HOST_INFO: "host:info",
   // window controls (frameless titlebar)
   WIN_MIN: "win:minimize",
@@ -69,6 +71,14 @@ export type Transcript = { file: string; events: TranscriptEvent[] };
 
 export type HostInfo = { shell: string; home: string; cwd: string; projects: string[] };
 
+// Ecosystem super-tool live status (real signals — running proc / launchd / recent write).
+export type ToolStatus = {
+  id: string; name: string; icon: string;
+  status: "live" | "ready" | "off";
+  detail: string;
+  action?: string;   // optional click action id (e.g. "open-obsidian")
+};
+
 // The API surface exposed on window.dai (preload contextBridge).
 export interface DaiApi {
   term: {
@@ -97,6 +107,7 @@ export interface DaiApi {
     transcript(file: string, limit?: number): Promise<Transcript>;
   };
   host: { info(): Promise<HostInfo> };
+  tools: { status(): Promise<ToolStatus[]>; action(id: string): void };
   win: { minimize(): void; maxToggle(): void; close(): void };
 }
 

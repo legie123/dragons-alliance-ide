@@ -125,6 +125,33 @@ body { color: var(--text); }
 .mc-launch-row { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; }
 .mc-launch-row:hover { background: rgba(124,140,255,0.14); }
 
+/* ---------- ecosystem status strip (live tool indicators) ---------- */
+.eco-bar {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+  padding: 8px 14px; border-radius: 12px;
+  background: linear-gradient(90deg, rgba(52,211,153,0.05), rgba(124,140,255,0.05));
+  border: 1px solid var(--panel-border);
+}
+.eco-label { font-size: 10px; font-weight: 750; letter-spacing: 0.14em; color: var(--muted); white-space: nowrap; }
+.eco-live { color: #34d399; margin-left: 4px; }
+.eco-pills { display: flex; gap: 7px; flex-wrap: wrap; }
+.eco-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border);
+  border-radius: 999px; padding: 4px 11px 4px 8px; font-size: 11.5px; color: var(--muted);
+  transition: all .15s;
+}
+.eco-pill.live { color: var(--text); border-color: rgba(52,211,153,0.28); background: rgba(52,211,153,0.07); }
+.eco-pill.off { opacity: 0.45; }
+.eco-pill.clickable { cursor: pointer; }
+.eco-pill.clickable:hover { border-color: var(--accent); background: rgba(124,140,255,0.12); color: #fff; }
+.eco-pill:disabled { cursor: default; }
+.eco-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+.eco-dot.pulse { animation: ecopulse 1.6s ease-in-out infinite; }
+@keyframes ecopulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.8); } }
+.eco-ic { font-size: 12px; }
+.eco-name { font-weight: 600; white-space: nowrap; }
+
 /* ---------- ⌘K command palette ---------- */
 .cmdk-btn {
   background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border);

@@ -33,6 +33,15 @@ export async function fetchHost(): Promise<Host> {
   return window.dai.host.info();
 }
 
+// ---- ecosystem tools (live indicators) ----
+export type { ToolStatus } from "@shared/ipc";
+export async function fetchTools() {
+  return window.dai.tools.status();
+}
+export function toolAction(id: string) {
+  window.dai.tools.action(id);
+}
+
 export async function broadcast(data: string, enter: boolean, ids?: string[]) {
   return window.dai.term.broadcast(data, enter, ids);
 }

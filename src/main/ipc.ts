@@ -1,12 +1,15 @@
 // Dragons Alliance IDE — IPC glue for NON-terminal services (fs / projects /
 // sessions / host / window). Terminal IO lives entirely in the pty-host process
 // and flows over a MessagePort — it never passes through here.
-import { ipcMain, BrowserWindow } from "electron";
+import { ipcMain, BrowserWindow, shell } from "electron";
+import { execFile } from "node:child_process";
 import os from "node:os";
+import path from "node:path";
 import { CH } from "../shared/ipc";
 import { fsList, fsRead, fsWrite, fsWalk } from "./fs";
 import { collect, getTranscript } from "./sessions";
 import { listProjects, enrichProjects } from "./projects";
+import { probeTools } from "./tools";
 
 type LiveTerm = { id: string; cwd: string; is_master: boolean };
 
@@ -36,6 +39,16 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
     };
   });
   ipcMain.handle(CH.SESSIONS_TRANSCRIPT, (_e, { file, limit }) => getTranscript(file, limit));
+  ipcMain.handle(CH.TOOLS_STATUS, () => probeTools());
+  ipcMain.on(CH.TOOLS_ACTION, (_e, id: string) => {
+    const HOME = os.homedir();
+    if (id === "open-obsidian") {
+      shell.openExternal("obsidian://open?vault=Antigravity-Brain");
+    } else if (id === "open-graphify") {
+      const digest = path.join(HOME, "code", "dragons-alliance-ide", "graphify-out", "_GRAPHIFY_DIGEST.md");
+      execFile("open", [digest], () => shell.showItemInFolder(path.dirname(digest)));
+    }
+  });
   ipcMain.handle(CH.HOST_INFO, () => ({
     shell: process.env.SHELL || "/bin/zsh",
     home: os.homedir(),

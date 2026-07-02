@@ -85,6 +85,10 @@ const dai: DaiApi = {
     transcript: (file, limit) => ipcRenderer.invoke(CH.SESSIONS_TRANSCRIPT, { file, limit }),
   },
   host: { info: () => ipcRenderer.invoke(CH.HOST_INFO) },
+  tools: {
+    status: () => ipcRenderer.invoke(CH.TOOLS_STATUS),
+    action: (id) => ipcRenderer.send(CH.TOOLS_ACTION, id),
+  },
   win: {
     minimize: () => ipcRenderer.send(CH.WIN_MIN),
     maxToggle: () => ipcRenderer.send(CH.WIN_MAXTOGGLE),
