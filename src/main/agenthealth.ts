@@ -116,11 +116,18 @@ export function agentHealth(file: string): AgentHealth {
       }
     }
 
-    if (!lastActivityMs) lastActivityMs = mtimeMs;
+    // mtime reflects the REAL last write; fold it in unconditionally so a huge/
+    // unparseable tail line (e.g. a base64 image tool_result) can't make a
+    // seconds-fresh agent look stalled.
+    lastActivityMs = Math.max(lastActivityMs, mtimeMs);
     const now = Date.now();
     const stalled = now - lastActivityMs > STALL_MS;
 
     // --- goalPct ---
+    // Only TodoWrite completion means "done". The no-todos fallback is a
+    // tool-SUCCESS ratio (did tools error), NOT goal completion — it must never
+    // reach 100/"done", else a mid-task agent running clean tools looks finished
+    // and Autopilot stops watching it. Cap it at 95.
     let goalPct: number;
     let todosDone = false;
     if (lastTodos && lastTodos.length) {
@@ -129,7 +136,7 @@ export function agentHealth(file: string): AgentHealth {
       goalPct = (completed / total) * 100;
       todosDone = completed === total;
     } else if (toolCount > 0) {
-      goalPct = ((toolCount - errorCount) / toolCount) * 100;
+      goalPct = Math.min(95, ((toolCount - errorCount) / toolCount) * 100);
     } else {
       goalPct = 0;
     }
@@ -165,7 +172,7 @@ export function agentHealth(file: string): AgentHealth {
         now - p.ts < FRESH_ERROR_MS,
     );
     let status: AgentHealth["status"];
-    if (goalPct >= 100 || todosDone) status = "done";
+    if (todosDone) status = "done"; // completion is a TodoWrite signal only
     else if (hasFreshError) status = "error";
     else if (stalled) status = "stalled";
     else if (now - lastActivityMs < WORKING_MS) status = "working";

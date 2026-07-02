@@ -48,10 +48,16 @@ export function radarStatus(): RadarStatus {
 }
 
 export function refreshRadar(): void {
-  const bin = fs.existsSync(NODE_BIN) ? NODE_BIN : process.execPath;
+  if (!fs.existsSync(RADAR_SCRIPT)) return; // no scanner → nothing to run
+  const hasNode = fs.existsSync(NODE_BIN);
+  const bin = hasNode ? NODE_BIN : process.execPath;
+  // When falling back to process.execPath in a packaged app, that's the Electron
+  // binary — force it to behave as node, else it would try to open a 2nd app
+  // instance instead of running radar.mjs.
+  const env = hasNode ? process.env : { ...process.env, ELECTRON_RUN_AS_NODE: "1" };
   try {
-    spawn(bin, [RADAR_SCRIPT], { cwd: RADAR_DIR, detached: true, stdio: "ignore" }).unref();
+    spawn(bin, [RADAR_SCRIPT], { cwd: RADAR_DIR, detached: true, stdio: "ignore", env }).unref();
   } catch {
-    /* scanner missing / spawn failed — ignore, next status() stays available:false */
+    /* spawn failed — ignore, next status() stays available with cached json */
   }
 }

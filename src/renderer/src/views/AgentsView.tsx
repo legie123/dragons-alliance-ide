@@ -69,12 +69,17 @@ export function AgentsView({ onOpenFile }: { onOpenFile?: (p: string) => void })
         const fresh = h.problems[0] && now - h.problems[0].ts < 3 * 60_000;
         const last = cooldown.current.get(s.file) ?? 0;
         if (!bad || !fresh || now - last < 90_000) continue;
-        // resolve the agent's live claude terminal by cwd
+        // resolve the agent's live claude terminal by EXACT cwd. Never use
+        // startsWith (would match sibling/child dirs → nudge the wrong agent),
+        // and if more than one claude terminal shares the cwd the target is
+        // ambiguous — skip rather than blindly typing into someone else's agent.
         let terms: { id: string; cmd: string; cwd: string }[] = [];
         try { terms = await window.dai.term.list(); } catch { /* host busy */ }
         const cwd = h.cwd_full || s.cwd_full || "";
-        const t = terms.find((x) => x.cmd === "claude" && (x.cwd === cwd || (cwd && x.cwd.startsWith(cwd))));
-        if (!t) continue; // no live terminal for this agent — can't nudge
+        if (!cwd) continue;
+        const matches = terms.filter((x) => x.cmd === "claude" && x.cwd === cwd);
+        if (matches.length !== 1) continue; // 0 = no terminal, >1 = ambiguous → don't nudge
+        const t = matches[0];
         const p = h.problems[0];
         const prompt = `Autopilot: am detectat o problemă (${p.kind}: ${p.detail}). Analizează ultima eroare, repar-o, apoi continuă.`;
         try {
