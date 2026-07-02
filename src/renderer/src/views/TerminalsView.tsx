@@ -132,14 +132,14 @@ export function TerminalsView() {
     <div className="ide-pro">
       <ProjectRail projects={projects} activePath={activeProject} onSelect={setActiveProject} />
 
-      <div className="ide">
-        {/* MASTER */}
-        <div className="master-zone">
+      <div className={`ide${layout === "quad" ? " ide-quad" : ""}`}>
+        {/* MASTER — collapses to just its bar in quad mode so 4 workers get the full 2×2 */}
+        <div className={`master-zone${layout === "quad" ? " collapsed" : ""}`}>
           <div className="master-bar">
             <div className="mb-left">
               <span className="crown">🜲</span>
               <span className="mb-title">MASTER TERMINAL</span>
-              <span className="mb-sub">drives {scope === "all" ? "every terminal" : `· ${activeName}`} live when synced</span>
+              <span className="mb-sub">{layout === "quad" ? "hidden in quad · switch to grid to drive" : `drives ${scope === "all" ? "every terminal" : `· ${activeName}`} live when synced`}</span>
             </div>
             <div className="mb-right">
               <button className={`syncbtn${sync ? " on" : ""}`} onClick={() => setSync((s) => !s)}>

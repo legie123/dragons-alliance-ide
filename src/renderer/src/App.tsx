@@ -9,6 +9,7 @@ import { MissionBar } from "./components/MissionBar";
 import { CommandPalette } from "./components/CommandPalette";
 import { PhoneConnect } from "./components/PhoneConnect";
 import { EcosystemBar } from "./components/EcosystemBar";
+import { DragonEmblem } from "./components/DragonEmblem";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects } from "./api";
 
@@ -90,7 +91,7 @@ export default function App() {
       <div className="shell">
         <div className="topbar">
           <div className="brand">
-            <span className="glyph">🜲</span>
+            <span className="glyph"><DragonEmblem size={34} /></span>
             <div>
               <h1>Dragons Alliance IDE</h1>
               <div className="sub">native · agent IDE · live intelligence</div>
