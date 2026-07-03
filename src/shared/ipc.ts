@@ -64,6 +64,25 @@ export const CH = {
   NEO_CLICK: "neo:click",       // invoke({x,y,tab?}) → real click at CSS coords
   NEO_SCROLL: "neo:scroll",     // invoke({dy,tab?})
   NEO_SNAP: "neo:snap",         // invoke(tab?) → NeoSnap (live screenshot + viewport)
+  // google workspace (folders / sheets / forms / gmail — same OAuth token)
+  GOOGLE_ENSURE_TREE: "google:ensuretree",     // invoke() → GTreeResult (Dragons Alliance structure)
+  GOOGLE_FOLDER_CREATE: "google:foldercreate", // invoke({name,parentId?}) → GDriveFile|null
+  GOOGLE_UPLOAD: "google:upload",              // invoke({localPath,folderId,convert?}) → GDriveFile|null
+  SHEET_CREATE: "google:sheetcreate",          // invoke({title,folderId?}) → GDriveFile|null
+  SHEET_READ: "google:sheetread",              // invoke({id,range?}) → GSheetData
+  SHEET_UPDATE: "google:sheetupdate",          // invoke({id,range,values}) → {ok:boolean}
+  FORM_CREATE: "google:formcreate",            // invoke(title) → GFormInfo|null
+  FORM_RESPONSES: "google:formresponses",      // invoke(formId) → GFormResponse[]
+  MAIL_SEARCH: "google:mailsearch",            // invoke(q) → GMailMsg[]
+  MAIL_GET: "google:mailget",                  // invoke(id) → GMailMsg|null
+  MAIL_SAVE_ATTACHMENT: "google:mailsaveatt",  // invoke({msgId,attId,filename,folderId}) → GDriveFile|null
+  // metadata registry + candidates (local drive-meta.json)
+  META_LIST: "meta:list",                      // invoke(filter?) → DriveMeta[]
+  META_UPSERT: "meta:upsert",                  // invoke(entry) → DriveMeta
+  CANDIDATE_CREATE: "candidate:create",        // invoke(name) → DriveMeta
+  // proton mail (bridge probe)
+  PROTON_STATUS: "proton:status",              // invoke() → ProtonStatus
+  PROTON_SET_CONFIG: "proton:setconfig",       // invoke({host,port,user}) → ProtonStatus
 } as const;
 
 // ---- types ----
@@ -192,6 +211,40 @@ export type GDriveFile = {
 export type GDriveRead = { name: string; mime: string; text: string; truncated: boolean };
 export type GDriveBackupResult = { ok: boolean; folderId?: string; uploaded: number; failed: number; error?: string };
 
+// ---- Google Workspace (folders / sheets / forms / gmail) ----
+export type GTreeResult = { ok: boolean; created: string[]; existing: string[]; rootId?: string; error?: string };
+export type GSheetData = { id: string; range: string; values: string[][]; error?: string };
+export type GFormInfo = { formId: string; title: string; responderUri?: string; error?: string };
+export type GFormResponse = { responseId: string; submittedAt: string; answers: Record<string, string> };
+export type GMailMsg = {
+  id: string; threadId: string; from: string; subject: string; date: string; snippet: string;
+  attachments: { attId: string; filename: string; mime: string; size: number }[];
+};
+
+// ---- Drive metadata registry (local, links everything to Neuromap) ----
+export type DriveMeta = {
+  id: string;
+  type: "candidate" | "company" | "project" | "contract" | "paperform" | "excel" | "sheet" | "form" | "email" | "folder" | "document";
+  name: string;
+  source: string;                 // "drive" | "local" | "gmail" | "proton" | "ide"
+  path?: string;
+  googleDriveId?: string; sheetId?: string; formId?: string; emailId?: string;
+  candidateId?: string; companyId?: string; projectId?: string;
+  status: string;                 // "active" | "pending" | "complete" | "missing" | …
+  tags: string[];
+  createdAt: number; updatedAt: number;
+  owner?: string;
+  linkedNodes: string[];          // ids of related meta entries / neuromap nodes
+};
+
+// ---- Proton Mail (Bridge) ----
+export type ProtonStatus = {
+  configured: boolean;            // host/port/user saved
+  bridgeUp: boolean;              // TCP probe of the local Bridge IMAP port succeeded
+  host: string; port: number; user?: string | null;
+  hint: string;                   // honest next step ("install Proton Mail Bridge", …)
+};
+
 // ---- Neo browser (Preview) ----
 export type NeoStatus = { connected: boolean; browser?: string; error?: string };
 export type NeoTab = { index: number; targetId: string; title: string; url: string };
@@ -261,6 +314,28 @@ export interface DaiApi {
     click(x: number, y: number, tab?: string): Promise<void>;
     scroll(dy: number, tab?: string): Promise<void>;
     snap(tab?: string): Promise<NeoSnap | null>;
+  };
+  google: {
+    ensureTree(): Promise<GTreeResult>;
+    folderCreate(name: string, parentId?: string): Promise<GDriveFile | null>;
+    upload(localPath: string, folderId: string, convert?: boolean): Promise<GDriveFile | null>;
+    sheetCreate(title: string, folderId?: string): Promise<GDriveFile | null>;
+    sheetRead(id: string, range?: string): Promise<GSheetData>;
+    sheetUpdate(id: string, range: string, values: string[][]): Promise<{ ok: boolean }>;
+    formCreate(title: string): Promise<GFormInfo | null>;
+    formResponses(formId: string): Promise<GFormResponse[]>;
+    mailSearch(q: string): Promise<GMailMsg[]>;
+    mailGet(id: string): Promise<GMailMsg | null>;
+    mailSaveAttachment(msgId: string, attId: string, filename: string, folderId: string): Promise<GDriveFile | null>;
+  };
+  meta: {
+    list(filter?: Partial<DriveMeta>): Promise<DriveMeta[]>;
+    upsert(entry: Partial<DriveMeta> & { name: string; type: DriveMeta["type"] }): Promise<DriveMeta>;
+    candidateCreate(name: string): Promise<DriveMeta>;
+  };
+  proton: {
+    status(): Promise<ProtonStatus>;
+    setConfig(host: string, port: number, user: string): Promise<ProtonStatus>;
   };
 }
 

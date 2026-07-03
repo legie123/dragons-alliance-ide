@@ -394,6 +394,48 @@ body { color: var(--text); }
 .cr-gallery { flex: 1; min-height: 0; border: 1px solid var(--panel-border); border-radius: 10px; display: flex; flex-direction: column; }
 .cr-gallery-head { padding: 7px 12px; font-size: 10px; letter-spacing: 0.1em; color: var(--faint); border-bottom: 1px solid var(--panel-border); }
 
+/* ---------- Drive Ops: sub-tabs + workspace panels ---------- */
+.drv-tabs { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+.drv-tab { background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border); color: var(--muted);
+  border-radius: 8px; padding: 5px 11px; font-size: 11px; font-weight: 650; cursor: pointer; }
+.drv-tab.on { color: #fff; border-color: var(--accent); background: rgba(212,175,55,0.16); }
+.drv-gate { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--muted);
+  font-size: 13px; padding: 40px; text-align: center; }
+.drv-toolrow { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 12px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px; }
+.drv-in.slim { padding: 6px 10px; font-size: 12px; width: 210px; }
+.drv-in.wide, .drv-search.wide { flex: 1; min-width: 220px; }
+.drv-check { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.drv-cfg-row { display: flex; gap: 8px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+.drv-open { margin-left: auto; flex: 0 0 auto; color: #93c5fd; font-size: 12px; cursor: pointer; background: none; border: none; }
+.drv-sheet { flex: 1; overflow: auto; padding: 10px; }
+.drv-sheet table { border-collapse: collapse; font-size: 11.5px; }
+.drv-sheet td { border: 1px solid var(--panel-border); padding: 3px 8px; color: var(--muted); white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.drv-resp { border-bottom: 1px solid var(--panel-border); padding: 7px 0; }
+.drv-resp-t { font-size: 10px; color: var(--faint); } .drv-resp-a { font-size: 12px; color: var(--muted); }
+.drv-mail { border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: var(--panel); }
+.drv-mail-h { display: flex; justify-content: space-between; font-size: 12px; }
+.drv-mail-d { color: var(--faint); font-size: 10.5px; }
+.drv-mail-s { font-size: 12.5px; font-weight: 650; margin: 3px 0; }
+.drv-mail-snip { font-size: 11.5px; color: var(--muted); }
+.drv-mail-atts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+.drv-att { background: rgba(212,175,55,0.08); border: 1px solid var(--panel-border); color: var(--muted);
+  border-radius: 7px; padding: 4px 9px; font-size: 11px; cursor: pointer; }
+.drv-att:hover { border-color: var(--accent); color: #fff; }
+.drv-att-save { color: var(--accent); font-weight: 650; }
+.drv-check-h { font-size: 10px; letter-spacing: 0.1em; color: var(--faint); text-transform: uppercase; margin-bottom: 6px; }
+.drv-doc { display: block; width: 100%; text-align: left; background: rgba(255,255,255,0.03); border: 1px solid var(--panel-border);
+  color: var(--muted); border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer; margin-bottom: 4px; }
+.drv-doc.complete { color: #34d399; border-color: rgba(52,211,153,0.35); }
+.drv-doc.missing { color: #fbbf24; }
+.drv-doc.add { color: var(--faint); border-style: dashed; }
+.drv-linked { font-size: 11px; color: var(--muted); padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.drv-act { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-bottom: 1px solid var(--panel-border); font-size: 12px; }
+.drv-act-t { color: var(--faint); font-size: 10.5px; width: 64px; flex: 0 0 auto; }
+.drv-act-k { color: var(--accent); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; width: 76px; flex: 0 0 auto; }
+.drv-act-s { color: var(--muted); font-size: 11px; margin-left: auto; }
+.drv-act-src { color: var(--faint); font-size: 10.5px; }
+
 /* ---------- ecosystem status strip (live tool indicators) ---------- */
 .eco-bar {
   display: flex; align-items: center; gap: 14px; margin-bottom: 12px;

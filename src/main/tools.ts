@@ -128,8 +128,14 @@ export async function probeTools(): Promise<ToolStatus[]> {
     },
     {
       id: "google", name: "Google API", icon: "🗂️",
-      status: exists(path.join(HOME, ".config", "dai", "google.json")) ? "ready" : "needs",
-      detail: "Drive folders → Neuromap (needs OAuth client id/secret)",
+      // needs → configured (id/secret saved) → live (signed in, refresh token present)
+      status: (() => {
+        try {
+          const c = JSON.parse(fs.readFileSync(path.join(HOME, ".config", "dai", "google.json"), "utf8"));
+          return c.refreshToken ? "live" : (c.clientId && c.clientSecret ? "ready" : "needs");
+        } catch { return "needs"; }
+      })(),
+      detail: "Drive · Sheets · Forms · Gmail (OAuth in ☁️ Drive → Config)",
     },
     {
       id: "obsidian-team", name: "Obsidian Team", icon: "👥",

@@ -138,6 +138,28 @@ const dai: DaiApi = {
     scroll: (dy, tab) => ipcRenderer.invoke(CH.NEO_SCROLL, { dy, tab }),
     snap: (tab) => ipcRenderer.invoke(CH.NEO_SNAP, tab),
   },
+  google: {
+    ensureTree: () => ipcRenderer.invoke(CH.GOOGLE_ENSURE_TREE),
+    folderCreate: (name, parentId) => ipcRenderer.invoke(CH.GOOGLE_FOLDER_CREATE, { name, parentId }),
+    upload: (localPath, folderId, convert) => ipcRenderer.invoke(CH.GOOGLE_UPLOAD, { localPath, folderId, convert }),
+    sheetCreate: (title, folderId) => ipcRenderer.invoke(CH.SHEET_CREATE, { title, folderId }),
+    sheetRead: (id, range) => ipcRenderer.invoke(CH.SHEET_READ, { id, range }),
+    sheetUpdate: (id, range, values) => ipcRenderer.invoke(CH.SHEET_UPDATE, { id, range, values }),
+    formCreate: (title) => ipcRenderer.invoke(CH.FORM_CREATE, title),
+    formResponses: (formId) => ipcRenderer.invoke(CH.FORM_RESPONSES, formId),
+    mailSearch: (q) => ipcRenderer.invoke(CH.MAIL_SEARCH, q),
+    mailGet: (id) => ipcRenderer.invoke(CH.MAIL_GET, id),
+    mailSaveAttachment: (msgId, attId, filename, folderId) => ipcRenderer.invoke(CH.MAIL_SAVE_ATTACHMENT, { msgId, attId, filename, folderId }),
+  },
+  meta: {
+    list: (filter) => ipcRenderer.invoke(CH.META_LIST, filter),
+    upsert: (entry) => ipcRenderer.invoke(CH.META_UPSERT, entry),
+    candidateCreate: (name) => ipcRenderer.invoke(CH.CANDIDATE_CREATE, name),
+  },
+  proton: {
+    status: () => ipcRenderer.invoke(CH.PROTON_STATUS),
+    setConfig: (host, port, user) => ipcRenderer.invoke(CH.PROTON_SET_CONFIG, { host, port, user }),
+  },
 };
 
 contextBridge.exposeInMainWorld("dai", dai);

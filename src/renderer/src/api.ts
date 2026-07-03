@@ -60,9 +60,11 @@ export type { NeuroGraph, NeuroNode, NeuroEdge, NeuroGraphOpts, NeuroLayer, Neur
 export async function fetchNeuroGraph(opts: import("@shared/ipc").NeuroGraphOpts) { return window.dai.neuromap.graph(opts); }
 export async function fetchNeuroNode(id: string) { return window.dai.neuromap.node(id); }
 
-// ---- google drive ----
-export type { GDriveStatus, GDriveFile } from "@shared/ipc";
+// ---- google drive + workspace ----
+export type { GDriveStatus, GDriveFile, GTreeResult, GSheetData, GFormInfo, GFormResponse, GMailMsg, DriveMeta, ProtonStatus } from "@shared/ipc";
 export async function fetchGDriveStatus() { return window.dai.gdrive.status(); }
+export async function fetchMeta(filter?: any) { return window.dai.meta.list(filter); }
+export async function fetchProtonStatus() { return window.dai.proton.status(); }
 
 // ---- ecosystem tools (live indicators) ----
 export type { ToolStatus } from "@shared/ipc";

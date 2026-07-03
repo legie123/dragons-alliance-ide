@@ -20,7 +20,13 @@ const HOME = os.homedir();
 const CFG_DIR = path.join(HOME, ".config", "dai");
 const CFG = path.join(CFG_DIR, "google.json"); // { clientId, clientSecret, refreshToken?, email?, lastBackup? }
 const VAULT = path.join(HOME, "Documents", "Obsidian", "Antigravity-Brain");
-const SCOPES = "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file";
+const SCOPES = [
+  "https://www.googleapis.com/auth/drive",            // folders/upload/organize
+  "https://www.googleapis.com/auth/spreadsheets",     // Sheets create/read/update
+  "https://www.googleapis.com/auth/forms.body",       // Forms create
+  "https://www.googleapis.com/auth/forms.responses.readonly",
+  "https://www.googleapis.com/auth/gmail.readonly",   // Mail read + attachments
+].join(" ");
 const BACKUP_FOLDER = "Dragons Alliance Vault Backup";
 
 type Cfg = { clientId?: string; clientSecret?: string; refreshToken?: string; email?: string | null; lastBackup?: number | null };
@@ -61,7 +67,7 @@ export function gdriveSignout(): GDriveStatus {
 // ---- access token (in-memory, refreshed on demand) ----
 let _access: { token: string; exp: number } | null = null;
 
-async function accessToken(): Promise<string | null> {
+export async function accessToken(): Promise<string | null> {
   const c = readCfg();
   if (!c.clientId || !c.clientSecret || !c.refreshToken) return null;
   if (_access && Date.now() < _access.exp - 60_000) return _access.token;
@@ -77,7 +83,7 @@ async function accessToken(): Promise<string | null> {
   } catch { return null; }
 }
 
-async function api(url: string, init?: RequestInit): Promise<Response | null> {
+export async function api(url: string, init?: RequestInit): Promise<Response | null> {
   const tok = await accessToken();
   if (!tok) return null;
   try { return await fetch(url, { ...init, headers: { ...(init?.headers || {}), authorization: `Bearer ${tok}` } }); }

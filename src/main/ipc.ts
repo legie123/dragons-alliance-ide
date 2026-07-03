@@ -14,6 +14,9 @@ import { probeTools } from "./tools";
 import { radarStatus, refreshRadar } from "./radar";
 import { buildGraph, nodeDetail, armWatch } from "./neuromap";
 import { gdriveStatus, gdriveAuth, gdriveSignout, gdriveSetClient, gdriveList, gdriveSearch, gdriveRead, gdriveBackup } from "./gdrive";
+import { gEnsureTree, gCreateFolder, gUpload, gSheetCreate, gSheetRead, gSheetUpdate, gFormCreate, gFormResponses, gMailSearch, gMailGet, gMailAttachmentToDrive } from "./google";
+import { metaList, metaUpsert, candidateCreate } from "./driveMeta";
+import { protonStatus, protonSetConfig } from "./proton";
 import { neoStatus, neoEnsure, neoTabs, neoOpen, neoNavigate, neoReload, neoBack, neoForward, neoAsk, neoClick, neoScroll, neoSnap } from "./neo";
 import type { NeuroGraphOpts, NeuroLayer } from "../shared/ipc";
 
@@ -92,6 +95,28 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
   ipcMain.handle(CH.GDRIVE_SEARCH, (_e, query: string) => gdriveSearch(query));
   ipcMain.handle(CH.GDRIVE_READ, (_e, fileId: string) => gdriveRead(fileId));
   ipcMain.handle(CH.GDRIVE_BACKUP, () => gdriveBackup());
+
+  // ---- google workspace (folders / sheets / forms / gmail) ----
+  ipcMain.handle(CH.GOOGLE_ENSURE_TREE, () => gEnsureTree());
+  ipcMain.handle(CH.GOOGLE_FOLDER_CREATE, (_e, { name, parentId }) => gCreateFolder(name, parentId));
+  ipcMain.handle(CH.GOOGLE_UPLOAD, (_e, { localPath, folderId, convert }) => gUpload(localPath, folderId, convert));
+  ipcMain.handle(CH.SHEET_CREATE, (_e, { title, folderId }) => gSheetCreate(title, folderId));
+  ipcMain.handle(CH.SHEET_READ, (_e, { id, range }) => gSheetRead(id, range));
+  ipcMain.handle(CH.SHEET_UPDATE, (_e, { id, range, values }) => gSheetUpdate(id, range, values));
+  ipcMain.handle(CH.FORM_CREATE, (_e, title: string) => gFormCreate(title));
+  ipcMain.handle(CH.FORM_RESPONSES, (_e, formId: string) => gFormResponses(formId));
+  ipcMain.handle(CH.MAIL_SEARCH, (_e, q: string) => gMailSearch(q));
+  ipcMain.handle(CH.MAIL_GET, (_e, id: string) => gMailGet(id));
+  ipcMain.handle(CH.MAIL_SAVE_ATTACHMENT, (_e, { msgId, attId, filename, folderId }) => gMailAttachmentToDrive(msgId, attId, filename, folderId));
+
+  // ---- drive metadata registry + candidates ----
+  ipcMain.handle(CH.META_LIST, (_e, filter) => metaList(filter));
+  ipcMain.handle(CH.META_UPSERT, (_e, entry) => metaUpsert(entry));
+  ipcMain.handle(CH.CANDIDATE_CREATE, (_e, name: string) => candidateCreate(name));
+
+  // ---- proton mail (bridge probe) ----
+  ipcMain.handle(CH.PROTON_STATUS, () => protonStatus());
+  ipcMain.handle(CH.PROTON_SET_CONFIG, (_e, { host, port, user }) => protonSetConfig(host, port, user));
 
   // ---- neo browser (Preview view — real Neo over CDP) ----
   ipcMain.handle(CH.NEO_STATUS, () => neoStatus());
