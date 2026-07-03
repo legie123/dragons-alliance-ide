@@ -25,3 +25,7 @@ graphify-out/
 *.sqlite3
 .swarm/
 .claude-flow/
+
+# ruflo runtime state
+agentdb.rvf.lock
+*.rvf
