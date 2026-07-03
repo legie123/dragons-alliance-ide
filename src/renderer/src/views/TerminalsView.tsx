@@ -124,6 +124,11 @@ export function TerminalsView() {
     window.dai.term.kill(id);
     setWorkers((p) => p.filter((t) => t.id !== id));
     setActiveWorker((a) => (a === id ? null : a));
+    // prune the dead id from every membership set + status so we never mirror/
+    // channel/label a terminal that no longer exists (audit: dead-id leak)
+    setLinkedIds((cur) => cur.filter((x) => x !== id));
+    setChannelIds((cur) => cur.filter((x) => x !== id));
+    setStatus((p) => { const n = { ...p }; delete n[id]; return n; });
   }
 
   async function quickSend() {

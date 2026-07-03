@@ -84,6 +84,7 @@ function parseSession(file: string, mtimeMs: number, raw: string): Session | nul
   let assistants = 0;
   let users = 0;
   let tools = 0;
+  let toolErrors = 0;
   let lastTodos: any[] | null = null;
 
   for (const rawLine of raw.split("\n")) {
@@ -102,6 +103,14 @@ function parseSession(file: string, mtimeMs: number, raw: string): Session | nul
       lastPrompt = d.lastPrompt || lastPrompt;
     } else if (t === "user") {
       users += 1;
+      // tool_result blocks ride on user records — count errors for a real
+      // tool-success signal (feeds the goalPct fallback)
+      const uc = d.message?.content;
+      if (Array.isArray(uc)) {
+        for (const b of uc) {
+          if (b && typeof b === "object" && b.type === "tool_result" && b.is_error === true) toolErrors += 1;
+        }
+      }
     } else if (t === "assistant") {
       assistants += 1;
       cwd = d.cwd || cwd;
@@ -152,7 +161,9 @@ function parseSession(file: string, mtimeMs: number, raw: string): Session | nul
     const completed = lastTodos.filter((t: any) => t?.status === "completed").length;
     goalPct = (completed / lastTodos.length) * 100;
   } else if (tools > 0) {
-    goalPct = Math.min(95, 100); // no error signal here → treat active tool use as progress
+    // real tool-success ratio (errors counted from tool_result.is_error), capped
+    // below 100 — success rate is progress evidence, never "done"
+    goalPct = Math.min(95, ((tools - toolErrors) / tools) * 100);
   } else {
     goalPct = 0;
   }
