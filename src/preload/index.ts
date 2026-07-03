@@ -124,6 +124,20 @@ const dai: DaiApi = {
     read: (fileId) => ipcRenderer.invoke(CH.GDRIVE_READ, fileId),
     backup: () => ipcRenderer.invoke(CH.GDRIVE_BACKUP),
   },
+  neo: {
+    status: () => ipcRenderer.invoke(CH.NEO_STATUS),
+    ensure: () => ipcRenderer.invoke(CH.NEO_ENSURE),
+    tabs: () => ipcRenderer.invoke(CH.NEO_TABS),
+    open: (url) => ipcRenderer.invoke(CH.NEO_OPEN, url),
+    navigate: (url, tab) => ipcRenderer.invoke(CH.NEO_NAVIGATE, { url, tab }),
+    reload: (tab) => ipcRenderer.invoke(CH.NEO_RELOAD, tab),
+    back: (tab) => ipcRenderer.invoke(CH.NEO_BACK, tab),
+    forward: (tab) => ipcRenderer.invoke(CH.NEO_FORWARD, tab),
+    ask: (prompt, submit) => ipcRenderer.invoke(CH.NEO_ASK, { prompt, submit }),
+    click: (x, y, tab) => ipcRenderer.invoke(CH.NEO_CLICK, { x, y, tab }),
+    scroll: (dy, tab) => ipcRenderer.invoke(CH.NEO_SCROLL, { dy, tab }),
+    snap: (tab) => ipcRenderer.invoke(CH.NEO_SNAP, tab),
+  },
 };
 
 contextBridge.exposeInMainWorld("dai", dai);

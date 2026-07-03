@@ -51,6 +51,19 @@ export const CH = {
   GDRIVE_SEARCH: "gdrive:search",       // invoke(query) → GDriveFile[]
   GDRIVE_READ: "gdrive:read",           // invoke(fileId) → GDriveRead
   GDRIVE_BACKUP: "gdrive:backup",       // invoke() → GDriveBackupResult (vault → Drive)
+  // neo browser (Preview view — drives the real Neo browser over CDP)
+  NEO_STATUS: "neo:status",     // invoke() → NeoStatus
+  NEO_ENSURE: "neo:ensure",     // invoke() → NeoStatus (runs neo-debug if port down)
+  NEO_TABS: "neo:tabs",         // invoke() → NeoTab[]
+  NEO_OPEN: "neo:open",         // invoke(url) → { targetId }
+  NEO_NAVIGATE: "neo:navigate", // invoke({url,tab?})
+  NEO_RELOAD: "neo:reload",     // invoke(tab?)
+  NEO_BACK: "neo:back",         // invoke(tab?)
+  NEO_FORWARD: "neo:forward",   // invoke(tab?)
+  NEO_ASK: "neo:ask",           // invoke({prompt,submit?}) → sends prompt into Magic Page
+  NEO_CLICK: "neo:click",       // invoke({x,y,tab?}) → real click at CSS coords
+  NEO_SCROLL: "neo:scroll",     // invoke({dy,tab?})
+  NEO_SNAP: "neo:snap",         // invoke(tab?) → NeoSnap (live screenshot + viewport)
 } as const;
 
 // ---- types ----
@@ -179,6 +192,11 @@ export type GDriveFile = {
 export type GDriveRead = { name: string; mime: string; text: string; truncated: boolean };
 export type GDriveBackupResult = { ok: boolean; folderId?: string; uploaded: number; failed: number; error?: string };
 
+// ---- Neo browser (Preview) ----
+export type NeoStatus = { connected: boolean; browser?: string; error?: string };
+export type NeoTab = { index: number; targetId: string; title: string; url: string };
+export type NeoSnap = { dataUrl: string; vw: number; vh: number; url: string; title: string; targetId: string };
+
 // The API surface exposed on window.dai (preload contextBridge).
 export interface DaiApi {
   term: {
@@ -229,6 +247,20 @@ export interface DaiApi {
     search(query: string): Promise<GDriveFile[]>;
     read(fileId: string): Promise<GDriveRead>;
     backup(): Promise<GDriveBackupResult>;
+  };
+  neo: {
+    status(): Promise<NeoStatus>;
+    ensure(): Promise<NeoStatus>;
+    tabs(): Promise<NeoTab[]>;
+    open(url: string): Promise<{ targetId: string }>;
+    navigate(url: string, tab?: string): Promise<void>;
+    reload(tab?: string): Promise<void>;
+    back(tab?: string): Promise<void>;
+    forward(tab?: string): Promise<void>;
+    ask(prompt: string, submit?: boolean): Promise<{ tab: string; composer: string; submitted: boolean }>;
+    click(x: number, y: number, tab?: string): Promise<void>;
+    scroll(dy: number, tab?: string): Promise<void>;
+    snap(tab?: string): Promise<NeoSnap | null>;
   };
 }
 

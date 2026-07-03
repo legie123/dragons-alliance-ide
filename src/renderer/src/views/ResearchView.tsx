@@ -1,56 +1,97 @@
-// Research — houses the Obscura research tool. Obscura is an UNTRUSTED external
-// repo (github.com/h4ckf0r0day/obscura). Per security policy we do NOT auto-clone
-// or npm-install it; the UI shows exact config steps + status and stays a real
-// structure. Once vetted + configured, results become Research Items in Neuromap.
-import { useState } from "react";
+// Research — the vault's research library, live. Reads real notes from
+// 07_RESEARCH in the Obsidian brain (fs.walk + fs.read over the existing fs IPC —
+// HOME-confined), full-text search, frontmatter + markdown preview. Every note
+// here is also a node in Neuromap (research lens). Replaces the earlier
+// untrusted-external-tool scaffold with data we already own.
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-const OBSCURA = "https://github.com/h4ckf0r0day/obscura.git";
+const RESEARCH_DIR = "Documents/Obsidian/Antigravity-Brain/07_RESEARCH";
+
+type Note = { path: string; name: string; title: string; tags: string[]; created: string; body: string };
+
+function parseFm(raw: string): { title?: string; tags: string[]; created?: string; body: string } {
+  const m = raw.match(/^---\n([\s\S]*?)\n---\n?/);
+  if (!m) return { tags: [], body: raw };
+  const fm: Record<string, string> = {};
+  for (const line of m[1].split("\n")) {
+    const kv = line.match(/^([\w-]+):\s*(.*)$/);
+    if (kv) fm[kv[1]] = kv[2].trim();
+  }
+  const tags = (fm.tags?.match(/\[([^\]]*)\]/)?.[1] || "")
+    .split(",").map((s) => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+  return { title: fm.title?.replace(/^["']|["']$/g, ""), tags, created: fm.created, body: raw.slice(m[0].length) };
+}
+
+async function loadNotes(): Promise<Note[]> {
+  const home = (await window.dai.host.info()).home;
+  const root = `${home}/${RESEARCH_DIR}`;
+  const { files } = await window.dai.fs.walk(root, 400);
+  const mds = files.filter((f) => f.endsWith(".md"));
+  const notes = await Promise.all(mds.map(async (rel): Promise<Note | null> => {
+    try {
+      const raw = await window.dai.fs.read(`${root}/${rel}`);
+      const { title, tags, created, body } = parseFm(raw);
+      const name = rel.split("/").pop()!.replace(/\.md$/, "");
+      return { path: `${root}/${rel}`, name, title: title || name, tags, created: created || "", body };
+    } catch { return null; }
+  }));
+  return notes.filter((n): n is Note => !!n)
+    .sort((a, b) => (b.created || "").localeCompare(a.created || ""));
+}
 
 export function ResearchView() {
-  const [query, setQuery] = useState("");
-  const [history] = useState<string[]>([]);
+  const { data: notes = [], refetch, isFetching } = useQuery({ queryKey: ["research"], queryFn: loadNotes, refetchInterval: 20000 });
+  const [q, setQ] = useState("");
+  const [sel, setSel] = useState<string | null>(null);
+
+  const hits = useMemo(() => {
+    if (!q.trim()) return notes;
+    const needle = q.toLowerCase();
+    return notes.filter((n) =>
+      n.title.toLowerCase().includes(needle) ||
+      n.tags.some((t) => t.toLowerCase().includes(needle)) ||
+      n.body.toLowerCase().includes(needle));
+  }, [notes, q]);
+
+  const open = useMemo(() => notes.find((n) => n.path === sel) || null, [notes, sel]);
+  useEffect(() => { if (sel && !open) setSel(null); }, [sel, open]);
 
   return (
     <div className="rs-view">
       <div className="rs-bar">
         <span className="rs-title">🔎 RESEARCH</span>
-        <span className="rs-tool">Obscura</span>
-        <span className="rs-status needs">● needs review + config</span>
+        <span className="rs-tool">07_RESEARCH · Antigravity-Brain</span>
+        <span className="rs-status live">● {notes.length} notes{isFetching ? " · scanning…" : ""}</span>
+        <input className="rs-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="search title, tag, content…" spellCheck={false} />
+        <button className="rs-go" onClick={() => refetch()}>⟳</button>
       </div>
 
       <div className="rs-body">
-        <div className="rs-main">
-          <div className="rs-run">
-            <input className="rs-q" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="research query…" disabled />
-            <button className="rs-go" disabled title="configure Obscura first">Run research</button>
-          </div>
-          <div className="rs-output">
-            <div className="rs-out-head">Output</div>
-            <div className="rs-out-body rs-empty">
-              No runs yet. Obscura is not installed in this environment.
-            </div>
-          </div>
-          <div className="rs-logs">
-            <div className="rs-out-head">History</div>
-            {history.length === 0 ? <div className="rs-empty">no history</div> : history.map((h, i) => <div key={i} className="rs-log-row">{h}</div>)}
-          </div>
+        <div className="rs-list">
+          {hits.length === 0 && <div className="rs-empty">{q ? "no matches" : "no research notes yet — findings land here from every session"}</div>}
+          {hits.map((n) => (
+            <button key={n.path} className={`rs-note${sel === n.path ? " sel" : ""}`} onClick={() => setSel(n.path)}>
+              <div className="rs-note-title">{n.title}</div>
+              <div className="rs-note-meta">
+                {n.created && <span className="rs-note-date">{n.created}</span>}
+                {n.tags.slice(0, 4).map((t) => <span key={t} className="rs-tag">{t}</span>)}
+              </div>
+            </button>
+          ))}
         </div>
 
-        <aside className="rs-config">
-          <div className="rs-cfg-head">⚠ Untrusted external tool</div>
-          <p className="rs-cfg-note">
-            <code>{OBSCURA}</code> is a third-party repo. Cloning + <code>npm install</code> runs
-            arbitrary code. It was <b>not</b> auto-installed. Steps to enable after you approve:
-          </p>
-          <ol className="rs-cfg-steps">
-            <li>Review the repo source (owner, code, postinstall scripts).</li>
-            <li>If trusted: <code>git clone {OBSCURA} ~/code/obscura</code></li>
-            <li><code>cd ~/code/obscura &amp;&amp; npm install</code> (inspect first).</li>
-            <li>Provide any required API keys in <code>.env.local</code> (never committed).</li>
-            <li>Then the Run button + result → Neuromap Research Items get wired.</li>
-          </ol>
-          <div className="rs-cfg-foot">Results, once configured, become <b>Research Item</b> nodes (teal) in Neuromap.</div>
-        </aside>
+        {open ? (
+          <article className="rs-reader">
+            <div className="rs-reader-head">
+              <span className="rs-reader-title">{open.title}</span>
+              <span className="rs-reader-tags">{open.tags.map((t) => <span key={t} className="rs-tag">{t}</span>)}</span>
+            </div>
+            <pre className="rs-reader-body">{open.body.trim().slice(0, 60000)}</pre>
+          </article>
+        ) : (
+          <div className="rs-hint">Pick a note — full markdown + frontmatter. These same notes are the teal research nodes in 🧠 Neuromap.</div>
+        )}
       </div>
     </div>
   );

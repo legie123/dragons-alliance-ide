@@ -24,10 +24,20 @@ const CodeView = lazy(() => import("./views/CodeView").then((m) => ({ default: m
 type View = "ide" | "agents" | "radar" | "code" | "metrics" | "neuromap" | "preview" | "research" | "creative" | "drive";
 export type OpenFileSignal = { path: string; n: number } | null;
 
+// Secondary views live in the "More ▾" dropdown so the topbar stays readable.
+const MORE_VIEWS: { id: View; label: string }[] = [
+  { id: "metrics", label: "📊 Metrics" },
+  { id: "radar", label: "📡 Radar" },
+  { id: "preview", label: "🖥 Preview" },
+  { id: "research", label: "🔎 Research" },
+  { id: "creative", label: "🎨 Creative" },
+];
+
 export default function App() {
   const [view, setView] = useState<View>("ide");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [phoneOpen, setPhoneOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [openFile, setOpenFile] = useState<OpenFileSignal>(null);
   const nonce = useRef(0);
   const { data: host } = useQuery({ queryKey: ["host"], queryFn: fetchHost, refetchInterval: false });
@@ -110,14 +120,31 @@ export default function App() {
           <div className="viewswitch">
             <button className={view === "ide" ? "active" : ""} onClick={() => setView("ide")}>⌘ Terminals</button>
             <button className={view === "agents" ? "active" : ""} onClick={() => setView("agents")}>🤖 Agents</button>
-            <button className={view === "radar" ? "active" : ""} onClick={() => setView("radar")}>📡 Radar</button>
             <button className={view === "code" ? "active" : ""} onClick={() => setView("code")}>⌗ Code</button>
-            <button className={view === "metrics" ? "active" : ""} onClick={() => setView("metrics")}>📊 Metrics</button>
             <button className={view === "neuromap" ? "active" : ""} onClick={() => setView("neuromap")}>🧠 Neuromap</button>
-            <button className={view === "preview" ? "active" : ""} onClick={() => setView("preview")}>🖥 Preview</button>
-            <button className={view === "research" ? "active" : ""} onClick={() => setView("research")}>🔎 Research</button>
-            <button className={view === "creative" ? "active" : ""} onClick={() => setView("creative")}>🎨 Creative</button>
             <button className={view === "drive" ? "active" : ""} onClick={() => setView("drive")}>☁️ Drive</button>
+            <div className="more-wrap">
+              <button
+                className={MORE_VIEWS.some((v) => v.id === view) ? "active" : ""}
+                onClick={() => setMoreOpen((o) => !o)}
+                title="More views"
+              >
+                {MORE_VIEWS.find((v) => v.id === view)?.label ?? "More"} ▾
+              </button>
+              {moreOpen && (
+                <>
+                  <div className="more-backdrop" onClick={() => setMoreOpen(false)} />
+                  <div className="more-menu">
+                    {MORE_VIEWS.map((v) => (
+                      <button key={v.id} className={view === v.id ? "active" : ""}
+                        onClick={() => { setView(v.id); setMoreOpen(false); }}>
+                        {v.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             <button className="phone-btn-top" onClick={() => setPhoneOpen(true)} title="Connect from phone — code &amp; communicate (⌘J)">📱 Phone</button>
             <button className="cmdk-btn" onClick={() => setPaletteOpen(true)} title="Command palette (⌘K)">⌘K</button>
           </div>

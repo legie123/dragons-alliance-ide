@@ -19,6 +19,7 @@ const FRESH_MS = 5 * 60_000;
 // top-level folder → layer
 const LAYER_OF: Record<string, NeuroLayer> = {
   _meta: "core", "09_MEMORY": "core", "13_ARCHITECTURE": "core", "06_DECISIONS": "core",
+  "07_RESEARCH": "core", "10_MAPS": "core",   // clean knowledge layer — research + MOC hubs ARE core
   "01_PROJECTS": "projects",
   "02_AGENTS": "agents-notes", "03_CLAUDE": "agents-notes",
 };
@@ -28,7 +29,7 @@ function layerOf(folder: string): NeuroLayer {
 // layer → the top-level folders to scan (so a small budget isn't eaten by
 // unrelated folders before reaching the ones this layer needs)
 const FOLDERS_FOR: Record<NeuroLayer, string[]> = {
-  core: ["_meta", "09_MEMORY", "13_ARCHITECTURE", "06_DECISIONS", "10_MAPS"],
+  core: ["_meta", "07_RESEARCH", "09_MEMORY", "13_ARCHITECTURE", "06_DECISIONS", "10_MAPS"],
   projects: ["01_PROJECTS"],
   "agents-notes": ["02_AGENTS", "03_CLAUDE"],
   all: ["_meta", "01_PROJECTS", "07_RESEARCH", "09_MEMORY", "13_ARCHITECTURE", "06_DECISIONS", "10_MAPS", "02_AGENTS", "08_TASKS"],

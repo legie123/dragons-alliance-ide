@@ -14,6 +14,7 @@ import { probeTools } from "./tools";
 import { radarStatus, refreshRadar } from "./radar";
 import { buildGraph, nodeDetail, armWatch } from "./neuromap";
 import { gdriveStatus, gdriveAuth, gdriveSignout, gdriveSetClient, gdriveList, gdriveSearch, gdriveRead, gdriveBackup } from "./gdrive";
+import { neoStatus, neoEnsure, neoTabs, neoOpen, neoNavigate, neoReload, neoBack, neoForward, neoAsk, neoClick, neoScroll, neoSnap } from "./neo";
 import type { NeuroGraphOpts, NeuroLayer } from "../shared/ipc";
 
 type LiveTerm = { id: string; cwd: string; is_master: boolean };
@@ -91,6 +92,20 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
   ipcMain.handle(CH.GDRIVE_SEARCH, (_e, query: string) => gdriveSearch(query));
   ipcMain.handle(CH.GDRIVE_READ, (_e, fileId: string) => gdriveRead(fileId));
   ipcMain.handle(CH.GDRIVE_BACKUP, () => gdriveBackup());
+
+  // ---- neo browser (Preview view — real Neo over CDP) ----
+  ipcMain.handle(CH.NEO_STATUS, () => neoStatus());
+  ipcMain.handle(CH.NEO_ENSURE, () => neoEnsure());
+  ipcMain.handle(CH.NEO_TABS, () => neoTabs());
+  ipcMain.handle(CH.NEO_OPEN, (_e, url: string) => neoOpen(url));
+  ipcMain.handle(CH.NEO_NAVIGATE, (_e, { url, tab }: { url: string; tab?: string }) => neoNavigate(url, tab));
+  ipcMain.handle(CH.NEO_RELOAD, (_e, tab?: string) => neoReload(tab));
+  ipcMain.handle(CH.NEO_BACK, (_e, tab?: string) => neoBack(tab));
+  ipcMain.handle(CH.NEO_FORWARD, (_e, tab?: string) => neoForward(tab));
+  ipcMain.handle(CH.NEO_ASK, (_e, { prompt, submit }: { prompt: string; submit?: boolean }) => neoAsk(prompt, submit));
+  ipcMain.handle(CH.NEO_CLICK, (_e, { x, y, tab }: { x: number; y: number; tab?: string }) => neoClick(x, y, tab));
+  ipcMain.handle(CH.NEO_SCROLL, (_e, { dy, tab }: { dy: number; tab?: string }) => neoScroll(dy, tab));
+  ipcMain.handle(CH.NEO_SNAP, (_e, tab?: string) => neoSnap(tab));
 
   // ---- window controls (frameless titlebar) ----
   ipcMain.on(CH.WIN_MIN, () => mainWin?.minimize());
