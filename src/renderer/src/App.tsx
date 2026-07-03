@@ -13,10 +13,11 @@ import { DriveView } from "./views/DriveView";
 import { MissionBar } from "./components/MissionBar";
 import { CommandPalette } from "./components/CommandPalette";
 import { PhoneConnect } from "./components/PhoneConnect";
+import { CredentialsVault } from "./components/CredentialsVault";
 import { EcosystemBar } from "./components/EcosystemBar";
 import { DragonEmblem } from "./components/DragonEmblem";
 import { registerProvider, Cmd } from "./palette";
-import { fetchHost, fetchProjects } from "./api";
+import { fetchHost, fetchProjects, fetchGDriveStatus } from "./api";
 
 // Monaco is ~5MB — keep it out of the initial bundle, load only when Code opens.
 const CodeView = lazy(() => import("./views/CodeView").then((m) => ({ default: m.CodeView })));
@@ -37,7 +38,15 @@ export default function App() {
   const [view, setView] = useState<View>("ide");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [phoneOpen, setPhoneOpen] = useState(false);
+  const [vaultOpen, setVaultOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+
+  // Auto-open the secure credentials pop-up on first run when Google isn't set up.
+  useEffect(() => {
+    let done = false;
+    fetchGDriveStatus().then((s) => { if (!done && !s?.configured) setVaultOpen(true); }).catch(() => {});
+    return () => { done = true; };
+  }, []);
   const [openFile, setOpenFile] = useState<OpenFileSignal>(null);
   const nonce = useRef(0);
   const { data: host } = useQuery({ queryKey: ["host"], queryFn: fetchHost, refetchInterval: false });
@@ -83,6 +92,7 @@ export default function App() {
       { id: "view:drive", title: "Go to Google Drive", category: "View", icon: "☁️", run: () => setView("drive") },
       { id: "radar:refresh", title: "Radar: refresh scan (github-radar)", category: "Action", icon: "📡", run: () => { setView("radar"); window.dai.radar.refresh(); } },
       { id: "action:phone", title: "Connect from phone (code + communicate)", subtitle: "⌘J", category: "Action", icon: "📱", run: () => setPhoneOpen(true) },
+      { id: "action:keys", title: "API keys & credentials (secure vault)", category: "Action", icon: "🔐", run: () => setVaultOpen(true) },
     ]);
   }, []);
 
@@ -145,6 +155,7 @@ export default function App() {
                 </>
               )}
             </div>
+            <button className="phone-btn-top" onClick={() => setVaultOpen(true)} title="API keys &amp; credentials (secure, local)">🔐 Keys</button>
             <button className="phone-btn-top" onClick={() => setPhoneOpen(true)} title="Connect from phone — code &amp; communicate (⌘J)">📱 Phone</button>
             <button className="cmdk-btn" onClick={() => setPaletteOpen(true)} title="Command palette (⌘K)">⌘K</button>
           </div>
@@ -181,6 +192,7 @@ export default function App() {
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} roots={roots} onOpenFile={goOpenFile} />
       <PhoneConnect open={phoneOpen} onClose={() => setPhoneOpen(false)} projects={projects} />
+      <CredentialsVault open={vaultOpen} onClose={() => setVaultOpen(false)} />
     </>
   );
 }

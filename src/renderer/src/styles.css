@@ -394,6 +394,33 @@ body { color: var(--text); }
 .cr-gallery { flex: 1; min-height: 0; border: 1px solid var(--panel-border); border-radius: 10px; display: flex; flex-direction: column; }
 .cr-gallery-head { padding: 7px 12px; font-size: 10px; letter-spacing: 0.1em; color: var(--faint); border-bottom: 1px solid var(--panel-border); }
 
+/* ---------- Credentials Vault (secure API-key pop-up) ---------- */
+.vault { width: min(560px, 92vw); max-height: 86vh; display: flex; flex-direction: column;
+  background: linear-gradient(180deg, #16100f, #0c0709); border: 1px solid rgba(212,175,55,0.3);
+  border-radius: 16px; box-shadow: 0 30px 90px rgba(0,0,0,0.7); overflow: hidden; }
+.vault-head { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px 12px; border-bottom: 1px solid var(--panel-border); }
+.vault-glyph { font-size: 26px; filter: drop-shadow(0 0 10px rgba(212,175,55,0.5)); }
+.vault-head h2 { margin: 0; font-size: 16px; }
+.vault-sub { font-size: 11.5px; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+.vault-body { flex: 1; overflow: auto; padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; }
+.vault-card { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px; padding: 13px 14px; display: flex; flex-direction: column; gap: 8px; }
+.vault-card-h { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.vault-ic { font-size: 15px; }
+.vault-badge { margin-left: auto; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 6px; }
+.vault-badge.on { color: #34d399; background: rgba(52,211,153,0.14); }
+.vault-badge.mid { color: #fbbf24; background: rgba(251,191,36,0.14); }
+.vault-badge.off { color: var(--faint); background: rgba(255,255,255,0.05); }
+.vault-steps { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.vault-steps code, .vault-foot code { color: #93c5fd; }
+.vault-in { background: #0a0608; border: 1px solid var(--panel-border); color: var(--text); border-radius: 8px;
+  padding: 8px 11px; font-size: 12.5px; font-family: ui-monospace, Menlo, monospace; outline: none; }
+.vault-in:focus { border-color: var(--accent); }
+.vault-in.slim { width: 90px; flex: 0 0 auto; }
+.vault-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.vault-row .vault-in:not(.slim) { flex: 1; min-width: 160px; }
+.vault-foot { flex: 0 0 auto; padding: 11px 18px; border-top: 1px solid var(--panel-border); font-size: 10.5px; color: var(--faint); line-height: 1.5; }
+.vault-busy { color: var(--accent); }
+
 /* ---------- Drive Ops: sub-tabs + workspace panels ---------- */
 .drv-tabs { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
 .drv-tab { background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border); color: var(--muted);
