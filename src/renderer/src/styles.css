@@ -275,6 +275,19 @@ body { color: var(--text); }
 .nm-btn { background: rgba(212,175,55,0.12); border: 1px solid var(--panel-border); color: #e9dcae;
   border-radius: 8px; padding: 6px 12px; font-size: 11px; cursor: pointer; }
 .nm-hint { margin-left: auto; font-size: 10.5px; color: var(--faint); }
+.nm-segs { display: flex; gap: 3px; }
+.nm-seg { background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border); color: var(--muted);
+  border-radius: 7px; padding: 4px 9px; font-size: 10.5px; cursor: pointer; text-transform: capitalize; }
+.nm-seg.on { color: #fff; border-color: var(--accent); background: rgba(212,175,55,0.16); }
+.nm-lens { background: #0a0c12; border: 1px solid var(--panel-border); color: var(--muted); border-radius: 7px; padding: 4px 8px; font-size: 10.5px; }
+.nm-team { margin-top: 8px; font-size: 10px; color: var(--faint); border-top: 1px solid var(--panel-border); padding-top: 6px; }
+.nm-meta-body { font-size: 10.5px; color: var(--muted); line-height: 1.5; margin: 8px 0; max-height: 130px; overflow: auto;
+  background: rgba(0,0,0,0.25); border-radius: 8px; padding: 8px; white-space: pre-wrap; }
+.nm-meta-links { margin-top: 8px; } .nm-meta-links-h { font-size: 9.5px; color: var(--faint); letter-spacing: 0.06em; margin-bottom: 4px; }
+.nm-link { display: block; width: 100%; text-align: left; background: rgba(255,255,255,0.03); border: 1px solid var(--panel-border);
+  color: #93c5fd; border-radius: 6px; padding: 3px 8px; font-size: 10.5px; cursor: pointer; margin-bottom: 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nm-link:hover { border-color: var(--accent); color: #fff; }
 .nm-body { flex: 1; min-height: 0; position: relative; border: 1px solid var(--panel-border);
   border-radius: 14px; overflow: hidden; background: radial-gradient(120% 90% at 50% 0%, #120d12 0%, #0a0608 70%); }
 .nm-canvas { width: 100%; height: 100%; display: block; cursor: grab; }

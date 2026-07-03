@@ -12,6 +12,9 @@ import { agentHealth } from "./agenthealth";
 import { listProjects, enrichProjects } from "./projects";
 import { probeTools } from "./tools";
 import { radarStatus, refreshRadar } from "./radar";
+import { buildGraph, nodeDetail, armWatch } from "./neuromap";
+import { gdriveStatus, gdriveAuth, gdriveSignout, gdriveSetClient, gdriveList, gdriveSearch, gdriveRead, gdriveBackup } from "./gdrive";
+import type { NeuroGraphOpts, NeuroLayer } from "../shared/ipc";
 
 type LiveTerm = { id: string; cwd: string; is_master: boolean };
 
@@ -69,6 +72,25 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
       if (u.protocol === "http:" || u.protocol === "https:") shell.openExternal(u.href);
     } catch { /* malformed url — ignore */ }
   });
+
+  // ---- neuromap (Obsidian vault knowledge graph, live) ----
+  ipcMain.handle(CH.NEUROMAP_GRAPH, (_e, opts: NeuroGraphOpts) => buildGraph(opts));
+  ipcMain.handle(CH.NEUROMAP_NODE, (_e, id: string) => nodeDetail(id));
+  ipcMain.on(CH.NEUROMAP_WATCH, (_e, layers: NeuroLayer[]) => {
+    armWatch(layers, (changed) => {
+      if (mainWin && !mainWin.isDestroyed()) mainWin.webContents.send(CH.NEUROMAP_CHANGED, changed);
+    });
+  });
+
+  // ---- google drive (OAuth + REST all in main; renderer never sees tokens) ----
+  ipcMain.handle(CH.GDRIVE_STATUS, () => gdriveStatus());
+  ipcMain.handle(CH.GDRIVE_AUTH, () => gdriveAuth());
+  ipcMain.handle(CH.GDRIVE_SIGNOUT, () => gdriveSignout());
+  ipcMain.handle(CH.GDRIVE_SET_CLIENT, (_e, { clientId, clientSecret }) => gdriveSetClient(clientId, clientSecret));
+  ipcMain.handle(CH.GDRIVE_LIST, (_e, folderId?: string) => gdriveList(folderId));
+  ipcMain.handle(CH.GDRIVE_SEARCH, (_e, query: string) => gdriveSearch(query));
+  ipcMain.handle(CH.GDRIVE_READ, (_e, fileId: string) => gdriveRead(fileId));
+  ipcMain.handle(CH.GDRIVE_BACKUP, () => gdriveBackup());
 
   // ---- window controls (frameless titlebar) ----
   ipcMain.on(CH.WIN_MIN, () => mainWin?.minimize());

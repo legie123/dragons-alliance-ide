@@ -55,6 +55,15 @@ export function modelGrade(model: string): "good" | "great" | "max" | null {
 }
 export const MODEL_KEYS = ["opus", "sonnet", "haiku", "fable"] as const;
 
+// ---- neuromap (Obsidian knowledge graph) ----
+export type { NeuroGraph, NeuroNode, NeuroEdge, NeuroGraphOpts, NeuroLayer, NeuroMode, NeuroLens, NeuroNodeDetail } from "@shared/ipc";
+export async function fetchNeuroGraph(opts: import("@shared/ipc").NeuroGraphOpts) { return window.dai.neuromap.graph(opts); }
+export async function fetchNeuroNode(id: string) { return window.dai.neuromap.node(id); }
+
+// ---- google drive ----
+export type { GDriveStatus, GDriveFile } from "@shared/ipc";
+export async function fetchGDriveStatus() { return window.dai.gdrive.status(); }
+
 // ---- ecosystem tools (live indicators) ----
 export type { ToolStatus } from "@shared/ipc";
 export async function fetchTools() {

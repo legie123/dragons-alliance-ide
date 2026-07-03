@@ -104,6 +104,26 @@ const dai: DaiApi = {
   shell: {
     open: (url) => ipcRenderer.send(CH.SHELL_OPEN, url),
   },
+  neuromap: {
+    graph: (opts) => ipcRenderer.invoke(CH.NEUROMAP_GRAPH, opts),
+    node: (id) => ipcRenderer.invoke(CH.NEUROMAP_NODE, id),
+    watch: (layers) => ipcRenderer.send(CH.NEUROMAP_WATCH, layers),
+    onChanged: (cb) => {
+      const h = (_e: unknown, changed: string[]) => cb(changed);
+      ipcRenderer.on(CH.NEUROMAP_CHANGED, h);
+      return () => ipcRenderer.removeListener(CH.NEUROMAP_CHANGED, h);
+    },
+  },
+  gdrive: {
+    status: () => ipcRenderer.invoke(CH.GDRIVE_STATUS),
+    auth: () => ipcRenderer.invoke(CH.GDRIVE_AUTH),
+    signout: () => ipcRenderer.invoke(CH.GDRIVE_SIGNOUT),
+    setClient: (clientId, clientSecret) => ipcRenderer.invoke(CH.GDRIVE_SET_CLIENT, { clientId, clientSecret }),
+    list: (folderId) => ipcRenderer.invoke(CH.GDRIVE_LIST, folderId),
+    search: (query) => ipcRenderer.invoke(CH.GDRIVE_SEARCH, query),
+    read: (fileId) => ipcRenderer.invoke(CH.GDRIVE_READ, fileId),
+    backup: () => ipcRenderer.invoke(CH.GDRIVE_BACKUP),
+  },
 };
 
 contextBridge.exposeInMainWorld("dai", dai);

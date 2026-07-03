@@ -37,6 +37,20 @@ export const CH = {
   WIN_CLOSE: "win:close",
   // shell
   SHELL_OPEN: "shell:open",   // open an external URL in the default browser
+  // neuromap (Obsidian vault knowledge graph)
+  NEUROMAP_GRAPH: "neuromap:graph",     // invoke(opts) → NeuroGraph
+  NEUROMAP_NODE: "neuromap:node",       // invoke(id) → NeuroNodeDetail
+  NEUROMAP_WATCH: "neuromap:watch",     // send(layers[]) → (re)arm fs.watch
+  NEUROMAP_CHANGED: "neuromap:changed", // event main→renderer { changed: string[] }
+  // google drive
+  GDRIVE_STATUS: "gdrive:status",       // invoke() → GDriveStatus
+  GDRIVE_AUTH: "gdrive:auth",           // invoke() → GDriveStatus (starts loopback OAuth)
+  GDRIVE_SIGNOUT: "gdrive:signout",     // invoke() → GDriveStatus
+  GDRIVE_SET_CLIENT: "gdrive:setclient",// invoke({clientId,clientSecret}) → GDriveStatus
+  GDRIVE_LIST: "gdrive:list",           // invoke(folderId?) → GDriveFile[]
+  GDRIVE_SEARCH: "gdrive:search",       // invoke(query) → GDriveFile[]
+  GDRIVE_READ: "gdrive:read",           // invoke(fileId) → GDriveRead
+  GDRIVE_BACKUP: "gdrive:backup",       // invoke() → GDriveBackupResult (vault → Drive)
 } as const;
 
 // ---- types ----
@@ -113,6 +127,58 @@ export type ToolStatus = {
   action?: string;   // optional click action id (e.g. "open-obsidian")
 };
 
+// ---- NeuroMap (Obsidian vault knowledge graph, live) ----
+export type NeuroMode = "agents" | "shared" | "live";
+export type NeuroLayer = "core" | "projects" | "agents-notes" | "all";
+export type NeuroLens = "none" | "research" | "creative";
+
+export type NeuroNode = {
+  id: string;              // vault-relative path — stable node id
+  title: string;           // frontmatter title or filename
+  folder: string;          // top-level vault folder (07_RESEARCH, 09_MEMORY, …)
+  layer: NeuroLayer;       // which layer this node belongs to
+  type: string | null;     // frontmatter `type`
+  tags: string[];
+  deg: number;             // total degree (in+out) — drives node size
+  mtime: number;
+  agent?: string | null;   // team-mode(agents): attributed author, heuristic
+  fresh?: boolean;         // changed very recently — growth pulse
+};
+export type NeuroEdge = { source: string; target: string };
+export type NeuroGraphOpts = { layers: NeuroLayer[]; mode: NeuroMode; lens: NeuroLens };
+export type NeuroGraph = {
+  nodes: NeuroNode[];
+  edges: NeuroEdge[];
+  layers: { id: NeuroLayer; label: string; count: number }[];
+  scannedAt: number;
+  vault: string;
+  mode: NeuroMode;
+  teamHint?: string;       // e.g. "vault not shared (no git remote)" for mode=shared
+};
+export type NeuroNodeDetail = {
+  id: string; title: string; folder: string; mtime: number;
+  frontmatter: Record<string, unknown>;
+  body: string;                                   // markdown body (preview)
+  backlinks: { id: string; title: string }[];
+  outlinks: { id: string; title: string }[];
+  agent?: string | null;
+};
+
+// ---- Google Drive ----
+export type GDriveStatus = {
+  configured: boolean;     // client id/secret present
+  signedIn: boolean;
+  email?: string | null;
+  vault?: string;          // local vault path (for backup UI)
+  lastBackup?: number | null;
+};
+export type GDriveFile = {
+  id: string; name: string; mimeType: string;
+  modifiedTime?: string; size?: number; iconLink?: string; isFolder: boolean;
+};
+export type GDriveRead = { name: string; mime: string; text: string; truncated: boolean };
+export type GDriveBackupResult = { ok: boolean; folderId?: string; uploaded: number; failed: number; error?: string };
+
 // The API surface exposed on window.dai (preload contextBridge).
 export interface DaiApi {
   term: {
@@ -148,6 +214,22 @@ export interface DaiApi {
   tools: { status(): Promise<ToolStatus[]>; action(id: string): void };
   win: { minimize(): void; maxToggle(): void; close(): void };
   shell: { open(url: string): void };
+  neuromap: {
+    graph(opts: NeuroGraphOpts): Promise<NeuroGraph>;
+    node(id: string): Promise<NeuroNodeDetail>;
+    watch(layers: NeuroLayer[]): void;
+    onChanged(cb: (changed: string[]) => void): () => void;  // returns unsubscribe
+  };
+  gdrive: {
+    status(): Promise<GDriveStatus>;
+    auth(): Promise<GDriveStatus>;
+    signout(): Promise<GDriveStatus>;
+    setClient(clientId: string, clientSecret: string): Promise<GDriveStatus>;
+    list(folderId?: string): Promise<GDriveFile[]>;
+    search(query: string): Promise<GDriveFile[]>;
+    read(fileId: string): Promise<GDriveRead>;
+    backup(): Promise<GDriveBackupResult>;
+  };
 }
 
 declare global {
