@@ -120,6 +120,37 @@ export async function probeTools(): Promise<ToolStatus[]> {
       status: exists(path.join(HOME, ".lean-ctx")) ? "ready" : "off",
       detail: "context engineering layer",
     },
+    // ---- expansion sectors ----
+    {
+      id: "neuromap", name: "Neuromap", icon: "🧠",
+      status: "live",
+      detail: "living graph of the ecosystem (real local data)",
+    },
+    {
+      id: "google", name: "Google API", icon: "🗂️",
+      status: exists(path.join(HOME, ".config", "dai", "google.json")) ? "ready" : "needs",
+      detail: "Drive folders → Neuromap (needs OAuth client id/secret)",
+    },
+    {
+      id: "obsidian-team", name: "Obsidian Team", icon: "👥",
+      status: obsRunning ? "needs" : "needs",
+      detail: "team-mode sync → Neuromap (needs config)",
+    },
+    {
+      id: "preview", name: "Preview Engine", icon: "🖥️",
+      status: "ready",
+      detail: "in-IDE live preview (provide dev-server url)",
+    },
+    {
+      id: "obscura", name: "Obscura", icon: "🔎",
+      status: exists(path.join(HOME, "code", "obscura")) ? "ready" : "needs",
+      detail: "research tool — untrusted external repo, needs review",
+    },
+    {
+      id: "creative", name: "Creative APIs", icon: "🎨",
+      status: exists(path.join(HOME, ".config", "dai", "creative.json")) ? "ready" : "needs",
+      detail: "Higgsfield/Canva/Nanobanan… (needs API keys)",
+    },
   ];
 
   _cache = { ts: Date.now(), tools };

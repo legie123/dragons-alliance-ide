@@ -108,7 +108,7 @@ export type AgentHealth = {
 // Ecosystem super-tool live status (real signals — running proc / launchd / recent write).
 export type ToolStatus = {
   id: string; name: string; icon: string;
-  status: "live" | "ready" | "off";
+  status: "live" | "ready" | "needs" | "off";  // needs = installed structure, needs config
   detail: string;
   action?: string;   // optional click action id (e.g. "open-obsidian")
 };

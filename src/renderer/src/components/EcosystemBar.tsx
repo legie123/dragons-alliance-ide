@@ -7,6 +7,7 @@ import { fetchTools, toolAction, ToolStatus } from "../api";
 const DOT: Record<ToolStatus["status"], string> = {
   live: "#34d399",   // pulsing green — actively collaborating
   ready: "#fbbf24",  // amber — installed, idle
+  needs: "#e0603d",  // ember — installed structure, needs config
   off: "#59617a",    // grey — not present
 };
 

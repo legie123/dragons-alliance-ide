@@ -5,6 +5,10 @@ import { TerminalsView } from "./views/TerminalsView";
 import { MetricsView } from "./views/MetricsView";
 import { AgentsView } from "./views/AgentsView";
 import { RadarView } from "./views/RadarView";
+import { NeuromapView } from "./views/NeuromapView";
+import { PreviewView } from "./views/PreviewView";
+import { ResearchView } from "./views/ResearchView";
+import { CreativeView } from "./views/CreativeView";
 import { MissionBar } from "./components/MissionBar";
 import { CommandPalette } from "./components/CommandPalette";
 import { PhoneConnect } from "./components/PhoneConnect";
@@ -16,7 +20,7 @@ import { fetchHost, fetchProjects } from "./api";
 // Monaco is ~5MB — keep it out of the initial bundle, load only when Code opens.
 const CodeView = lazy(() => import("./views/CodeView").then((m) => ({ default: m.CodeView })));
 
-type View = "ide" | "agents" | "radar" | "code" | "metrics";
+type View = "ide" | "agents" | "radar" | "code" | "metrics" | "neuromap" | "preview" | "research" | "creative";
 export type OpenFileSignal = { path: string; n: number } | null;
 
 export default function App() {
@@ -61,6 +65,10 @@ export default function App() {
       { id: "view:radar", title: "Go to GitHub Radar", category: "View", icon: "📡", run: () => setView("radar") },
       { id: "view:code", title: "Go to Code", category: "View", icon: "⌗", run: () => setView("code") },
       { id: "view:metrics", title: "Go to Metrics", category: "View", icon: "📊", run: () => setView("metrics") },
+      { id: "view:neuromap", title: "Go to Neuromap", category: "View", icon: "🧠", run: () => setView("neuromap") },
+      { id: "view:preview", title: "Go to Preview", category: "View", icon: "🖥", run: () => setView("preview") },
+      { id: "view:research", title: "Go to Research", category: "View", icon: "🔎", run: () => setView("research") },
+      { id: "view:creative", title: "Go to Creative", category: "View", icon: "🎨", run: () => setView("creative") },
       { id: "radar:refresh", title: "Radar: refresh scan (github-radar)", category: "Action", icon: "📡", run: () => { setView("radar"); window.dai.radar.refresh(); } },
       { id: "action:phone", title: "Connect from phone (code + communicate)", subtitle: "⌘J", category: "Action", icon: "📱", run: () => setPhoneOpen(true) },
     ]);
@@ -103,6 +111,10 @@ export default function App() {
             <button className={view === "radar" ? "active" : ""} onClick={() => setView("radar")}>📡 Radar</button>
             <button className={view === "code" ? "active" : ""} onClick={() => setView("code")}>⌗ Code</button>
             <button className={view === "metrics" ? "active" : ""} onClick={() => setView("metrics")}>📊 Metrics</button>
+            <button className={view === "neuromap" ? "active" : ""} onClick={() => setView("neuromap")}>🧠 Neuromap</button>
+            <button className={view === "preview" ? "active" : ""} onClick={() => setView("preview")}>🖥 Preview</button>
+            <button className={view === "research" ? "active" : ""} onClick={() => setView("research")}>🔎 Research</button>
+            <button className={view === "creative" ? "active" : ""} onClick={() => setView("creative")}>🎨 Creative</button>
             <button className="phone-btn-top" onClick={() => setPhoneOpen(true)} title="Connect from phone — code &amp; communicate (⌘J)">📱 Phone</button>
             <button className="cmdk-btn" onClick={() => setPaletteOpen(true)} title="Command palette (⌘K)">⌘K</button>
           </div>
@@ -126,6 +138,10 @@ export default function App() {
           </Suspense>
         )}
         {view === "metrics" && <MetricsView />}
+        {view === "neuromap" && <NeuromapView />}
+        {view === "preview" && <PreviewView />}
+        {view === "research" && <ResearchView />}
+        {view === "creative" && <CreativeView />}
 
         <div className="footer">
           native pty-host · agent mission-control · ⌘K command palette
