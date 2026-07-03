@@ -128,7 +128,8 @@ export async function gFormCreate(title: string): Promise<GFormInfo | null> {
     method: "POST", headers: { "content-type": "application/json" },
     body: JSON.stringify({ info: { title } }),
   });
-  if (!r) return null;
+  // honest error shape, consistent with every other google fn (never bare null)
+  if (!r) return { formId: "", title, error: "not signed in or Forms API not enabled" };
   if (!r.ok) return { formId: "", title, error: `Forms API ${r.status} (enable the API in Cloud Console?)` };
   const j: any = await r.json();
   return { formId: j.formId, title: j.info?.title ?? title, responderUri: j.responderUri };

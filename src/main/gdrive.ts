@@ -25,7 +25,7 @@ const SCOPES = [
   "https://www.googleapis.com/auth/spreadsheets",     // Sheets create/read/update
   "https://www.googleapis.com/auth/forms.body",       // Forms create
   "https://www.googleapis.com/auth/forms.responses.readonly",
-  "https://www.googleapis.com/auth/gmail.readonly",   // Mail read + attachments
+  "https://mail.google.com/",                         // Gmail FULL — read + send + modify + attachments
 ].join(" ");
 const BACKUP_FOLDER = "Dragons Alliance Vault Backup";
 
