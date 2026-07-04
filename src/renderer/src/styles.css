@@ -1206,7 +1206,7 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
   backdrop-filter: blur(12px);
   z-index: 10;
 }
-.titlebar-mark { color: #c4b5fd; margin-right: 10px; }
+.titlebar-mark { display: inline-flex; align-items: center; margin-right: 10px; }
 .titlebar-word { color: var(--muted); }
 
 /* ---------- Phone Connect ---------- */
@@ -1475,11 +1475,13 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 
 /* ==================== FORGE LAYER — visible atmosphere ==================== */
 .fx { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-/* the royal dragon — SEEN, not guessed: large emblem, gold-smoke, right flank */
+/* the royal dragon — SEEN, not guessed: the sigil itself (transparent cutout),
+   gold-smoke, right flank. An emblem-watermark, never a giant medallion circle. */
 .fx-dragon { position: absolute; right: -140px; bottom: -170px; opacity: 0.09;
   filter: saturate(0.7) drop-shadow(0 0 60px rgba(212, 175, 55, 0.35));
   transform: rotate(-6deg); will-change: transform;
   animation: dragondrift 46s ease-in-out infinite alternate; }
+.fx-dragon-mark { width: 760px; height: 760px; object-fit: contain; display: block; }
 @keyframes dragondrift {
   0%   { transform: rotate(-6deg) translate3d(0, 0, 0) scale(1); }
   100% { transform: rotate(-4deg) translate3d(-26px, -18px, 0) scale(1.03); }
@@ -1700,3 +1702,8 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
   border-color: rgba(240, 199, 94, 0.8);
   box-shadow: 0 0 20px rgba(212, 175, 55, 0.6), 0 0 46px rgba(44, 24, 53, 0.7);
 }
+
+/* brand loading state — the sigil breathes while a heavy view loads */
+.brand-loading { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.brand-loading .dragon-emblem { animation: sigilbreathe 2.2s ease-in-out infinite alternate; }
+@keyframes sigilbreathe { 0% { box-shadow: 0 0 10px var(--dragon-glow); } 100% { box-shadow: 0 0 26px var(--dragon-glow); } }

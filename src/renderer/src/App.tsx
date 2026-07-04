@@ -18,6 +18,7 @@ import { EcosystemBar } from "./components/EcosystemBar";
 import { GodModePanel } from "./components/GodModePanel";
 import { AdminPanel, type AdminTab } from "./components/AdminPanel";
 import { DragonEmblem } from "./components/DragonEmblem";
+import dragonMark from "./assets/dragon-mark.png";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects, fetchGDriveStatus, broadcast } from "./api";
 import { IcCommand, IcCrown, IcGem, IcTerminal } from "./components/icons";
@@ -156,7 +157,8 @@ export default function App() {
       {/* forge layer — VISIBLE atmosphere: royal dragon watermark, two aurora
           smoke bands, rising embers. Pure CSS motion, killed by reduced-motion. */}
       <div className="fx" aria-hidden>
-        <div className="fx-dragon"><DragonEmblem size={760} /></div>
+        {/* imperial watermark — the dragon itself (transparent cutout), not a medallion circle */}
+        <div className="fx-dragon"><img className="fx-dragon-mark" src={dragonMark} alt="" draggable={false} /></div>
         {Array.from({ length: 11 }, (_, i) => <span key={i} className="fx-ember" style={{ ["--i" as any]: i }} />)}
       </div>
       <div className="shell">
@@ -227,7 +229,12 @@ export default function App() {
         )}
         {view === "radar" && <RadarView />}
         {view === "code" && (
-          <Suspense fallback={<div className="empty">loading editor…</div>}>
+          <Suspense fallback={
+            <div className="empty brand-loading">
+              <DragonEmblem size={44} />
+              <span>loading editor…</span>
+            </div>
+          }>
             <CodeView openFile={openFile} />
           </Suspense>
         )}
