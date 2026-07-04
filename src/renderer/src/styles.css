@@ -1685,14 +1685,19 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
   --brand-gold-soft: var(--gold-soft);
   --brand-ember: var(--accent-ember);
   --brand-crystal: #cba9ff;
-  --brand-dragon-glow: rgba(212, 175, 55, 0.45);
-  --brand-panel: var(--panel);
+  --dragon-glow: rgba(212, 175, 55, 0.45);
+  --sigil-border: rgba(212, 175, 55, 0.55);
+  --panel-glass: var(--panel);
+  --shadow-premium: 0 18px 50px -20px rgba(0, 0, 0, 0.85);
+  /* aliasuri istorice — acelasi adevar, nume vechi */
+  --brand-dragon-glow: var(--dragon-glow);
+  --brand-panel: var(--panel-glass);
   --brand-border: var(--panel-border-strong);
-  --brand-shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.85);
+  --brand-shadow: var(--shadow-premium);
 }
 .dragon-emblem {
   display: inline-flex; border-radius: 50%; overflow: hidden;
-  border: 1px solid rgba(212, 175, 55, 0.55);
+  border: 1px solid var(--sigil-border);
   background: var(--bg); flex: 0 0 auto;
   transition: box-shadow .2s ease, border-color .2s ease;
 }

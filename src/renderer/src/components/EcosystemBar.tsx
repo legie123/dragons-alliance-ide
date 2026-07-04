@@ -65,6 +65,7 @@ export function EcosystemBar() {
   return (
     <div className="sp-dock" ref={wrapRef}>
       <span className="sp-dock-label">
+        <DragonEmblem size={15} glow={false} />
         SUPERPOWERS
         <span className="eco-live" title="powers with live signal right now">{liveCount}/{SUPERPOWERS.length} live</span>
       </span>
