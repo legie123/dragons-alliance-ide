@@ -124,7 +124,7 @@ export default function App() {
             <span className="glyph"><DragonEmblem size={34} /></span>
             <div>
               <h1>Dragons Alliance IDE</h1>
-              <div className="sub">native · agent IDE · live intelligence</div>
+              <div className="sub">Command Center · AI Operations</div>
             </div>
           </div>
           <div className="viewswitch">

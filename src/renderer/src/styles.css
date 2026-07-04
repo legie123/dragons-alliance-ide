@@ -1,14 +1,28 @@
 :root {
-  /* Smoky ember palette — dark ash red-violet base, royal-gold accent, "smoke & embers". */
-  --bg: #0a0608;
-  --panel: rgba(34, 22, 30, 0.55);
-  --panel-border: rgba(190, 140, 120, 0.16);
+  /* IMPERIAL DRAGON palette — obsidian dominant, burgundy smoke, violet shadow,
+     gold controlat. Derivata din logo-ul de brand (dragon auriu pe obsidian). */
+  --brand-obsidian: #070408;
+  --brand-burgundy: #3b0a26;
+  --brand-crimson: #7f1d3a;
+  --brand-violet-smoke: #4c1d95;
+  --brand-gold: #d4af37;
+  --brand-gold-soft: #f0d27a;
+  --brand-ember: #e0603d;
+  --brand-crystal: #cba9ff;
+  --brand-dragon-glow: rgba(212, 175, 55, 0.45);
+  --brand-panel: rgba(30, 14, 24, 0.6);
+  --brand-border: rgba(212, 175, 55, 0.16);
+  --brand-shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.85);
+
+  --bg: var(--brand-obsidian);
+  --panel: var(--brand-panel);
+  --panel-border: var(--brand-border);
   --text: #f0e6e6;
   --muted: #b09296;
   --faint: #6e5860;
-  --accent: #d4af37;            /* royal gold */
+  --accent: var(--brand-gold);
   --accent-violet: #9d7bd8;     /* smoky violet */
-  --accent-ember: #e0603d;      /* ember red-orange */
+  --accent-ember: var(--brand-ember);
   --gold-grad: linear-gradient(135deg, #f6dd92 0%, #d4af37 55%, #8b6a1a 100%);
   font-family: ui-sans-serif, -apple-system, "SF Pro Display", "Inter", system-ui,
     sans-serif;
@@ -37,9 +51,12 @@ body { color: var(--text); }
     /* treasure-hoard / dragon-fire glow rising from the bottom */
     radial-gradient(90% 55% at 50% 118%, rgba(212, 175, 55, 0.14) 0%, transparent 60%),
     radial-gradient(60% 44% at 50% 108%, rgba(224, 96, 61, 0.10) 0%, transparent 66%),
+    /* fum burgundy imperial — profunzime, nu agresivitate */
+    radial-gradient(60% 50% at 28% 78%, rgba(59, 10, 38, 0.34) 0%, transparent 62%),
+    radial-gradient(48% 42% at 70% 60%, rgba(76, 29, 149, 0.14) 0%, transparent 60%),
     /* deep vignette — darkest at the corners */
-    radial-gradient(135% 120% at 50% 30%, transparent 46%, rgba(4, 2, 4, 0.55) 100%),
-    radial-gradient(120% 120% at 50% 0%, #160d12 0%, #0a0608 58%, #060306 100%);
+    radial-gradient(135% 120% at 50% 30%, transparent 46%, rgba(3, 1, 4, 0.6) 100%),
+    radial-gradient(120% 120% at 50% 0%, #180a16 0%, #0a0510 58%, #050307 100%);
 }
 /* very subtle coiled-dragon watermark — felt, not seen */
 .bg-vignette::before {
@@ -92,7 +109,7 @@ body { color: var(--text); }
   color: var(--muted); border-radius: 9px; padding: 8px 14px;
   font-size: 13px; cursor: pointer; transition: all .15s; font-weight: 600;
 }
-.viewswitch button.active { color: #fff; border-color: var(--accent); background: rgba(157,123,216,0.16); box-shadow: 0 0 16px rgba(157,123,216,0.18); }
+.viewswitch button.active { color: #fff; border-color: var(--accent); background: rgba(59,10,38,0.55); box-shadow: 0 0 16px rgba(212,175,55,0.22); }
 
 /* "More ▾" dropdown — secondary views grouped so the topbar stays readable */
 .more-wrap { position: relative; }
@@ -467,22 +484,34 @@ body { color: var(--text); }
 .eco-bar {
   display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
   padding: 8px 14px; border-radius: 12px;
-  background: linear-gradient(90deg, rgba(52,211,153,0.05), rgba(157,123,216,0.05));
-  border: 1px solid var(--panel-border);
+  background: linear-gradient(90deg, rgba(59,10,38,0.32), rgba(76,29,149,0.14));
+  border: 1px solid var(--brand-border);
+  box-shadow: var(--brand-shadow);
 }
 .eco-label { font-size: 10px; font-weight: 750; letter-spacing: 0.14em; color: var(--muted); white-space: nowrap; }
 .eco-live { color: #34d399; margin-left: 4px; }
 .eco-pills { display: flex; gap: 7px; flex-wrap: wrap; }
 .eco-pill {
   display: flex; align-items: center; gap: 6px;
-  background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border);
+  background: rgba(20, 8, 16, 0.55); border: 1px solid var(--brand-border);
   border-radius: 999px; padding: 4px 11px 4px 8px; font-size: 11.5px; color: var(--muted);
   transition: all .15s;
 }
-.eco-pill.live { color: var(--text); border-color: rgba(52,211,153,0.28); background: rgba(52,211,153,0.07); }
+.eco-pill.live {
+  color: var(--text); border-color: rgba(212,175,55,0.4); background: rgba(212,175,55,0.08);
+  box-shadow: 0 0 12px rgba(212,175,55,0.16); /* dragon glow — activ */
+}
 .eco-pill.off { opacity: 0.45; }
+.eco-pill.needs { opacity: 0.75; border-color: rgba(224,96,61,0.3); }
 .eco-pill.clickable { cursor: pointer; }
-.eco-pill.clickable:hover { border-color: var(--accent); background: rgba(157,123,216,0.12); color: #fff; }
+.eco-pill.clickable:hover { border-color: var(--accent); background: rgba(59,10,38,0.5); color: #fff; box-shadow: 0 0 14px rgba(212,175,55,0.22); }
+/* GODMODE — sigiliul master: tratament imperial distinct */
+.eco-pill.godmode {
+  border-color: rgba(212,175,55,0.5);
+  background: linear-gradient(90deg, rgba(59,10,38,0.6), rgba(76,29,149,0.3));
+  color: var(--brand-gold-soft);
+}
+.eco-pill.godmode:hover { box-shadow: 0 0 20px rgba(212,175,55,0.4); }
 .eco-pill:disabled { cursor: default; }
 .eco-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
 .eco-dot.pulse { animation: ecopulse 1.6s ease-in-out infinite; }
@@ -496,7 +525,7 @@ body { color: var(--text); }
   color: var(--muted); border-radius: 9px; padding: 8px 12px; font-size: 12px;
   font-weight: 700; letter-spacing: 0.04em; cursor: pointer; transition: all .15s;
 }
-.cmdk-btn:hover { color: #fff; border-color: var(--accent); background: rgba(157,123,216,0.14); }
+.cmdk-btn:hover { color: #fff; border-color: var(--accent); background: rgba(59,10,38,0.5); box-shadow: 0 0 12px rgba(212,175,55,0.2); }
 
 .cmdk-backdrop {
   position: fixed; inset: 0; z-index: 100;
@@ -887,6 +916,21 @@ button.primary:hover { filter: brightness(1.08); }
 .brand .glyph {
   display: flex; align-items: center;
   filter: drop-shadow(0 0 12px rgba(212,175,55, 0.5));
+}
+/* Sigiliul imperial — medalion circular cu inel de aur si glow controlat. */
+.dragon-emblem {
+  display: inline-flex; border-radius: 50%; overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.55);
+  background: var(--brand-obsidian); flex: 0 0 auto;
+  transition: box-shadow .2s ease, border-color .2s ease;
+}
+.dragon-emblem img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.16); }
+.dragon-emblem-glow {
+  box-shadow: 0 0 14px var(--brand-dragon-glow), 0 0 34px rgba(76, 29, 149, 0.35);
+}
+.dragon-emblem-glow:hover {
+  border-color: rgba(240, 210, 122, 0.8);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.6), 0 0 46px rgba(76, 29, 149, 0.45);
 }
 .brand h1 {
   font-size: 19px;

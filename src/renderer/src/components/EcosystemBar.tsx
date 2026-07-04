@@ -3,6 +3,7 @@
 // Every light reflects a real signal probed in the main process (no fake lights).
 import { useQuery } from "@tanstack/react-query";
 import { fetchTools, toolAction, ToolStatus } from "../api";
+import { DragonEmblem } from "./DragonEmblem";
 
 const DOT: Record<ToolStatus["status"], string> = {
   live: "#34d399",   // pulsing green — actively collaborating
@@ -27,7 +28,7 @@ export function EcosystemBar() {
         {tools.map((t) => (
           <button
             key={t.id}
-            className={`eco-pill ${t.status}${t.action ? " clickable" : ""}`}
+            className={`eco-pill ${t.status}${t.action ? " clickable" : ""}${t.id === "godmode" ? " godmode" : ""}`}
             title={`${t.name} — ${t.detail}${t.action ? " · click to open" : ""}`}
             onClick={() => t.action && toolAction(t.action)}
             disabled={!t.action}
@@ -36,7 +37,8 @@ export function EcosystemBar() {
               className={`eco-dot ${t.status === "live" ? "pulse" : ""}`}
               style={{ background: DOT[t.status], boxShadow: t.status !== "off" ? `0 0 8px ${DOT[t.status]}` : "none" }}
             />
-            <span className="eco-ic">{t.icon}</span>
+            {/* GODMODE poarta sigiliul-dragon master, nu emoji */}
+            {t.id === "godmode" ? <DragonEmblem size={14} glow={false} /> : <span className="eco-ic">{t.icon}</span>}
             <span className="eco-name">{t.name}</span>
           </button>
         ))}
