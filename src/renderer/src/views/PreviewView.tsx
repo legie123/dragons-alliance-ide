@@ -3,6 +3,7 @@
 // over CDP (via window.dai.neo): a live screenshot frame you can click/scroll into,
 // reload/back/forward controls, and a chat-agent wired to Neo's Magic Page.
 import { useEffect, useRef, useState } from "react";
+import { IcMonitor } from "../components/icons";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProjects } from "../api";
 import type { NeoStatus, NeoSnap } from "@shared/ipc";
@@ -105,7 +106,7 @@ export function PreviewView() {
   return (
     <div className="pv-view">
       <div className="pv-bar">
-        <span className="pv-title">🖥 PREVIEW</span>
+        <span className="pv-title"><IcMonitor /> PREVIEW</span>
         <select className="pv-sel" value={proj} onChange={(e) => setProj(e.target.value)}>
           <option value="">select project…</option>
           {projects.map((p) => <option key={p.path} value={p.path}>{p.name}</option>)}

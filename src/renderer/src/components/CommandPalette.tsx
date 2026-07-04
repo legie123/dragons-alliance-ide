@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { IcCommand, IcZap, IcMonitor, IcFolder, IcFile, IcTerminal, IcCrown, IcKey } from "./icons";
 import { motion, AnimatePresence } from "motion/react";
 import { Cmd, paletteCommands, fuzzyScore } from "../palette";
 import { fsWalk } from "../api";
 
-const CAT_ICON: Record<Cmd["category"], string> = {
-  Action: "⚡", View: "◱", Project: "📁", Terminal: "⌘", File: "◦",
+const CAT_ICON: Record<Cmd["category"], ReactNode> = {
+  Action: <IcZap size={13} />, View: <IcMonitor size={13} />, Project: <IcFolder size={13} />,
+  Terminal: <IcTerminal size={13} />, File: <IcFile size={13} />,
+  Superpower: <IcCrown size={13} />, Admin: <IcKey size={13} />,
 };
 const MAX = 60;
 
@@ -104,7 +108,7 @@ export function CommandPalette({
           initial={{ opacity: 0, y: -12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 26 }}>
           <div className="cmdk-input">
-            <span className="cmdk-glyph">🜲</span>
+            <span className="cmdk-glyph"><IcCommand size={16} /></span>
             <input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={onKey}
               placeholder="Jump to a file, command, project, terminal…" spellCheck={false} />
             <span className="cmdk-hint">esc</span>

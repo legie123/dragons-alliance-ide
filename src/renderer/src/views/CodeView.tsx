@@ -2,14 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import Editor from "@monaco-editor/react";
 import "../monaco-setup";
 import { useQuery } from "@tanstack/react-query";
-import { fetchHost, fsRead, fsWrite, langFromPath, FsEntry } from "../api";
+import { fetchHost, fetchProjects, fsRead, fsWrite, langFromPath, FsEntry } from "../api";
 import { FileTree } from "../components/FileTree";
+import { IcCode, IcBranch } from "../components/icons";
 
 type OpenFile = { path: string; name: string; content: string; dirty: boolean; lang: string };
 type OpenSignal = { path: string; n: number } | null;
 
 export function CodeView({ openFile }: { openFile?: OpenSignal }) {
   const { data: host } = useQuery({ queryKey: ["host"], queryFn: fetchHost, refetchInterval: false });
+  const { data: projects = [] } = useQuery({ queryKey: ["projects"], queryFn: fetchProjects, refetchInterval: 8000 });
   const [files, setFiles] = useState<OpenFile[]>([]);
   const [activePath, setActivePath] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -17,6 +19,16 @@ export function CodeView({ openFile }: { openFile?: OpenSignal }) {
   const editorRef = useRef<any>(null);
 
   const active = files.find((f) => f.path === activePath) || null;
+
+  // engineering signal: repo of the active file → branch badge + diff count (real git state)
+  const repo = (() => {
+    if (!activePath) return null;
+    let best: (typeof projects)[number] | null = null;
+    for (const p of projects) {
+      if (p.branch && (activePath === p.path || activePath.startsWith(p.path + "/")) && (!best || p.path.length > best.path.length)) best = p;
+    }
+    return best;
+  })();
 
   async function openPath(path: string) {
     if (files.some((f) => f.path === path)) { setActivePath(path); return; }
@@ -91,6 +103,12 @@ export function CodeView({ openFile }: { openFile?: OpenSignal }) {
             </div>
           ))}
           <div className="code-spacer" />
+          {repo && (
+            <span className="code-repo" title={`${repo.name} — branch ${repo.branch}${repo.dirty ? ` · ${repo.dirty} changed files` : " · clean"}`}>
+              <IcBranch size={13} /> {repo.branch}
+              {repo.dirty > 0 ? <b className="code-diff">±{repo.dirty}</b> : <i className="code-clean">clean</i>}
+            </span>
+          )}
           {active && (
             <button className={`savebtn${active.dirty ? " dirty" : ""}`} disabled={saving || !active.dirty} onClick={save}>
               {saving ? "saving…" : active.dirty ? "⌘S Save" : "Saved"}
@@ -122,7 +140,7 @@ export function CodeView({ openFile }: { openFile?: OpenSignal }) {
               }}
             />
           ) : (
-            <div className="code-empty">🜲 open a file to start editing</div>
+            <div className="code-empty"><IcCode /> open a file to start editing</div>
           )}
         </div>
       </main>

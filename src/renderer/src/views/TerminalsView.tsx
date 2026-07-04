@@ -6,6 +6,8 @@ import { broadcast, fetchHost, fetchTerms, fetchProjects, Term } from "../api";
 import { registerProvider, Cmd } from "../palette";
 import { elementFor } from "../elements";
 import { Crystal } from "../components/Crystal";
+import { EmptyState, StatusPill } from "../components/da";
+import { IcTerminal, IcSigil, IcSend } from "../components/icons";
 
 let SEQ = 1;
 const newId = () => `t${Date.now().toString(36)}${SEQ++}`;
@@ -181,6 +183,8 @@ export function TerminalsView() {
             <div className="mb-left">
               <span className="crown">🜲</span>
               <span className="mb-title">MASTER TERMINAL</span>
+              <StatusPill state="idle">zsh</StatusPill>
+              <StatusPill state={sync ? "sync" : "off"}>{sync ? `synced · ${liveCount}` : "solo"}</StatusPill>
               <span className="mb-sub">{layout === "quad" ? "master hidden in tiles · use grid to drive" : `drives ${scope === "all" ? "every terminal" : `· ${activeName}`} live when synced`}</span>
             </div>
             <div className="mb-right">
@@ -246,8 +250,8 @@ export function TerminalsView() {
               {menuOpen && (
                 <div className="menu">
                   <div className="menu-sep">into {activeProject ? activeName : "~ home"}</div>
-                  <div className="menu-row" onClick={() => add("shell")}>🖥️ <b>zsh shell</b></div>
-                  <div className="menu-row" onClick={() => add("claude")}>🜲 <b>claude session</b></div>
+                  <div className="menu-row" onClick={() => add("shell")}><IcTerminal /> <b>zsh shell</b></div>
+                  <div className="menu-row" onClick={() => add("claude")}><IcSigil /> <b>claude session</b></div>
                 </div>
               )}
             </div>
@@ -259,9 +263,10 @@ export function TerminalsView() {
             <button className="addterm" onClick={() => add("shell")} disabled={visibleWorkers.length >= 8}
               title={visibleWorkers.length >= 8 ? "max 8 terminals" : "add a terminal"}>+ Add</button>
             <div className="quickopen">
-              <span className="qo-label">open</span>
+              <span className="qo-label">DEPLOY</span>
               {[2, 4, 6, 8].map((n) => (
-                <button key={n} className="qo-btn" onClick={() => openN(n)}>{n}</button>
+                <button key={n} className={`qo-btn${visibleWorkers.length >= n ? " armed" : ""}`}
+                  onClick={() => openN(n)} title={`open ${n} worker terminals as tiles`}>{n}</button>
               ))}
             </div>
             <button className={`chanbtn${channelOn ? " on" : ""}`} onClick={() => setChannelOn((c) => !c)}
@@ -288,7 +293,19 @@ export function TerminalsView() {
           className={layout === "grid" ? "term-grid" : layout === "quad" ? "term-tiles" : "term-focus"}
           style={layout === "quad" ? { gridTemplateColumns: `repeat(${tileCols(visibleWorkers.length)}, minmax(0, 1fr))` } : undefined}
         >
-          {visibleWorkers.length === 0 && <div className="empty">no workers in {activeProject ? activeName : "any project"} — click + Worker</div>}
+          {visibleWorkers.length === 0 && (
+            <EmptyState
+              icon={<IcSigil size={34} />}
+              title="Ready for command"
+              hint={`No workers in ${activeProject ? activeName : "any project"}. Deploy one, or arm a one-shot below.`}
+              actions={[
+                { label: "+ Deploy worker", onClick: () => add("shell"), primary: true },
+                { label: "git status", onClick: () => setBmsg("git status") },
+                { label: "npm run dev", onClick: () => setBmsg("npm run dev") },
+                { label: "npm test", onClick: () => setBmsg("npm test") },
+              ]}
+            />
+          )}
           {(layout === "quad" ? visibleWorkers.slice(0, 8) : visibleWorkers).map((t, i) => (
             <div key={t.id} className="pane-wrap" style={{ display: layout === "grid" || layout === "quad" || t.id === showId ? "flex" : "none" }}>
               <TerminalPane term={t} active={layout === "grid" || layout === "quad" || t.id === showId}
@@ -301,7 +318,7 @@ export function TerminalsView() {
 
         {/* QUICK BROADCAST */}
         <div className="broadcast">
-          <span className="bc-label">📡 send → {activeProject ? activeName : "all"} workers</span>
+          <span className="bc-label"><IcSend /> send → {activeProject ? activeName : "all"} workers</span>
           <input value={bmsg} onChange={(e) => setBmsg(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") quickSend(); }}
             placeholder="one-shot command to the visible workers (e.g.  git status )" />

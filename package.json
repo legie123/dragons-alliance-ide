@@ -10,7 +10,8 @@
     "build": "electron-vite build",
     "start": "electron-vite preview",
     "postinstall": "chmod +x node_modules/node-pty/prebuilds/darwin-*/spawn-helper || true",
-    "dist": "electron-vite build && electron-builder --mac"
+    "dist": "electron-vite build && electron-builder --mac",
+    "doctor": "node scripts/superpowers-doctor.mjs --check --verbose"
   },
   "dependencies": {
     "node-pty": "^1.0.0",

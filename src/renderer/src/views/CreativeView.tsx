@@ -3,6 +3,7 @@
 // project selector, and asset gallery structure are real; generation is gated on
 // keys. Assets, once produced, link to a project + become Creative nodes (magenta).
 import { useState } from "react";
+import { IcPalette } from "../components/icons";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProjects } from "../api";
 
@@ -25,7 +26,7 @@ export function CreativeView() {
   return (
     <div className="cr-view">
       <div className="cr-bar">
-        <span className="cr-title">🎨 CREATIVE</span>
+        <span className="cr-title"><IcPalette /> CREATIVE</span>
         <select className="cr-sel" value={proj} onChange={(e) => setProj(e.target.value)}>
           <option value="">link to project…</option>
           {projects.map((p) => <option key={p.path} value={p.path}>{p.name}</option>)}

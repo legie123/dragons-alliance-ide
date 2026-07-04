@@ -3,6 +3,7 @@
 // in the main process on the user's own OAuth client; every panel gates honestly
 // on sign-in / API enablement — nothing here fakes a connection or data.
 import { useEffect, useState } from "react";
+import { IcFolder, IcFile, IcImage, IcSheet, IcZap } from "../components/icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchGDriveStatus, fetchMeta, fetchProtonStatus } from "../api";
 import type { GDriveFile, GSheetData, GMailMsg, DriveMeta } from "../api";
@@ -177,7 +178,7 @@ function FoldersTab() {
   return (
     <>
       <div className="drv-toolrow">
-        <button className="drv-btn accent" onClick={ensureTree} title="Create Dragons Alliance/Companies|Candidates|Contracts|… (idempotent)">⚡ Create Dragons Alliance structure</button>
+        <button className="drv-btn accent" onClick={ensureTree} title="Create Dragons Alliance/Companies|Candidates|Contracts|… (idempotent)"><IcZap /> Create Dragons Alliance structure</button>
         <input className="drv-in slim" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={`new folder in ${cwd.name}`} />
         <button className="drv-btn" onClick={mkFolder} disabled={!newName.trim()}>+ Folder</button>
         <input className="drv-in slim wide" value={upPath} onChange={(e) => setUpPath(e.target.value)} placeholder="upload: /path/to/file (xlsx, pdf…)" spellCheck={false} />
@@ -200,7 +201,7 @@ function FoldersTab() {
           {files.length === 0 && !busy && <div className="drv-empty">empty folder</div>}
           {files.map((f) => (
             <button key={f.id} className={`drv-row${f.isFolder ? " folder" : ""}`} onClick={() => openFile(f)}>
-              <span className="drv-ic">{f.isFolder ? "📁" : f.mimeType.includes("spreadsheet") ? "📊" : f.mimeType.includes("image") ? "🖼" : f.mimeType.includes("pdf") ? "📕" : "📄"}</span>
+              <span className="drv-ic">{f.isFolder ? <IcFolder /> : f.mimeType.includes("spreadsheet") ? <IcSheet /> : f.mimeType.includes("image") ? <IcImage /> : <IcFile />}</span>
               <span className="drv-name">{f.name}</span>
               {f.size ? <span className="drv-size">{(f.size / 1024).toFixed(0)}K</span> : null}
             </button>
@@ -259,7 +260,7 @@ function SheetsTab() {
           {sheets.length === 0 && !busy && <div className="drv-empty">no Sheets yet — create one, or upload an Excel with convert→Sheets in Folders</div>}
           {sheets.map((f) => (
             <button key={f.id} className="drv-row" onClick={() => preview(f)}>
-              <span className="drv-ic">📊</span><span className="drv-name">{f.name}</span>
+              <span className="drv-ic"><IcSheet /></span><span className="drv-name">{f.name}</span>
               <span className="drv-open" onClick={(e) => { e.stopPropagation(); window.dai.shell.open(`https://docs.google.com/spreadsheets/d/${f.id}`); }}>↗</span>
             </button>
           ))}
@@ -473,7 +474,7 @@ function CandidatesTab({ signedIn }: { signedIn: boolean }) {
         {candidates.map((c: DriveMeta) => (
           <button key={c.id} className={`drv-row${sel?.id === c.id ? " folder" : ""}`} onClick={() => setSel(c)}>
             <span className="drv-ic">👤</span><span className="drv-name">{c.name}</span>
-            <span className="drv-size">{c.googleDriveId ? "📁 drive" : "local"}</span>
+            <span className="drv-size">{c.googleDriveId ? "drive" : "local"}</span>
           </button>
         ))}
       </div>
