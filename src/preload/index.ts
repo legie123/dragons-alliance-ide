@@ -150,6 +150,7 @@ const dai: DaiApi = {
     mailSearch: (q) => ipcRenderer.invoke(CH.MAIL_SEARCH, q),
     mailGet: (id) => ipcRenderer.invoke(CH.MAIL_GET, id),
     mailSaveAttachment: (msgId, attId, filename, folderId) => ipcRenderer.invoke(CH.MAIL_SAVE_ATTACHMENT, { msgId, attId, filename, folderId }),
+    health: () => ipcRenderer.invoke(CH.GOOGLE_HEALTH),
   },
   meta: {
     list: (filter) => ipcRenderer.invoke(CH.META_LIST, filter),
@@ -160,6 +161,24 @@ const dai: DaiApi = {
     status: () => ipcRenderer.invoke(CH.PROTON_STATUS),
     setConfig: (host, port, user) => ipcRenderer.invoke(CH.PROTON_SET_CONFIG, { host, port, user }),
   },
+  settings: {
+    get: () => ipcRenderer.invoke(CH.SETTINGS_GET),
+    set: (patch) => ipcRenderer.invoke(CH.SETTINGS_SET, patch),
+  },
+  audit: {
+    list: (limit) => ipcRenderer.invoke(CH.AUDIT_LIST, limit),
+    log: (kind, detail) => ipcRenderer.send(CH.AUDIT_LOG, { kind, detail }),
+  },
+  perms: {
+    get: () => ipcRenderer.invoke(CH.PERMS_GET),
+    set: (state) => ipcRenderer.invoke(CH.PERMS_SET, state),
+  },
+  vaultSync: {
+    status: () => ipcRenderer.invoke(CH.VAULT_STATUS),
+    sync: (message) => ipcRenderer.invoke(CH.VAULT_SYNC, message),
+    setRemote: (url) => ipcRenderer.invoke(CH.VAULT_SET_REMOTE, url),
+  },
+  shot: { capture: () => ipcRenderer.invoke(CH.SHOT_CAPTURE) },
 };
 
 contextBridge.exposeInMainWorld("dai", dai);

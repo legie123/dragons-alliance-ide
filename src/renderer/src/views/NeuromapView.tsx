@@ -7,19 +7,21 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchNeuroGraph, fetchNeuroNode } from "../api";
 import type { NeuroLayer, NeuroMode, NeuroLens, NeuroNode, NeuroNodeDetail } from "../api";
 
+// Executive intelligence palette — mature cluster colors (spec):
+// core=gold · agents=purple · projects=blue · research/shared=teal · inactive=grey smoke
 const LAYER_COLOR: Record<NeuroLayer, string> = {
-  core: "#22d3ee", projects: "#d4af37", "agents-notes": "#ec4899", all: "#a78bfa",
+  core: "#d4af37", projects: "#5ea2ef", "agents-notes": "#8d5cff", all: "#746a70",
 };
 const FOLDER_COLOR = (folder: string): string => {
   const f = folder.toLowerCase();
-  if (f.includes("research")) return "#2dd4bf";
-  if (f.includes("memory")) return "#22d3ee";
-  if (f.includes("project")) return "#d4af37";
-  if (f.includes("agent") || f.includes("claude")) return "#ec4899";
-  if (f.includes("decision")) return "#f97316";
-  if (f.includes("map")) return "#a78bfa";
-  if (f.includes("meta")) return "#60a5fa";
-  return "#9aa0b0";
+  if (f.includes("research")) return "#43e0c0";
+  if (f.includes("memory")) return "#f0c75e";
+  if (f.includes("meta") || f.includes("map")) return "#d4af37";
+  if (f.includes("project")) return "#5ea2ef";
+  if (f.includes("agent") || f.includes("claude")) return "#8d5cff";
+  if (f.includes("decision")) return "#d24a36";
+  if (f.includes("architect")) return "#b8860b";
+  return "#746a70";
 };
 
 type Pos = { x: number; y: number };
@@ -35,6 +37,7 @@ export function NeuromapView() {
   const [ty, setTy] = useState(0);
   const [scale, setScale] = useState(1);
   const [pulse, setPulse] = useState(0);
+  const [focusMode, setFocusMode] = useState(false); // dim everything but the selected node's neighborhood
   const drag = useRef<{ x: number; y: number } | null>(null);
 
   const opts = useMemo(() => ({ layers: [layer], mode, lens }), [layer, mode, lens]);
@@ -85,6 +88,15 @@ export function NeuromapView() {
   const edges = graph?.edges ?? [];
   const visible = (n: NeuroNode) => !q || n.title.toLowerCase().includes(q.toLowerCase()) || n.tags.some((t) => t.toLowerCase().includes(q.toLowerCase()));
 
+  // focus mode: the selected node + its direct links stay lit, the rest recede
+  const hood = useMemo(() => {
+    if (!sel) return null;
+    const s = new Set<string>([sel]);
+    for (const e of edges) { if (e.source === sel) s.add(e.target); if (e.target === sel) s.add(e.source); }
+    return s;
+  }, [sel, edges]);
+  const dimmed = (id: string) => focusMode && hood ? !hood.has(id) : false;
+
   const onWheel = (e: React.WheelEvent) => { e.preventDefault(); setScale((s) => Math.min(3, Math.max(0.3, s - e.deltaY * 0.001))); };
   const onDown = (e: React.MouseEvent) => { drag.current = { x: e.clientX - tx, y: e.clientY - ty }; };
   const onMove = (e: React.MouseEvent) => { if (drag.current) { setTx(e.clientX - drag.current.x); setTy(e.clientY - drag.current.y); } };
@@ -113,7 +125,11 @@ export function NeuromapView() {
           <option value="creative">lens: creative</option>
         </select>
         <input className="nm-search" placeholder="search notes/tags…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <button className="nm-btn" onClick={() => { setTx(0); setTy(0); setScale(1); }}>reset</button>
+        <button className={`nm-btn${focusMode ? " on" : ""}`} onClick={() => setFocusMode((f) => !f)}
+          disabled={!sel} title={sel ? "dim everything but the selected node's neighborhood" : "select a node first"}>
+          ◎ Focus
+        </button>
+        <button className="nm-btn" onClick={() => { setTx(0); setTy(0); setScale(1); setFocusMode(false); }}>reset</button>
       </div>
 
       <div className="nm-body">
@@ -121,21 +137,37 @@ export function NeuromapView() {
           <g transform={`translate(${tx},${ty}) scale(${scale})`}>
             {edges.map((e, i) => {
               const a = posOf(e.source), b = posOf(e.target);
-              return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="rgba(212,175,55,0.1)" strokeWidth={0.7} />;
+              const hot = focusMode && hood && (e.source === sel || e.target === sel);
+              const cold = focusMode && hood && !hot;
+              return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                stroke={hot ? "rgba(212,175,55,0.45)" : "rgba(212,175,55,0.1)"}
+                strokeWidth={hot ? 1.1 : 0.7} opacity={cold ? 0.12 : 1} />;
             })}
+            {/* crystal-sphere nodes: radial highlight top-left = subtle 3D volume;
+                selected = double royal-gold ring, fresh = slow neural pulse */}
+            <defs>
+              <radialGradient id="nmSheen" cx="0.32" cy="0.28" r="0.85">
+                <stop offset="0%" stopColor="#fff" stopOpacity="0.55" />
+                <stop offset="35%" stopColor="#fff" stopOpacity="0.08" />
+                <stop offset="100%" stopColor="#000" stopOpacity="0.25" />
+              </radialGradient>
+            </defs>
             {nodes.filter(visible).map((n) => {
               const p = posOf(n.id);
               const r = 4 + Math.min(10, n.deg * 1.2);
               const on = n.id === sel;
-              const color = mode === "agents" && n.agent ? "#ec4899" : FOLDER_COLOR(n.folder);
+              const color = mode === "agents" && n.agent ? "#8d5cff" : FOLDER_COLOR(n.folder);
               return (
-                <g key={n.id} transform={`translate(${p.x},${p.y})`} onClick={() => setSel(n.id)} style={{ cursor: "pointer" }}>
-                  <circle r={r + (on ? 4 : 0)} fill={color} opacity={on ? 1 : 0.88}
-                    stroke={on ? "#fff" : "rgba(0,0,0,0.4)"} strokeWidth={on ? 2 : 0.8}
-                    style={{ filter: n.fresh ? `drop-shadow(0 0 7px ${color})` : "none" }}>
-                    {n.fresh && <animate attributeName="r" values={`${r};${r + 3};${r}`} dur="1.6s" repeatCount="indefinite" />}
+                <g key={n.id} transform={`translate(${p.x},${p.y})`} onClick={() => setSel(n.id)}
+                  style={{ cursor: "pointer" }} opacity={dimmed(n.id) ? 0.13 : 1}>
+                  {on && <circle r={r + 6.5} fill="none" stroke="#d4af37" strokeWidth={1} opacity={0.55} />}
+                  <circle r={r + (on ? 3 : 0)} fill={color} opacity={on ? 1 : 0.9}
+                    stroke={on ? "#d4af37" : "rgba(0,0,0,0.45)"} strokeWidth={on ? 1.6 : 0.8}
+                    style={{ filter: n.fresh ? `drop-shadow(0 0 7px ${color})` : on ? "drop-shadow(0 0 8px rgba(212,175,55,0.5))" : "none" }}>
+                    {n.fresh && <animate attributeName="r" values={`${r};${r + 3};${r}`} dur="3s" repeatCount="indefinite" />}
                   </circle>
-                  {(r > 7 || on) && <text y={r + 11} textAnchor="middle" fontSize={9} fill="#c9c2c8" style={{ pointerEvents: "none" }}>{n.title.slice(0, 20)}</text>}
+                  <circle r={r + (on ? 3 : 0)} fill="url(#nmSheen)" style={{ pointerEvents: "none" }} />
+                  {(r > 7 || on) && <text y={r + 12} textAnchor="middle" fontSize={9.5} fill="#b8afa8" style={{ pointerEvents: "none", paintOrder: "stroke", stroke: "rgba(6,3,6,0.85)", strokeWidth: 2.5 }}>{n.title.slice(0, 20)}</text>}
                 </g>
               );
             })}
@@ -158,6 +190,19 @@ export function NeuromapView() {
               <button className="nm-meta-x" onClick={() => setSel(null)}>✕</button>
             </div>
             <div className="nm-meta-type">{detail.folder}{detail.agent ? " · " + detail.agent : ""}</div>
+            {/* quick actions — all real: Focus dims to this node's hood, Related jumps
+                to the first linked note, Open raises the vault in Obsidian */}
+            <div className="nm-meta-actions">
+              <button className={`nm-act${focusMode ? " on" : ""}`} onClick={() => setFocusMode((f) => !f)}>◎ Focus</button>
+              <button className="nm-act" disabled={!detail.outlinks.length && !detail.backlinks.length}
+                onClick={() => { const t = detail.outlinks[0] || detail.backlinks[0]; if (t) setSel(t.id); }}>⇢ Related</button>
+              <button className="nm-act" title="opens the vault in Obsidian" onClick={() => window.dai.tools.action("open-obsidian")}>↗ Open</button>
+            </div>
+            <div className="nm-meta-counts">
+              <span><b>{detail.backlinks.length}</b> in</span>
+              <span><b>{detail.outlinks.length}</b> out</span>
+              <span><b>{Object.keys(detail.frontmatter).length}</b> meta</span>
+            </div>
             {Object.entries(detail.frontmatter).slice(0, 6).map(([k, v]) => (
               <div className="nm-meta-row" key={k}><span>{k}</span><b>{String(v).slice(0, 40)}</b></div>
             ))}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { IcRadar } from "../components/icons";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRadar, refreshRadar, human } from "../api";
 import type { RepoItem } from "../api";
@@ -43,7 +44,7 @@ export function RadarView() {
   return (
     <div className="radar-view">
       <div className="radar-head">
-        <span>📡 GITHUB RADAR</span>
+        <span className="radar-title"><IcRadar /> GITHUB RADAR</span>
         {data?.available && (
           <>
             <span>{data.scannedAt}</span>

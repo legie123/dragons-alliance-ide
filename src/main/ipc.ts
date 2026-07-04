@@ -17,6 +17,12 @@ import { gdriveStatus, gdriveAuth, gdriveSignout, gdriveSetClient, gdriveList, g
 import { gEnsureTree, gCreateFolder, gUpload, gSheetCreate, gSheetRead, gSheetUpdate, gFormCreate, gFormResponses, gMailSearch, gMailGet, gMailAttachmentToDrive } from "./google";
 import { metaList, metaUpsert, candidateCreate } from "./driveMeta";
 import { protonStatus, protonSetConfig } from "./proton";
+import { settingsGet, settingsSet } from "./settings";
+import { auditLog, auditList } from "./audit";
+import { permsGet, permsSet } from "./permissions";
+import { vaultStatus, vaultSync, vaultSetRemote } from "./vaultSync";
+import { gHealth } from "./google";
+import * as fsN from "node:fs";
 import { neoStatus, neoEnsure, neoTabs, neoOpen, neoNavigate, neoReload, neoBack, neoForward, neoAsk, neoClick, neoScroll, neoSnap } from "./neo";
 import type { NeuroGraphOpts, NeuroLayer } from "../shared/ipc";
 
@@ -33,7 +39,10 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
   // ---- fs ----
   ipcMain.handle(CH.FS_LIST, (_e, path) => fsList(path));
   ipcMain.handle(CH.FS_READ, (_e, path) => fsRead(path));
-  ipcMain.handle(CH.FS_WRITE, (_e, { path, content }) => fsWrite(path, content));
+  ipcMain.handle(CH.FS_WRITE, (_e, { path, content }) => {
+    auditLog("fs-write", String(path));
+    return fsWrite(path, content);
+  });
   ipcMain.handle(CH.FS_WALK, (_e, { root, limit }) => fsWalk(root, limit));
 
   // ---- data ----
@@ -58,8 +67,17 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
     if (id === "open-obsidian") {
       shell.openExternal("obsidian://open?vault=Antigravity-Brain");
     } else if (id === "open-graphify") {
-      const digest = path.join(HOME, "code", "dragons-alliance-ide", "graphify-out", "_GRAPHIFY_DIGEST.md");
-      execFile("open", [digest], () => shell.showItemInFolder(path.dirname(digest)));
+      const dir = path.join(HOME, "code", "dragons-alliance-ide", "graphify-out");
+      const digest = path.join(dir, "_GRAPHIFY_DIGEST.md");
+      if (fsN.existsSync(digest)) {
+        execFile("open", [digest]);
+        auditLog("graphify-digest-open", digest);
+      } else if (fsN.existsSync(dir)) {
+        shell.showItemInFolder(dir);
+        auditLog("graphify-digest-missing", `digest not found, opened output dir instead: ${dir}`);
+      } else {
+        auditLog("graphify-digest-missing", "no graphify-out dir yet — run the graphify pipeline first");
+      }
     }
   });
   ipcMain.handle(CH.HOST_INFO, () => ({
@@ -88,13 +106,13 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
 
   // ---- google drive (OAuth + REST all in main; renderer never sees tokens) ----
   ipcMain.handle(CH.GDRIVE_STATUS, () => gdriveStatus());
-  ipcMain.handle(CH.GDRIVE_AUTH, () => gdriveAuth());
+  ipcMain.handle(CH.GDRIVE_AUTH, () => { auditLog("google-auth", "OAuth sign-in started"); return gdriveAuth(); });
   ipcMain.handle(CH.GDRIVE_SIGNOUT, () => gdriveSignout());
   ipcMain.handle(CH.GDRIVE_SET_CLIENT, (_e, { clientId, clientSecret }) => gdriveSetClient(clientId, clientSecret));
   ipcMain.handle(CH.GDRIVE_LIST, (_e, folderId?: string) => gdriveList(folderId));
   ipcMain.handle(CH.GDRIVE_SEARCH, (_e, query: string) => gdriveSearch(query));
   ipcMain.handle(CH.GDRIVE_READ, (_e, fileId: string) => gdriveRead(fileId));
-  ipcMain.handle(CH.GDRIVE_BACKUP, () => gdriveBackup());
+  ipcMain.handle(CH.GDRIVE_BACKUP, () => { auditLog("drive-backup", "vault → Drive backup started"); return gdriveBackup(); });
 
   // ---- google workspace (folders / sheets / forms / gmail) ----
   ipcMain.handle(CH.GOOGLE_ENSURE_TREE, () => gEnsureTree());
@@ -117,6 +135,56 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
   // ---- proton mail (bridge probe) ----
   ipcMain.handle(CH.PROTON_STATUS, () => protonStatus());
   ipcMain.handle(CH.PROTON_SET_CONFIG, (_e, { host, port, user }) => protonSetConfig(host, port, user));
+
+  // ---- settings (local IDE configuration) ----
+  ipcMain.handle(CH.SETTINGS_GET, () => settingsGet());
+  ipcMain.handle(CH.SETTINGS_SET, (_e, patch) => {
+    const next = settingsSet(patch);
+    auditLog("settings", "settings updated: " + Object.keys(patch ?? {}).join(", "));
+    return next;
+  });
+
+  // ---- audit trail ----
+  ipcMain.handle(CH.AUDIT_LIST, (_e, limit?: number) => auditList(limit));
+  ipcMain.on(CH.AUDIT_LOG, (_e, { kind, detail }: { kind: string; detail: string }) => auditLog(kind, detail));
+
+  // ---- permissions (local team/role model) ----
+  ipcMain.handle(CH.PERMS_GET, () => permsGet());
+  ipcMain.handle(CH.PERMS_SET, (_e, state) => {
+    const next = permsSet(state);
+    auditLog("permissions", `permissions saved: ${next.members.length} member(s)`);
+    return next;
+  });
+
+  // ---- vault sync (git engine over the Obsidian vault) ----
+  ipcMain.handle(CH.VAULT_STATUS, () => vaultStatus());
+  ipcMain.handle(CH.VAULT_SYNC, async (_e, message?: string) => {
+    const res = await vaultSync(message);
+    auditLog("vault-sync", res.ok ? res.detail : "FAILED: " + (res.error ?? "unknown"));
+    return res;
+  });
+  ipcMain.handle(CH.VAULT_SET_REMOTE, async (_e, url: string) => {
+    const st = await vaultSetRemote(url);
+    auditLog("vault-remote", st.remote ? "origin → " + st.remote : "remote rejected/unchanged");
+    return st;
+  });
+
+  // ---- google per-service health ----
+  ipcMain.handle(CH.GOOGLE_HEALTH, () => gHealth());
+
+  // ---- screenshot (window capture → ~/Desktop) ----
+  ipcMain.handle(CH.SHOT_CAPTURE, async () => {
+    if (!mainWin || mainWin.isDestroyed()) return { ok: false, error: "no window" };
+    try {
+      const img = await mainWin.webContents.capturePage();
+      const file = path.join(os.homedir(), "Desktop", `dai-shot-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.png`);
+      fsN.writeFileSync(file, img.toPNG());
+      auditLog("screenshot", file);
+      return { ok: true, path: file };
+    } catch (e: any) {
+      return { ok: false, error: String(e?.message ?? e).slice(0, 200) };
+    }
+  });
 
   // ---- neo browser (Preview view — real Neo over CDP) ----
   ipcMain.handle(CH.NEO_STATUS, () => neoStatus());

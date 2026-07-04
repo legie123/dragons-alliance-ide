@@ -6,8 +6,8 @@ export type Cmd = {
   id: string;
   title: string;
   subtitle?: string;
-  category: "Action" | "View" | "Project" | "Terminal" | "File";
-  icon?: string;
+  category: "Action" | "View" | "Project" | "Terminal" | "File" | "Superpower" | "Admin";
+  icon?: import("react").ReactNode;
   run: () => void;
 };
 

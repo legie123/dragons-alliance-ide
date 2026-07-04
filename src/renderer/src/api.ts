@@ -80,14 +80,14 @@ export async function broadcast(data: string, enter: boolean, ids?: string[]) {
 }
 
 export type Term = { id: string; cmd: string; cwd: string };
-export type ServerTerm = Term & { is_master: boolean; mirror: boolean; alive: boolean };
+export type ServerTerm = Term & { is_master: boolean; mirror: boolean; mirror_scope: string; alive: boolean };
 
 export async function fetchTerms(): Promise<ServerTerm[]> {
   try {
     const terms: TermInfo[] = await window.dai.term.list();
     return terms.map((t) => ({
       id: t.id, cmd: t.cmd, cwd: t.cwd,
-      is_master: t.is_master, mirror: t.mirror, alive: t.alive,
+      is_master: t.is_master, mirror: t.mirror, mirror_scope: t.mirror_scope, alive: t.alive,
     }));
   } catch {
     return [];

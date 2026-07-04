@@ -15,9 +15,13 @@ import { CommandPalette } from "./components/CommandPalette";
 import { PhoneConnect } from "./components/PhoneConnect";
 import { CredentialsVault } from "./components/CredentialsVault";
 import { EcosystemBar } from "./components/EcosystemBar";
+import { GodModePanel } from "./components/GodModePanel";
+import { AdminPanel, type AdminTab } from "./components/AdminPanel";
 import { DragonEmblem } from "./components/DragonEmblem";
 import { registerProvider, Cmd } from "./palette";
-import { fetchHost, fetchProjects, fetchGDriveStatus } from "./api";
+import { fetchHost, fetchProjects, fetchGDriveStatus, broadcast } from "./api";
+import { IcCommand, IcCrown, IcGem, IcTerminal } from "./components/icons";
+import { CORE_SECTORS, MORE_CATEGORIES, STATUS_META } from "./registry";
 
 // Monaco is ~5MB — keep it out of the initial bundle, load only when Code opens.
 const CodeView = lazy(() => import("./views/CodeView").then((m) => ({ default: m.CodeView })));
@@ -25,21 +29,15 @@ const CodeView = lazy(() => import("./views/CodeView").then((m) => ({ default: m
 type View = "ide" | "agents" | "radar" | "code" | "metrics" | "neuromap" | "preview" | "research" | "creative" | "drive";
 export type OpenFileSignal = { path: string; n: number } | null;
 
-// Secondary views live in the "More ▾" dropdown so the topbar stays readable.
-const MORE_VIEWS: { id: View; label: string }[] = [
-  { id: "metrics", label: "📊 Metrics" },
-  { id: "radar", label: "📡 Radar" },
-  { id: "preview", label: "🖥 Preview" },
-  { id: "research", label: "🔎 Research" },
-  { id: "creative", label: "🎨 Creative" },
-];
-
 export default function App() {
   const [view, setView] = useState<View>("ide");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [vaultOpen, setVaultOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [godOpen, setGodOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminTab, setAdminTab] = useState<AdminTab>("settings");
 
   // Auto-open the secure credentials pop-up on first run when Google isn't set up.
   useEffect(() => {
@@ -57,6 +55,34 @@ export default function App() {
     const warm = () => { import("./views/CodeView"); };
     if ("requestIdleCallback" in window) (window as any).requestIdleCallback(warm);
     else setTimeout(warm, 2000);
+  }, []);
+
+  // command bus — dock/panels jump decks, open vault/phone/godmode/more from anywhere
+  useEffect(() => {
+    const goto = (e: Event) => setView((e as CustomEvent).detail as View);
+    const vault = () => setVaultOpen(true);
+    const phone = () => setPhoneOpen(true);
+    const god = () => setGodOpen(true);
+    const more = () => setMoreOpen(true);
+    const admin = (e: Event) => {
+      const t = (e as CustomEvent).detail as AdminTab | undefined;
+      if (t) setAdminTab(t);
+      setAdminOpen(true);
+    };
+    window.addEventListener("dai:admin", admin);
+    window.addEventListener("dai:goto", goto);
+    window.addEventListener("dai:vault", vault);
+    window.addEventListener("dai:phone", phone);
+    window.addEventListener("dai:godmode", god);
+    window.addEventListener("dai:more", more);
+    return () => {
+      window.removeEventListener("dai:admin", admin);
+      window.removeEventListener("dai:goto", goto);
+      window.removeEventListener("dai:vault", vault);
+      window.removeEventListener("dai:phone", phone);
+      window.removeEventListener("dai:godmode", god);
+      window.removeEventListener("dai:more", more);
+    };
   }, []);
 
   // ⌘K palette + ⌘J phone-connect — global toggles.
@@ -77,22 +103,31 @@ export default function App() {
     setView("code");
   };
 
-  // App-level palette commands: view switching + a couple of globals.
+  // App-level palette: core sectors, superpowers, terminal commands, admin.
+  // Every command runs for real; disabled ones state their reason in the subtitle.
   useEffect(() => {
     return registerProvider("app", (): Cmd[] => [
-      { id: "view:ide", title: "Go to Terminals", category: "View", icon: "⌘", run: () => setView("ide") },
-      { id: "view:agents", title: "Go to Agents (Mission-Control)", category: "View", icon: "🤖", run: () => setView("agents") },
-      { id: "view:radar", title: "Go to GitHub Radar", category: "View", icon: "📡", run: () => setView("radar") },
-      { id: "view:code", title: "Go to Code", category: "View", icon: "⌗", run: () => setView("code") },
-      { id: "view:metrics", title: "Go to Metrics", category: "View", icon: "📊", run: () => setView("metrics") },
-      { id: "view:neuromap", title: "Go to Neuromap", category: "View", icon: "🧠", run: () => setView("neuromap") },
-      { id: "view:preview", title: "Go to Preview", category: "View", icon: "🖥", run: () => setView("preview") },
-      { id: "view:research", title: "Go to Research", category: "View", icon: "🔎", run: () => setView("research") },
-      { id: "view:creative", title: "Go to Creative", category: "View", icon: "🎨", run: () => setView("creative") },
-      { id: "view:drive", title: "Go to Google Drive", category: "View", icon: "☁️", run: () => setView("drive") },
-      { id: "radar:refresh", title: "Radar: refresh scan (github-radar)", category: "Action", icon: "📡", run: () => { setView("radar"); window.dai.radar.refresh(); } },
-      { id: "action:phone", title: "Connect from phone (code + communicate)", subtitle: "⌘J", category: "Action", icon: "📱", run: () => setPhoneOpen(true) },
-      { id: "action:keys", title: "API keys & credentials (secure vault)", category: "Action", icon: "🔐", run: () => setVaultOpen(true) },
+      // core sectors (from the registry — one truth)
+      ...CORE_SECTORS.map((s): Cmd => ({
+        id: "view:" + s.id, title: "Open " + s.label, category: "View", icon: s.icon(), run: () => setView(s.id as View),
+      })),
+      // superpowers
+      { id: "sp:godmode", title: "Open GODMODE", subtitle: "supreme command center", category: "Superpower", icon: <IcCrown />, run: () => setGodOpen(true) },
+      { id: "sp:obsidian", title: "Activate Obsidian (open vault)", category: "Superpower", icon: <IcGem />, run: () => window.dai.tools.action("open-obsidian") },
+      { id: "sp:grapevine", title: "Open Grapevine Map", subtitle: "Neuromap", category: "Superpower", run: () => setView("neuromap") },
+      { id: "sp:cloud", title: "Launch Cloud (Claude) Session", category: "Superpower", run: () => { window.dai.term.create({ id: `pk${Date.now().toString(36)}`, cmd: "claude", cwd: "~" }); setView("agents"); } },
+      // terminal commands — broadcast to the visible workers (real keystrokes)
+      { id: "t:git-status", title: "Terminal: run git status on workers", category: "Terminal", icon: <IcTerminal />, run: () => { setView("ide"); broadcast("git status", true); } },
+      { id: "t:npm-dev", title: "Terminal: run npm run dev on workers", category: "Terminal", icon: <IcTerminal />, run: () => { setView("ide"); broadcast("npm run dev", true); } },
+      // support + admin
+      { id: "view:research", title: "Open Research (intelligence desk)", category: "View", run: () => setView("research") },
+      { id: "view:radar", title: "Open GitHub Radar + rescan", category: "View", run: () => { setView("radar"); window.dai.radar.refresh(); } },
+      { id: "action:phone", title: "Phone — code from your phone", subtitle: "⌘J", category: "Admin", run: () => setPhoneOpen(true) },
+      { id: "action:keys", title: "Keys — credentials vault", category: "Admin", run: () => setVaultOpen(true) },
+      { id: "action:audit", title: "Audit trail", subtitle: "local action log", category: "Admin", run: () => { setAdminTab("audit"); setAdminOpen(true); } },
+      { id: "action:settings", title: "Settings — IDE configuration", category: "Admin", run: () => { setAdminTab("settings"); setAdminOpen(true); } },
+      { id: "action:perms", title: "Permissions — team & roles", category: "Admin", run: () => { setAdminTab("perms"); setAdminOpen(true); } },
+      { id: "action:vaultsync", title: "Sync Obsidian vault", subtitle: "git snapshot + push/pull", category: "Admin", run: () => { setAdminTab("team"); setAdminOpen(true); } },
     ]);
   }, []);
 
@@ -118,6 +153,12 @@ export default function App() {
     <>
       <TitleBar />
       <div className="bg-vignette" />
+      {/* forge layer — VISIBLE atmosphere: royal dragon watermark, two aurora
+          smoke bands, rising embers. Pure CSS motion, killed by reduced-motion. */}
+      <div className="fx" aria-hidden>
+        <div className="fx-dragon"><DragonEmblem size={760} /></div>
+        {Array.from({ length: 11 }, (_, i) => <span key={i} className="fx-ember" style={{ ["--i" as any]: i }} />)}
+      </div>
       <div className="shell">
         <div className="topbar">
           <div className="brand">
@@ -128,36 +169,48 @@ export default function App() {
             </div>
           </div>
           <div className="viewswitch">
-            <button className={view === "ide" ? "active" : ""} onClick={() => setView("ide")}>⌘ Terminals</button>
-            <button className={view === "agents" ? "active" : ""} onClick={() => setView("agents")}>🤖 Agents</button>
-            <button className={view === "code" ? "active" : ""} onClick={() => setView("code")}>⌗ Code</button>
-            <button className={view === "neuromap" ? "active" : ""} onClick={() => setView("neuromap")}>🧠 Neuromap</button>
-            <button className={view === "drive" ? "active" : ""} onClick={() => setView("drive")}>☁️ Drive</button>
+            {/* Layer 1 — CORE SECTORS: the eight permanent decks, one truth (registry) */}
+            {CORE_SECTORS.map((s) => (
+              <button key={s.id} className={view === s.id ? "active" : ""}
+                onClick={() => setView(s.id as View)} title={s.label}>
+                {s.icon()} {s.label}
+              </button>
+            ))}
             <div className="more-wrap">
-              <button
-                className={MORE_VIEWS.some((v) => v.id === view) ? "active" : ""}
-                onClick={() => setMoreOpen((o) => !o)}
-                title="More views"
-              >
-                {MORE_VIEWS.find((v) => v.id === view)?.label ?? "More"} ▾
+              <button className={view === "radar" || view === "research" ? "active" : ""}
+                onClick={() => setMoreOpen((o) => !o)} title="support tools · admin · experimental">
+                More ▾
               </button>
               {moreOpen && (
                 <>
                   <div className="more-backdrop" onClick={() => setMoreOpen(false)} />
-                  <div className="more-menu">
-                    {MORE_VIEWS.map((v) => (
-                      <button key={v.id} className={view === v.id ? "active" : ""}
-                        onClick={() => { setView(v.id); setMoreOpen(false); }}>
-                        {v.label}
-                      </button>
+                  <div className="more-menu wide">
+                    {MORE_CATEGORIES.map((cat) => (
+                      <div key={cat.title} className="more-cat">
+                        <div className="more-head">{cat.title}</div>
+                        {cat.items.map((it) => it.run ? (
+                          <button key={it.id} className="more-item"
+                            onClick={() => { it.run!(); setMoreOpen(false); }}>
+                            <span className="more-item-label">{it.icon()} {it.label}
+                              {it.status && <em className="more-item-st" style={{ color: STATUS_META[it.status].color }}>{STATUS_META[it.status].label}</em>}
+                            </span>
+                            <span className="more-item-desc">{it.sub}</span>
+                          </button>
+                        ) : (
+                          <button key={it.id} className="more-item disabled" disabled title={it.disabledReason}>
+                            <span className="more-item-label">{it.icon()} {it.label}
+                              {it.status && <em className="more-item-st" style={{ color: STATUS_META[it.status].color }}>{STATUS_META[it.status].label}</em>}
+                            </span>
+                            <span className="more-item-desc">{it.disabledReason || it.sub}</span>
+                          </button>
+                        ))}
+                      </div>
                     ))}
                   </div>
                 </>
               )}
             </div>
-            <button className="phone-btn-top" onClick={() => setVaultOpen(true)} title="API keys &amp; credentials (secure, local)">🔐 Keys</button>
-            <button className="phone-btn-top" onClick={() => setPhoneOpen(true)} title="Connect from phone — code &amp; communicate (⌘J)">📱 Phone</button>
-            <button className="cmdk-btn" onClick={() => setPaletteOpen(true)} title="Command palette (⌘K)">⌘K</button>
+            <button className="cmdk-btn" onClick={() => setPaletteOpen(true)} title="Command palette (⌘K)"><IcCommand /> K</button>
           </div>
         </div>
 
@@ -193,6 +246,8 @@ export default function App() {
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} roots={roots} onOpenFile={goOpenFile} />
       <PhoneConnect open={phoneOpen} onClose={() => setPhoneOpen(false)} projects={projects} />
       <CredentialsVault open={vaultOpen} onClose={() => setVaultOpen(false)} />
+      <GodModePanel open={godOpen} onClose={() => setGodOpen(false)} onCommand={() => setPaletteOpen(true)} />
+      <AdminPanel open={adminOpen} tab={adminTab} onClose={() => setAdminOpen(false)} onTab={setAdminTab} />
     </>
   );
 }

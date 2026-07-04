@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { IcSigil, IcZap, IcFolder, IcSend } from "./icons";
 import { broadcast, Project } from "../api";
 
 const CHIPS = ["status?", "ce faci acum?", "continua", "commit + push", "ruleaza testele"];
@@ -55,19 +56,19 @@ export function MissionBar({ projects }: { projects: Project[] }) {
   return (
     <div className="mc-mission">
       <div className="mc-launch">
-        <button className="mc-launch-btn" onClick={() => setLaunchOpen((o) => !o)}>🜲 Launch claude ▾</button>
+        <button className="mc-launch-btn" onClick={() => setLaunchOpen((o) => !o)}><IcSigil /> Launch claude ▾</button>
         {launchOpen && (
           <div className="mc-launch-menu">
-            <div className="mc-launch-all" onClick={launchAll}>⚡ in ALL projects ({projects.length})</div>
+            <div className="mc-launch-all" onClick={launchAll}><IcZap /> in ALL projects ({projects.length})</div>
             <div className="mc-launch-sep">into project</div>
             {projects.map((p) => (
-              <div key={p.path} className="mc-launch-row" onClick={() => launch(p.path, p.name)}>📁 {p.name}</div>
+              <div key={p.path} className="mc-launch-row" onClick={() => launch(p.path, p.name)}><IcFolder /> {p.name}</div>
             ))}
           </div>
         )}
       </div>
 
-      <span className="mc-mission-label">📡 mission → all agents</span>
+      <span className="mc-mission-label"><IcSend /> mission → all agents</span>
       <div className="mc-chips">
         {CHIPS.map((c) => <button key={c} className="mc-chip" onClick={() => send(c)}>{c}</button>)}
       </div>

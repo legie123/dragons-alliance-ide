@@ -83,6 +83,23 @@ export const CH = {
   // proton mail (bridge probe)
   PROTON_STATUS: "proton:status",              // invoke() → ProtonStatus
   PROTON_SET_CONFIG: "proton:setconfig",       // invoke({host,port,user}) → ProtonStatus
+  // settings (local IDE configuration — ~/.config/dai/settings.json, 0600)
+  SETTINGS_GET: "settings:get",                // invoke() → DaiSettings
+  SETTINGS_SET: "settings:set",                // invoke(patch) → DaiSettings
+  // audit trail (append-only JSONL — ~/.config/dai/audit.jsonl, 0600)
+  AUDIT_LIST: "audit:list",                    // invoke(limit?) → AuditEvent[]
+  AUDIT_LOG: "audit:log",                      // send({kind,detail}) — renderer-side events
+  // permissions (local team/role model — ~/.config/dai/permissions.json)
+  PERMS_GET: "perms:get",                      // invoke() → PermissionsState
+  PERMS_SET: "perms:set",                      // invoke(state) → PermissionsState
+  // vault sync (git engine over the Obsidian vault)
+  VAULT_STATUS: "vaultsync:status",            // invoke() → VaultSyncStatus
+  VAULT_SYNC: "vaultsync:sync",                // invoke(message?) → VaultSyncResult
+  VAULT_SET_REMOTE: "vaultsync:setremote",     // invoke(url) → VaultSyncStatus
+  // google per-service health probe
+  GOOGLE_HEALTH: "google:health",              // invoke() → GServiceHealth[]
+  // screenshot (main captures the window → ~/Desktop)
+  SHOT_CAPTURE: "shot:capture",                // invoke() → ShotResult
 } as const;
 
 // ---- types ----
@@ -245,6 +262,46 @@ export type ProtonStatus = {
   hint: string;                   // honest next step ("install Proton Mail Bridge", …)
 };
 
+// ---- Settings (local IDE configuration) ----
+export type DaiSettings = {
+  terminalFontSize: number;      // xterm font px
+  sessionsActiveMin: number;     // metrics "active" window (minutes)
+  radarAutoRefresh: boolean;     // rescan radar when the view opens
+  auditRetentionDays: number;    // prune audit events older than this
+  vaultAutoSyncMin: number;      // 0 = manual sync only
+  defaultCwd: string;            // cwd for new terminals ("~" ok)
+};
+
+// ---- Audit trail (append-only local action log) ----
+export type AuditEvent = { ts: number; kind: string; detail: string; actor: string };
+
+// ---- Permissions (local team/role model — enforcement-ready) ----
+export type PermRole = "owner" | "editor" | "viewer";
+export type PermCapability =
+  | "terminals" | "broadcast" | "credentials" | "drive-write" | "vault-sync" | "emergency-stop";
+export type PermMember = { id: string; name: string; role: PermRole };
+export type PermissionsState = {
+  members: PermMember[];
+  matrix: Record<PermRole, PermCapability[]>;
+};
+
+// ---- Vault sync (git engine over the Obsidian vault) ----
+export type VaultSyncStatus = {
+  isRepo: boolean; branch: string | null; remote: string | null;
+  dirty: number; ahead: number; behind: number;
+  lastCommit: string | null; lastSyncTs: number | null;
+};
+export type VaultSyncResult = {
+  ok: boolean; committed: number; pushed: boolean; pulled: boolean;
+  detail: string; error?: string;
+};
+
+// ---- Google per-service health ----
+export type GServiceHealth = { service: string; ok: boolean; status: number | null; detail: string };
+
+// ---- Screenshot ----
+export type ShotResult = { ok: boolean; path?: string; error?: string };
+
 // ---- Neo browser (Preview) ----
 export type NeoStatus = { connected: boolean; browser?: string; error?: string };
 export type NeoTab = { index: number; targetId: string; title: string; url: string };
@@ -327,6 +384,7 @@ export interface DaiApi {
     mailSearch(q: string): Promise<GMailMsg[]>;
     mailGet(id: string): Promise<GMailMsg | null>;
     mailSaveAttachment(msgId: string, attId: string, filename: string, folderId: string): Promise<GDriveFile | null>;
+    health(): Promise<GServiceHealth[]>;
   };
   meta: {
     list(filter?: Partial<DriveMeta>): Promise<DriveMeta[]>;
@@ -337,6 +395,24 @@ export interface DaiApi {
     status(): Promise<ProtonStatus>;
     setConfig(host: string, port: number, user: string): Promise<ProtonStatus>;
   };
+  settings: {
+    get(): Promise<DaiSettings>;
+    set(patch: Partial<DaiSettings>): Promise<DaiSettings>;
+  };
+  audit: {
+    list(limit?: number): Promise<AuditEvent[]>;
+    log(kind: string, detail: string): void;
+  };
+  perms: {
+    get(): Promise<PermissionsState>;
+    set(state: PermissionsState): Promise<PermissionsState>;
+  };
+  vaultSync: {
+    status(): Promise<VaultSyncStatus>;
+    sync(message?: string): Promise<VaultSyncResult>;
+    setRemote(url: string): Promise<VaultSyncStatus>;
+  };
+  shot: { capture(): Promise<ShotResult> };
 }
 
 declare global {

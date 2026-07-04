@@ -4,6 +4,7 @@
 // here is also a node in Neuromap (research lens). Replaces the earlier
 // untrusted-external-tool scaffold with data we already own.
 import { useEffect, useMemo, useState } from "react";
+import { IcSearch } from "../components/icons";
 import { useQuery } from "@tanstack/react-query";
 
 const RESEARCH_DIR = "Documents/Obsidian/Antigravity-Brain/07_RESEARCH";
@@ -60,7 +61,7 @@ export function ResearchView() {
   return (
     <div className="rs-view">
       <div className="rs-bar">
-        <span className="rs-title">🔎 RESEARCH</span>
+        <span className="rs-title"><IcSearch /> RESEARCH</span>
         <span className="rs-tool">07_RESEARCH · Antigravity-Brain</span>
         <span className="rs-status live">● {notes.length} notes{isFetching ? " · scanning…" : ""}</span>
         <input className="rs-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="search title, tag, content…" spellCheck={false} />

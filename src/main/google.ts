@@ -5,9 +5,9 @@
 // the REST API (UI/Apps-Script only) — we expose the honest manual step instead.
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { api } from "./gdrive.js";
+import { api, gdriveStatus } from "./gdrive.js";
 import type {
-  GDriveFile, GTreeResult, GSheetData, GFormInfo, GFormResponse, GMailMsg,
+  GDriveFile, GTreeResult, GSheetData, GFormInfo, GFormResponse, GMailMsg, GServiceHealth,
 } from "../shared/ipc.js";
 
 const FOLDER_MIME = "application/vnd.google-apps.folder";
@@ -146,6 +146,45 @@ export async function gFormResponses(formId: string): Promise<GFormResponse[]> {
     }
     return { responseId: resp.responseId, submittedAt: resp.lastSubmittedTime ?? "", answers };
   });
+}
+
+// ---- per-service health probe ----
+// Cheap authenticated calls per API. Drive/Gmail have real "about me" endpoints;
+// Sheets/Forms have no list endpoint, so we probe a known-missing id: a 404
+// proves the API is enabled + the token works, a 403 means SERVICE_DISABLED.
+const HEALTH_SERVICES = ["Drive", "Sheets", "Forms", "Gmail"];
+
+export async function gHealth(): Promise<GServiceHealth[]> {
+  // Skip network probes entirely when we already know why they'd fail — gives
+  // a specific, actionable reason instead of a blanket "not signed in" for
+  // both "never configured" and "configured but no token yet".
+  const status = gdriveStatus();
+  if (!status.configured) {
+    return HEALTH_SERVICES.map((service) => ({
+      service, ok: false, status: null,
+      detail: "not configured — paste OAuth client id/secret in Credentials",
+    }));
+  }
+  if (!status.signedIn) {
+    return HEALTH_SERVICES.map((service) => ({
+      service, ok: false, status: null,
+      detail: "configured, not signed in — click Sign in with Google",
+    }));
+  }
+  const probe = async (service: string, url: string, okStatuses: number[]): Promise<GServiceHealth> => {
+    const r = await api(url);
+    if (!r) return { service, ok: false, status: null, detail: "token refresh failed — sign in again" };
+    if (okStatuses.includes(r.status)) return { service, ok: true, status: r.status, detail: "reachable · token accepted" };
+    if (r.status === 403) return { service, ok: false, status: 403, detail: "API disabled or missing scope (enable in Cloud Console)" };
+    if (r.status === 401) return { service, ok: false, status: 401, detail: "token rejected — sign in again" };
+    return { service, ok: false, status: r.status, detail: `unexpected HTTP ${r.status}` };
+  };
+  return Promise.all([
+    probe("Drive", "https://www.googleapis.com/drive/v3/about?fields=user", [200]),
+    probe("Sheets", "https://sheets.googleapis.com/v4/spreadsheets/dai-health-probe-000", [404]),
+    probe("Forms", "https://forms.googleapis.com/v1/forms/dai-health-probe-000", [404]),
+    probe("Gmail", "https://gmail.googleapis.com/gmail/v1/users/me/profile", [200]),
+  ]);
 }
 
 // Honest, because the REST API cannot do it:

@@ -1,6 +1,7 @@
 import { memo, useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Project, TYPE_ICON, gradeColor, human } from "../api";
+import { Project, gradeColor, human } from "../api";
+import { ProjIcon } from "./icons";
 
 // Custom display names ("aliases") for projects — persisted locally, never touches
 // the real folder. Double-click a project name to rename it.
@@ -76,7 +77,7 @@ export const ProjectRail = memo(function ProjectRail({
               animate={{ opacity: 1, x: 0 }}
             >
               <div className="pr-row1">
-                <span className="pr-ic">{TYPE_ICON[p.type] || "📁"}</span>
+                <span className="pr-ic"><ProjIcon type={p.type} /></span>
                 {isEditing ? (
                   <input
                     className="pr-rename"

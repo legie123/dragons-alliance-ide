@@ -77,54 +77,68 @@ export async function probeTools(): Promise<ToolStatus[]> {
   const ruvFresh = minsAgo(newestMtime(ruvectorDbs)) < 10;
   const vaultFresh = minsAgo(newestMtime([vault])) < 30;
 
+  // IGNITE grammar — every chip fires its superpower (executed by EcosystemBar):
+  //   view:<name>            → jump to that command deck
+  //   term:<cmd>@<abs cwd>   → deploy a terminal (shell|claude) in cwd
+  //   arm:<typed cmd>@<cwd>  → deploy a shell + pre-type the command (user presses ⏎)
+  //   shell:<id>             → main-process action (open-obsidian / open-graphify)
+  //   vault:                 → open the Keys credentials vault
+  const codeDir = (p: string) => path.join(HOME, "code", p);
   const tools: ToolStatus[] = [
     {
       id: "obsidian", name: "Obsidian", icon: "🧠",
       status: obsRunning ? "live" : exists(vault) ? "ready" : "off",
       detail: obsRunning ? "brain vault open" + (vaultFresh ? " · synced recently" : "") : exists(vault) ? "vault present (app closed)" : "no vault",
-      action: exists(vault) ? "open-obsidian" : undefined,
+      action: exists(vault) ? "shell:open-obsidian" : undefined,
     },
     {
       id: "graphify", name: "Graphify", icon: "🕸️",
       status: graphPid && graphPid !== "-" ? "live" : graphPid === "-" ? "ready" : "off",
       detail: graphPid && graphPid !== "-" ? `launchd agent live (pid ${graphPid})` : graphPid === "-" ? "loaded, idle" : "not loaded",
-      action: exists(graphifyOut) ? "open-graphify" : undefined,
+      action: exists(graphifyOut) ? "shell:open-graphify" : undefined,
     },
     {
       id: "ruflo", name: "Ruflo", icon: "🤖",
       status: ruvFresh ? "live" : exists(ruvectorDbs[0]) || exists(ruvectorDbs[1]) ? "ready" : "off",
-      detail: ruvFresh ? "HNSW memory active" : "agents + memory ready",
+      detail: ruvFresh ? "HNSW memory active" : "memory + agents — click to ignite",
+      action: `arm:ruflo status@${HOME}`,
     },
     {
       id: "agents", name: "Claude Agents", icon: "🜲",
       status: liveAgents > 0 ? "live" : sessions.length > 0 ? "ready" : "off",
-      detail: liveAgents > 0 ? `${liveAgents} live · ${sessions.length} total` : `${sessions.length} sessions`,
+      detail: liveAgents > 0 ? `${liveAgents} live · ${sessions.length} total — open mission control` : `${sessions.length} sessions — open mission control`,
+      action: "view:agents",
     },
     {
       id: "godmode", name: "GODMODE", icon: "🜲",
-      status: exists(path.join(HOME, "code", "godmode-lab")) ? "ready" : "off",
-      detail: "3D / web3 / perf graphics stack",
+      status: exists(codeDir("godmode-lab")) ? "ready" : "off",
+      detail: "3D / web3 / perf stack — click: claude in godmode-lab",
+      action: exists(codeDir("godmode-lab")) ? `term:claude@${codeDir("godmode-lab")}` : undefined,
     },
     {
       id: "radar", name: "GitHub Radar", icon: "📡",
-      status: exists(path.join(HOME, "code", "github-radar")) ? "ready" : "off",
-      detail: "hot repo hunter → Obsidian",
+      status: exists(codeDir("github-radar")) ? "ready" : "off",
+      detail: "hot repo hunter — click: scan + open",
+      action: exists(codeDir("github-radar")) ? "view:radar" : undefined,
     },
     {
       id: "omnigent", name: "Omnigent", icon: "🐍",
       status: exists(path.join(HOME, ".local", "bin", "omnigent")) ? "ready" : "off",
-      detail: "meta-orchestrator (claude/codex/hermes)",
+      detail: "meta-orchestrator — click to ignite",
+      action: exists(path.join(HOME, ".local", "bin", "omnigent")) ? `arm:omnigent@${HOME}` : undefined,
     },
     {
       id: "leanctx", name: "lean-ctx", icon: "⚡",
       status: exists(path.join(HOME, ".lean-ctx")) ? "ready" : "off",
-      detail: "context engineering layer",
+      detail: "context engineering — click to ignite",
+      action: exists(path.join(HOME, ".lean-ctx")) ? `arm:lean-ctx stats@${HOME}` : undefined,
     },
     // ---- expansion sectors ----
     {
       id: "neuromap", name: "Neuromap", icon: "🧠",
       status: "live",
-      detail: "living graph of the ecosystem (real local data)",
+      detail: "living graph of the ecosystem — open the map",
+      action: "view:neuromap",
     },
     {
       id: "google", name: "Google API", icon: "🗂️",
@@ -135,27 +149,32 @@ export async function probeTools(): Promise<ToolStatus[]> {
           return c.refreshToken ? "live" : (c.clientId && c.clientSecret ? "ready" : "needs");
         } catch { return "needs"; }
       })(),
-      detail: "Drive · Sheets · Forms · Gmail (OAuth in ☁️ Drive → Config)",
+      detail: "Drive · Sheets · Forms · Gmail — click: credentials",
+      action: "vault:",
     },
     {
       id: "obsidian-team", name: "Obsidian Team", icon: "👥",
-      status: obsRunning ? "needs" : "needs",
-      detail: "team-mode sync → Neuromap (needs config)",
+      status: "needs",
+      detail: "team-mode sync — open Neuromap shared lens",
+      action: "view:neuromap",
     },
     {
       id: "preview", name: "Preview Engine", icon: "🖥️",
       status: "ready",
-      detail: "in-IDE live preview (provide dev-server url)",
+      detail: "in-IDE live preview — open",
+      action: "view:preview",
     },
     {
       id: "obscura", name: "Obscura", icon: "🔎",
-      status: exists(path.join(HOME, "code", "obscura")) ? "ready" : "needs",
-      detail: "research tool — untrusted external repo, needs review",
+      status: exists(codeDir("obscura")) ? "ready" : "needs",
+      detail: "research desk — open",
+      action: "view:research",
     },
     {
       id: "creative", name: "Creative APIs", icon: "🎨",
       status: exists(path.join(HOME, ".config", "dai", "creative.json")) ? "ready" : "needs",
-      detail: "Higgsfield/Canva/Nanobanan… (needs API keys)",
+      detail: "generation studio — open",
+      action: "view:creative",
     },
   ];
 
