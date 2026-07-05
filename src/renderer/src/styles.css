@@ -1560,6 +1560,38 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 .nm-meta-counts b { color: var(--gold-soft); font-size: 12px; margin-right: 3px; }
 .nm-search:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 1px rgba(67,224,192,0.25); }
 
+/* team-ops toolbar: wraps so the extra control groups never overflow the row */
+.nm-toolbar { flex-wrap: wrap; row-gap: 7px; }
+.nm-seg.pending { border-style: dashed; opacity: 0.82; }
+.nm-seg.pending::after { content: "·"; margin-left: 3px; color: var(--accent-ember); }
+
+/* SMART LABELS — screen-space overlay, constant size, legible at every zoom */
+.nm-labels { pointer-events: none; }
+.nm-label { font-size: 11px; fill: #cfc4b8; paint-order: stroke;
+  stroke: rgba(6,3,6,0.9); stroke-width: 3px; stroke-linejoin: round; font-weight: 500; }
+.nm-label.sel { fill: #f4e3a8; font-weight: 750; }
+.nm-label.hov { fill: #ffffff; font-weight: 650; }
+
+/* honest team banner + task empty overlay */
+.nm-banner { position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px;
+  background: rgba(20,12,20,0.92); backdrop-filter: blur(8px); border: 1px solid rgba(141,92,255,0.35);
+  border-radius: 10px; font-size: 11.5px; color: #d7c9ef; box-shadow: var(--shadow-2); z-index: 6; }
+.nm-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 5; }
+
+/* diagnostics panel — real counts, no invented numbers */
+.nm-diag { position: absolute; bottom: 12px; left: 12px; width: 210px;
+  background: rgba(12,8,12,0.92); backdrop-filter: blur(10px); border: 1px solid rgba(67,224,192,0.3);
+  border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow-2), 0 0 20px rgba(67,224,192,0.08); z-index: 6; }
+.nm-diag-head { display: flex; align-items: center; gap: 6px; font-size: 9.5px; letter-spacing: 0.12em;
+  color: var(--teal); margin-bottom: 7px; }
+.nm-diag-row { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; padding: 2px 0;
+  color: var(--faint); }
+.nm-diag-row b { color: #e9dcae; font-variant-numeric: tabular-nums; }
+.nm-diag-vault { margin-top: 6px; font-size: 9.5px; color: var(--muted); word-break: break-all;
+  border-top: 1px solid rgba(255,255,255,0.06); padding-top: 6px; }
+.nm-diag-rec { margin-top: 6px; font-size: 10px; line-height: 1.4; color: var(--teal); }
+
 /* ==================== MORE LAUNCHER: instrument rows ==================== */
 .more-head { font-size: 9px; font-weight: 800; letter-spacing: 0.16em; color: var(--faint); padding: 4px 10px 6px; }
 .more-item { display: flex !important; flex-direction: column; align-items: flex-start !important; gap: 1px !important;
