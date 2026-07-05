@@ -1,0 +1,110 @@
+/* ============================================================================
+   DRAGONS ALLIANCE — TOKEN NAMESPACE (UX Evolution layer)
+   Loaded AFTER styles.css. Every token below is either an alias of a legacy
+   var (zero visual change on landing) or a net-new namespace token.
+   Legacy vars stay authoritative for old rules; NEW code consumes ONLY these.
+   ========================================================================== */
+:root {
+  /* ---- core backgrounds ---- */
+  --bg-root: var(--bg);
+  --bg-shell: var(--bg-2);
+  --bg-panel: var(--surface);
+  --bg-panel-elevated: var(--surface-2);
+  --bg-panel-hover: var(--surface-3);
+  --bg-command: #0d0710;
+  --bg-tooltip: #1a0f18;
+
+  /* ---- brand (aliases; canonical hues live in styles.css :root) ---- */
+  --brand-obsidian: var(--bg);
+  --brand-burgundy: var(--burgundy-2);
+  --brand-crimson: #7f1d3a;
+  --brand-violet-smoke: var(--purple-smoke-2);
+  --brand-gold: var(--accent);
+  --brand-gold-soft: var(--gold-soft);
+  --brand-ember: var(--accent-ember);
+  --brand-dragon-glow: rgba(212, 175, 55, 0.45);
+
+  /* ---- borders ---- */
+  --border-subtle: var(--panel-border);
+  --border-strong: var(--panel-border-strong);
+  --border-gold: rgba(212, 175, 55, 0.55);
+  --border-danger: rgba(244, 63, 94, 0.5);
+  --border-success: rgba(67, 224, 192, 0.45);
+  --border-interactive: rgba(212, 175, 55, 0.35);
+
+  /* ---- text ---- */
+  --text-primary: var(--text);
+  --text-secondary: var(--muted);
+  --text-muted: var(--faint);
+  --text-gold: var(--gold-soft);
+  --text-danger: var(--st-error);
+  --text-success: var(--teal);
+
+  /* ---- sector accents (single source; propagated via [data-sector]) ---- */
+  --sector-terminal: var(--accent);       /* gold ops */
+  --sector-agents: #7c6cf0;               /* blue-violet mission */
+  --sector-code: #5fae7f;                 /* graphite green engineering */
+  --sector-neuromap: var(--teal);         /* crystal intelligence */
+  --sector-drive: var(--blue);            /* cloud vault */
+  --sector-metrics: var(--gold-soft);     /* observability */
+  --sector-preview: #b8afa8;              /* silver screen */
+  --sector-creative: var(--accent-ember); /* ember studio */
+
+  /* ---- operational states (pair with text, never color-only) ---- */
+  --state-live: var(--st-live);
+  --state-idle: var(--muted);
+  --state-error: var(--st-error);
+  --state-setup: var(--accent-ember);
+  --state-checking: var(--orange);
+  --state-disabled: var(--faint);
+
+  /* ---- effects ---- */
+  --shadow-panel: var(--shadow-1);
+  --shadow-command: var(--shadow-2);
+  --shadow-gold: var(--glow-gold);
+  --shadow-violet: 0 0 14px rgba(141, 92, 255, 0.28);
+  --shadow-ember: var(--glow-ember);
+  --shadow-teal: var(--glow-teal);
+  --focus-ring: 0 0 0 2px rgba(212, 175, 55, 0.55);
+  --hover-glow: 0 0 0 1px var(--panel-border-strong);
+  --active-glow: 0 0 12px var(--brand-dragon-glow);
+
+  /* ---- motion ---- */
+  --ease-premium: var(--ease-out);
+  --duration-fast: var(--dur-fast);
+  --duration-normal: var(--dur-med);
+  --duration-slow: var(--dur-slow);
+
+  /* ---- shell metrics (rails) ---- */
+  --rail-left-w: 196px;
+  --rail-right-w: 220px;
+  --statusbar-h: 26px;
+}
+
+/* ---- Appearance preferences (set on <html> by useAppearance) ------------ */
+/* motion: reduced — mirrors the prefers-reduced-motion kill-switch */
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+:root[data-motion="reduced"] .fx-ember { display: none; }
+
+/* density: compact — tighter chrome without touching content panes */
+:root[data-density="compact"] {
+  --rail-left-w: 168px;
+  --rail-right-w: 196px;
+  --statusbar-h: 22px;
+}
+
+/* glow: off — kill decorative glows, keep functional focus ring */
+:root[data-glow="off"] {
+  --shadow-gold: none;
+  --shadow-violet: none;
+  --shadow-ember: none;
+  --shadow-teal: none;
+  --active-glow: none;
+  --brand-dragon-glow: transparent;
+}

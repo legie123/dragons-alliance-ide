@@ -24,11 +24,11 @@ import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects, fetchGDriveStatus, broadcast } from "./api";
 import { IcCommand, IcCrown, IcGem, IcSearch, IcTerminal } from "./components/icons";
 import { CORE_SECTORS, MORE_CATEGORIES, STATUS_META } from "./registry";
+import { isView, type View } from "./views";
 
 // Monaco is ~5MB — keep it out of the initial bundle, load only when Code opens.
 const CodeView = lazy(() => import("./views/CodeView").then((m) => ({ default: m.CodeView })));
 
-type View = "ide" | "agents" | "radar" | "code" | "metrics" | "neuromap" | "preview" | "research" | "creative" | "drive";
 export type OpenFileSignal = { path: string; n: number } | null;
 
 export default function App() {
@@ -62,7 +62,7 @@ export default function App() {
 
   // command bus — dock/panels jump decks, open vault/phone/godmode/more from anywhere
   useEffect(() => {
-    const goto = (e: Event) => setView((e as CustomEvent).detail as View);
+    const goto = (e: Event) => { const v = (e as CustomEvent).detail; if (isView(v)) setView(v); };
     const vault = () => setVaultOpen(true);
     const phone = () => setPhoneOpen(true);
     const god = () => setGodOpen(true);
