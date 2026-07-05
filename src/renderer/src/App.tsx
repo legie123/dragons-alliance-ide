@@ -20,11 +20,15 @@ import { AdminPanel, type AdminTab } from "./components/AdminPanel";
 import { InteractiveGuide } from "./components/InteractiveGuide";
 import { DragonEmblem } from "./components/DragonEmblem";
 import dragonMark from "./assets/dragon-mark.png";
+import { LeftRail } from "./components/shell/LeftRail";
+import { TopBar } from "./components/shell/TopBar";
+import { RightRail } from "./components/shell/RightRail";
+import { StatusBar } from "./components/shell/StatusBar";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects, fetchGDriveStatus, broadcast } from "./api";
-import { IcCommand, IcCrown, IcGem, IcSearch, IcTerminal } from "./components/icons";
-import { CORE_SECTORS, MORE_CATEGORIES, STATUS_META } from "./registry";
-import { isView, type View } from "./views";
+import { IcCrown, IcGem, IcSearch, IcTerminal } from "./components/icons";
+import { CORE_SECTORS } from "./registry";
+import { isView, SECTOR_FOR_VIEW, type View } from "./views";
 
 // Monaco is ~5MB — keep it out of the initial bundle, load only when Code opens.
 const CodeView = lazy(() => import("./views/CodeView").then((m) => ({ default: m.CodeView })));
@@ -88,13 +92,17 @@ export default function App() {
     };
   }, []);
 
-  // ⌘K palette + ⌘J phone-connect — global toggles.
+  // ⌘K palette + ⌘J phone-connect + ⌘1-8 sector jumps — global toggles.
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return;
       const k = e.key.toLowerCase();
       if (k === "k") { e.preventDefault(); setPaletteOpen((o) => !o); }
       else if (k === "j") { e.preventDefault(); setPhoneOpen((o) => !o); }
+      else if (k >= "1" && k <= "8" && !e.shiftKey && !e.altKey) {
+        const s = CORE_SECTORS[Number(k) - 1];
+        if (s) { e.preventDefault(); setView(s.id); }
+      }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
@@ -153,6 +161,8 @@ export default function App() {
     return host.projects.filter((p) => p !== host.home);
   }, [host]);
 
+  const sector = SECTOR_FOR_VIEW[view];
+
   return (
     <>
       <TitleBar />
@@ -164,94 +174,59 @@ export default function App() {
         <div className="fx-dragon"><img className="fx-dragon-mark" src={dragonMark} alt="" draggable={false} /></div>
         {Array.from({ length: 11 }, (_, i) => <span key={i} className="fx-ember" style={{ ["--i" as any]: i }} />)}
       </div>
-      <div className="shell">
-        <div className="topbar">
-          <div className="brand">
-            <span className="glyph"><DragonEmblem size={34} /></span>
-            <div>
-              <h1>Dragons Alliance IDE</h1>
-              <div className="sub">Command Center · AI Operations</div>
-            </div>
-          </div>
-          <div className="viewswitch">
-            {/* Layer 1 — CORE SECTORS: the eight permanent decks, one truth (registry) */}
-            {CORE_SECTORS.map((s) => (
-              <button key={s.id} className={view === s.id ? "active" : ""}
-                onClick={() => setView(s.id as View)} title={s.label}>
-                {s.icon()} {s.label}
-              </button>
-            ))}
-            <div className="more-wrap">
-              <button className={view === "radar" || view === "research" ? "active" : ""}
-                onClick={() => setMoreOpen((o) => !o)} title="support tools · admin · experimental">
-                More ▾
-              </button>
-              {moreOpen && (
-                <>
-                  <div className="more-backdrop" onClick={() => setMoreOpen(false)} />
-                  <div className="more-menu wide">
-                    {MORE_CATEGORIES.map((cat) => (
-                      <div key={cat.title} className="more-cat">
-                        <div className="more-head">{cat.title}</div>
-                        {cat.items.map((it) => it.run ? (
-                          <button key={it.id} className="more-item"
-                            onClick={() => { it.run!(); setMoreOpen(false); }}>
-                            <span className="more-item-label">{it.icon()} {it.label}
-                              {it.status && <em className="more-item-st" style={{ color: STATUS_META[it.status].color }}>{STATUS_META[it.status].label}</em>}
-                            </span>
-                            <span className="more-item-desc">{it.sub}</span>
-                          </button>
-                        ) : (
-                          <button key={it.id} className="more-item disabled" disabled title={it.disabledReason}>
-                            <span className="more-item-label">{it.icon()} {it.label}
-                              {it.status && <em className="more-item-st" style={{ color: STATUS_META[it.status].color }}>{STATUS_META[it.status].label}</em>}
-                            </span>
-                            <span className="more-item-desc">{it.disabledReason || it.sub}</span>
-                          </button>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-            <button className="cmdk-btn" onClick={() => setPaletteOpen(true)} title="Command palette (⌘K)"><IcCommand /> K</button>
-            <button className="guide-btn" onClick={() => setGuideOpen(true)} title="Interactive sector guide"><IcSearch /> Guide</button>
-          </div>
-        </div>
+      <div className="shell" data-sector={sector}>
+        <TopBar
+          onPalette={() => setPaletteOpen(true)}
+          onSettings={() => { setAdminTab("settings"); setAdminOpen(true); }}
+        />
 
         <EcosystemBar />
 
-        <div style={{ display: view === "ide" ? "flex" : "none", flex: 1, minHeight: 0, flexDirection: "column" }}>
-          <TerminalsView />
-        </div>
-        {view === "agents" && (
-          <div className="mc-shell">
-            <AgentsView onOpenFile={goOpenFile} />
-            <MissionBar projects={projects} />
-          </div>
-        )}
-        {view === "radar" && <RadarView />}
-        {view === "code" && (
-          <Suspense fallback={
-            <div className="empty brand-loading">
-              <DragonEmblem size={44} />
-              <span>loading editor…</span>
-            </div>
-          }>
-            <CodeView openFile={openFile} />
-          </Suspense>
-        )}
-        {view === "metrics" && <MetricsView />}
-        {view === "neuromap" && <NeuromapView />}
-        {view === "preview" && <PreviewView />}
-        {view === "research" && <ResearchView />}
-        {view === "creative" && <CreativeView />}
-        {view === "drive" && <DriveView />}
+        <div className={`shell-main${sector === "support" ? " no-right" : ""}`}>
+          <LeftRail
+            view={view}
+            onView={setView}
+            moreOpen={moreOpen}
+            onMoreToggle={setMoreOpen}
+            onGuide={() => setGuideOpen(true)}
+            onSettings={() => { setAdminTab("settings"); setAdminOpen(true); }}
+          />
 
-        <div className="footer">
-          native pty-host · agent mission-control · ⌘K command palette
+          <main className="shell-view">
+            <div style={{ display: view === "ide" ? "flex" : "none", flex: 1, minHeight: 0, flexDirection: "column" }}>
+              <TerminalsView />
+            </div>
+            {view === "agents" && (
+              <div className="mc-shell">
+                <AgentsView onOpenFile={goOpenFile} />
+                <MissionBar projects={projects} />
+              </div>
+            )}
+            {view === "radar" && <RadarView />}
+            {view === "code" && (
+              <Suspense fallback={
+                <div className="empty brand-loading">
+                  <DragonEmblem size={44} />
+                  <span>loading editor…</span>
+                </div>
+              }>
+                <CodeView openFile={openFile} />
+              </Suspense>
+            )}
+            {view === "metrics" && <MetricsView />}
+            {view === "neuromap" && <NeuromapView />}
+            {view === "preview" && <PreviewView />}
+            {view === "research" && <ResearchView />}
+            {view === "creative" && <CreativeView />}
+            {view === "drive" && <DriveView />}
+          </main>
+
+          {sector !== "support" && (
+            <RightRail sector={sector} onHelp={() => setGuideOpen(true)} />
+          )}
         </div>
+
+        <StatusBar view={view} />
       </div>
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} roots={roots} onOpenFile={goOpenFile} />

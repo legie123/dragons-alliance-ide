@@ -10,6 +10,7 @@ dist/
 # generated
 graphify-out/
 .claude-flow/
+storybook-static/
 
 # env & secrets
 .env*

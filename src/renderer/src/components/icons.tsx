@@ -101,6 +101,56 @@ export const IcCube = (p: { size?: number }) => (
   <I {...p}><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" /><path d="M12 12l8-4.5M12 12L4 7.5M12 12v9" /></I>
 );
 
+/* ---- action / status glyphs (UX evolution batch — same stroke family) ---- */
+export const IcPlay = (p: { size?: number }) => (
+  <I {...p}><path d="M8 5.5l10 6.5-10 6.5v-13z" /></I>
+);
+export const IcStop = (p: { size?: number }) => (
+  <I {...p}><rect x="6.5" y="6.5" width="11" height="11" rx="1.5" /></I>
+);
+export const IcRefresh = (p: { size?: number }) => (
+  <I {...p}><path d="M19.5 12a7.5 7.5 0 11-2.2-5.3M19.5 3.5v3.6h-3.6" /></I>
+);
+export const IcSave = (p: { size?: number }) => (
+  <I {...p}><path d="M5 4h11l3 3v13H5V4z" /><path d="M8 4v5h7V4M8 20v-6h8v6" /></I>
+);
+export const IcCamera = (p: { size?: number }) => (
+  <I {...p}><path d="M4 8h3.5l1.8-2.5h5.4L16.5 8H20v11H4V8z" /><circle cx="12" cy="13" r="3.2" /></I>
+);
+export const IcExternal = (p: { size?: number }) => (
+  <I {...p}><path d="M10 5H5v14h14v-5M14 4h6v6M20 4l-9 9" /></I>
+);
+export const IcLock = (p: { size?: number }) => (
+  <I {...p}><rect x="5.5" y="10.5" width="13" height="9.5" rx="2" /><path d="M8.5 10.5V7.8a3.5 3.5 0 017 0v2.7" /></I>
+);
+export const IcClip = (p: { size?: number }) => (
+  <I {...p}><path d="M8.5 11.5l7-7a3.2 3.2 0 014.5 4.5l-9 9a5 5 0 01-7-7l8.5-8.5" /></I>
+);
+export const IcUser = (p: { size?: number }) => (
+  <I {...p}><circle cx="12" cy="8.5" r="3.4" /><path d="M5.5 20a6.5 6.5 0 0113 0" /></I>
+);
+export const IcCheck = (p: { size?: number }) => (
+  <I {...p}><path d="M4.5 12.5l5 5 10-11" /></I>
+);
+export const IcAlert = (p: { size?: number }) => (
+  <I {...p}><path d="M12 4L2.8 19.5h18.4L12 4z" /><path d="M12 10v4.2" /><circle cx="12" cy="16.8" r="0.5" fill="currentColor" /></I>
+);
+export const IcX = (p: { size?: number }) => (
+  <I {...p}><path d="M6 6l12 12M18 6L6 18" /></I>
+);
+export const IcBook = (p: { size?: number }) => (
+  <I {...p}><path d="M4 5.5A2.5 2.5 0 016.5 3H20v16H6.5A2.5 2.5 0 004 21.5v-16z" /><path d="M20 16H6.5A2.5 2.5 0 004 18.5M8 7.5h8" /></I>
+);
+export const IcSettings = (p: { size?: number }) => (
+  <I {...p}><circle cx="12" cy="12" r="3" /><path d="M12 2.8v3M12 18.2v3M21.2 12h-3M5.8 12h-3M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1M18.5 18.5l-2.1-2.1M7.6 7.6L5.5 5.5" /></I>
+);
+export const IcBroadcast = (p: { size?: number }) => (
+  <I {...p}><circle cx="12" cy="12" r="2" fill="currentColor" /><path d="M7.8 16.2a6 6 0 010-8.4M16.2 7.8a6 6 0 010 8.4M5 19a10 10 0 010-14M19 5a10 10 0 010 14" /></I>
+);
+export const IcEraser = (p: { size?: number }) => (
+  <I {...p}><path d="M9 19l-4.5-4.5a2 2 0 010-2.8l7.2-7.2a2 2 0 012.8 0l5 5a2 2 0 010 2.8L13 19H9z" /><path d="M6 19h14" /></I>
+);
+
 /** project type → icon (language cube / folder) */
 export const ProjIcon = ({ type, size = 14 }: { type: string; size?: number }) =>
   type === "dir" ? <IcFolder size={size} /> : type === "python" ? <IcSnake size={size} /> : <IcCube size={size} />;

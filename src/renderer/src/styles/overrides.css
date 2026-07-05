@@ -1,0 +1,10 @@
+/* ============================================================================
+   OVERRIDES — targeted re-skins of legacy styles.css rules. Loaded LAST.
+   Keep surgical: only rules that must change and can't live in new files.
+   ========================================================================== */
+
+/* Sector identity border-top now follows the propagated accent (single source
+   in tokens.css) instead of per-view hardcoded rgba values. */
+.ide-pro, .mc-shell, .nm-view, .drv-view, .code-view, .cr-view, .pv-view, .rs-view {
+  border-top-color: color-mix(in srgb, var(--sector-accent) 50%, transparent);
+}

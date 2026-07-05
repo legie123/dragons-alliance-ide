@@ -51,33 +51,33 @@ export type QuickAction = {
   danger?: boolean;
 };
 
-const goto = (v: string) => () => window.dispatchEvent(new CustomEvent("dai:goto", { detail: v }));
-const vault = () => window.dispatchEvent(new CustomEvent("dai:vault"));
-const phone = () => window.dispatchEvent(new CustomEvent("dai:phone"));
-const godmode = () => window.dispatchEvent(new CustomEvent("dai:godmode"));
+export const goto = (v: string) => () => window.dispatchEvent(new CustomEvent("dai:goto", { detail: v }));
+export const vault = () => window.dispatchEvent(new CustomEvent("dai:vault"));
+export const phone = () => window.dispatchEvent(new CustomEvent("dai:phone"));
+export const godmode = () => window.dispatchEvent(new CustomEvent("dai:godmode"));
 let SEQ = 1;
-const deployTerm = (cmd: string, cwd: string) => () => {
+export const deployTerm = (cmd: string, cwd: string) => () => {
   window.dai.term.create({ id: `ign${Date.now().toString(36)}${SEQ++}`, cmd, cwd });
   window.dai.audit.log("term-launch", `${cmd} @ ${cwd}`);
   goto("ide")();
 };
-const deployClaudeWithPrompt = (prompt: string, cwd: string) => () => {
+export const deployClaudeWithPrompt = (prompt: string, cwd: string) => () => {
   const id = `ign${Date.now().toString(36)}${SEQ++}`;
   window.dai.term.create({ id, cmd: "claude", cwd });
   setTimeout(() => window.dai.term.write(id, prompt), 1800);
   window.dai.audit.log("claude-prompt-arm", `${prompt.slice(0, 80)} @ ${cwd}`);
   goto("ide")();
 };
-const armTerm = (typed: string, cwd: string) => () => {
+export const armTerm = (typed: string, cwd: string) => () => {
   const id = `ign${Date.now().toString(36)}${SEQ++}`;
   window.dai.term.create({ id, cmd: "shell", cwd });
   setTimeout(() => window.dai.term.write(id, typed), 1400);
   window.dai.audit.log("term-arm", `${typed} @ ${cwd}`);
   goto("ide")();
 };
-const openObsidian = () => window.dai.tools.action("open-obsidian");
-const openGraphify = () => window.dai.tools.action("open-graphify");
-const admin = (tab: string) => () => window.dispatchEvent(new CustomEvent("dai:admin", { detail: tab }));
+export const openObsidian = () => window.dai.tools.action("open-obsidian");
+export const openGraphify = () => window.dai.tools.action("open-graphify");
+export const admin = (tab: string) => () => window.dispatchEvent(new CustomEvent("dai:admin", { detail: tab }));
 const vaultChatPrompt =
   "You are inside Dragons Alliance IDE. Build a local-only vault chat/RAG plan for ~/Documents/Obsidian/Antigravity-Brain. First inspect files, existing IPC, neuromap graph, security boundaries, and config. Do not invent credentials. Return a safe phased implementation with tests.";
 const superpowersRepairPrompt =

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { IcPalette } from "../components/icons";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProjects } from "../api";
+import { DesignToolDemos } from "../components/design-tools/DesignToolDemos";
 
 const TOOLS = [
   { key: "higgsfield", name: "Higgsfield", kind: "video / motion", env: "HIGGSFIELD_API_KEY" },
@@ -22,6 +23,7 @@ export function CreativeView() {
   const [prompt, setPrompt] = useState("");
   const [proj, setProj] = useState("");
   const active = TOOLS.find((t) => t.key === tool)!;
+  const showDesignDemos = import.meta.env.VITE_DAI_DESIGN_DEMOS === "1";
 
   return (
     <div className="cr-view">
@@ -55,6 +57,7 @@ export function CreativeView() {
             <div className="cr-gallery-head">Asset gallery</div>
             <div className="cr-empty">No assets yet. Generated assets link to the selected project and appear as Creative nodes in Neuromap.</div>
           </div>
+          {showDesignDemos && <DesignToolDemos />}
         </div>
       </div>
     </div>
