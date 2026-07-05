@@ -634,12 +634,13 @@ button { transition: transform var(--dur-fast) var(--ease); }
 .eco-name { font-weight: 600; white-space: nowrap; }
 
 /* ---------- ⌘K command palette ---------- */
-.cmdk-btn {
+.cmdk-btn, .guide-btn {
   background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border);
   color: var(--muted); border-radius: 9px; padding: 8px 12px; font-size: 12px;
   font-weight: 700; letter-spacing: 0.04em; cursor: pointer; transition: all .15s;
 }
-.cmdk-btn:hover { color: #fff; border-color: var(--accent); background: rgba(157,123,216,0.14); }
+.cmdk-btn:hover, .guide-btn:hover { color: #fff; border-color: var(--accent); background: rgba(157,123,216,0.14); }
+.guide-btn { letter-spacing: 0; }
 
 .cmdk-backdrop {
   position: fixed; inset: 0; z-index: 100;
@@ -671,6 +672,80 @@ button { transition: transform var(--dur-fast) var(--ease); }
 .cmdk-sub { font-size: 11px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .cmdk-cat { margin-left: auto; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); flex: 0 0 auto; }
 .cmdk-foot { display: flex; gap: 16px; padding: 8px 14px; border-top: 1px solid var(--panel-border); font-size: 10.5px; color: var(--faint); }
+
+/* ---------- Interactive sector guide ---------- */
+.guide-backdrop {
+  position: fixed; inset: 0; z-index: 110;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(3, 4, 8, 0.62); backdrop-filter: blur(6px);
+}
+.guide-panel {
+  width: min(980px, 94vw); max-height: min(760px, 88vh);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: linear-gradient(180deg, rgba(34,19,39,0.96), rgba(18,8,13,0.98));
+  border: 1px solid rgba(212,175,55,0.28); border-radius: var(--r-lg);
+  box-shadow: var(--shadow-3);
+}
+.guide-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px 18px; border-bottom: 1px solid var(--panel-border);
+}
+.guide-kicker { font-size: 10px; font-weight: 850; letter-spacing: 0.16em; color: var(--gold-soft); }
+.guide-head h2 { margin: 2px 0 0; font-size: 22px; letter-spacing: 0; }
+.guide-close {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border);
+  color: var(--muted); border-radius: 8px; padding: 8px 12px; cursor: pointer;
+}
+.guide-close:hover { color: #fff; border-color: rgba(212,175,55,0.45); }
+.guide-body { min-height: 0; display: grid; grid-template-columns: 260px 1fr; }
+.guide-list {
+  min-height: 0; overflow: auto; padding: 12px;
+  border-right: 1px solid var(--panel-border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.guide-sector {
+  width: 100%; display: flex; align-items: center; gap: 10px; text-align: left;
+  border: 1px solid transparent; border-radius: 8px; padding: 9px 10px;
+  background: rgba(255,255,255,0.025); color: var(--muted); cursor: pointer;
+}
+.guide-sector:hover { color: #fff; border-color: rgba(212,175,55,0.28); }
+.guide-sector.active { color: #fff; border-color: var(--accent); background: rgba(212,175,55,0.10); }
+.guide-sector-ic { display: inline-flex; color: var(--gold-soft); }
+.guide-sector strong { display: block; font-size: 13px; }
+.guide-sector em { display: block; margin-top: 2px; color: var(--faint); font-size: 10px; font-style: normal; }
+.guide-detail { min-width: 0; overflow: auto; padding: 18px; }
+.guide-title-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.guide-big-ic {
+  width: 42px; height: 42px; display: grid; place-items: center;
+  border: 1px solid rgba(212,175,55,0.28); border-radius: 10px;
+  background: rgba(212,175,55,0.08); color: var(--gold-soft);
+}
+.guide-label { font-size: 24px; font-weight: 850; letter-spacing: 0; }
+.guide-status { margin-top: 2px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.10em; }
+.guide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.guide-grid section {
+  min-width: 0; border: 1px solid var(--panel-border); border-radius: 8px;
+  padding: 12px; background: rgba(255,255,255,0.025);
+}
+.guide-grid h3 {
+  margin: 0 0 7px; font-size: 10px; color: var(--gold-soft);
+  text-transform: uppercase; letter-spacing: 0.12em;
+}
+.guide-grid p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.guide-actions {
+  display: flex; justify-content: flex-end; gap: 8px; padding-top: 16px;
+}
+.guide-actions button:not(.primary) {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border);
+  color: var(--muted); border-radius: 8px; padding: 8px 12px; cursor: pointer;
+}
+.guide-actions button:not(.primary):hover { color: #fff; border-color: rgba(212,175,55,0.45); }
+
+@media (max-width: 820px) {
+  .guide-body { grid-template-columns: 1fr; }
+  .guide-list { max-height: 210px; border-right: 0; border-bottom: 1px solid var(--panel-border); }
+  .guide-grid { grid-template-columns: 1fr; }
+}
 
 /* ---------- IDE (project-interconnected) ---------- */
 .ide-pro { flex: 1; min-height: 0; display: grid; grid-template-columns: 232px 1fr; gap: 12px; }
@@ -1524,7 +1599,7 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 .eco-pill.live .eco-ic { color: var(--teal); }
 .eco-pill:hover .eco-ic { color: var(--gold-soft); }
 /* nav buttons: icon + label aligned, instrument spacing */
-.viewswitch button, .phone-btn-top, .cmdk-btn { display: inline-flex; align-items: center; gap: 7px; }
+.viewswitch button, .phone-btn-top, .cmdk-btn, .guide-btn { display: inline-flex; align-items: center; gap: 7px; }
 /* obsidian bevel — material depth on every command surface (no glow needed) */
 .eco-bar, .nm-toolbar, .master-zone, .broadcast, .mc-mission, .drv-bar,
 .mc-list, .mc-transcript, .nm-body, .proj-rail, .da-sechead, .rs-list, .rs-reader {

@@ -149,7 +149,7 @@ export const SUPERPOWERS: SuperpowerDef[] = [
   },
   {
     id: "godmode", label: "GODMODE", icon: (p) => <IcCrown {...p} />, role: "supreme command center",
-    statusOf: () => "live",
+    statusOf: ({ tool }) => (tool("godmode") === "live" ? "live" : tool("godmode") === "ready" ? "idle" : "setup-required"),
     actions: [{ id: "gm-open", label: "Open GODMODE", run: godmode }],
   },
   {

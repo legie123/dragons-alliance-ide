@@ -17,11 +17,12 @@ import { CredentialsVault } from "./components/CredentialsVault";
 import { EcosystemBar } from "./components/EcosystemBar";
 import { GodModePanel } from "./components/GodModePanel";
 import { AdminPanel, type AdminTab } from "./components/AdminPanel";
+import { InteractiveGuide } from "./components/InteractiveGuide";
 import { DragonEmblem } from "./components/DragonEmblem";
 import dragonMark from "./assets/dragon-mark.png";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects, fetchGDriveStatus, broadcast } from "./api";
-import { IcCommand, IcCrown, IcGem, IcTerminal } from "./components/icons";
+import { IcCommand, IcCrown, IcGem, IcSearch, IcTerminal } from "./components/icons";
 import { CORE_SECTORS, MORE_CATEGORIES, STATUS_META } from "./registry";
 
 // Monaco is ~5MB — keep it out of the initial bundle, load only when Code opens.
@@ -36,6 +37,7 @@ export default function App() {
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [vaultOpen, setVaultOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [godOpen, setGodOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminTab, setAdminTab] = useState<AdminTab>("settings");
@@ -129,6 +131,7 @@ export default function App() {
       { id: "action:settings", title: "Settings — IDE configuration", category: "Admin", run: () => { setAdminTab("settings"); setAdminOpen(true); } },
       { id: "action:perms", title: "Permissions — team & roles", category: "Admin", run: () => { setAdminTab("perms"); setAdminOpen(true); } },
       { id: "action:vaultsync", title: "Sync Obsidian vault", subtitle: "git snapshot + push/pull", category: "Admin", run: () => { setAdminTab("team"); setAdminOpen(true); } },
+      { id: "guide:sectors", title: "Open interactive sector guide", subtitle: "explain every sector + hints", category: "Help", icon: <IcSearch />, run: () => setGuideOpen(true) },
     ]);
   }, []);
 
@@ -213,6 +216,7 @@ export default function App() {
               )}
             </div>
             <button className="cmdk-btn" onClick={() => setPaletteOpen(true)} title="Command palette (⌘K)"><IcCommand /> K</button>
+            <button className="guide-btn" onClick={() => setGuideOpen(true)} title="Interactive sector guide"><IcSearch /> Guide</button>
           </div>
         </div>
 
@@ -255,6 +259,12 @@ export default function App() {
       <CredentialsVault open={vaultOpen} onClose={() => setVaultOpen(false)} />
       <GodModePanel open={godOpen} onClose={() => setGodOpen(false)} onCommand={() => setPaletteOpen(true)} />
       <AdminPanel open={adminOpen} tab={adminTab} onClose={() => setAdminOpen(false)} onTab={setAdminTab} />
+      <InteractiveGuide
+        open={guideOpen}
+        current={view}
+        onClose={() => setGuideOpen(false)}
+        onOpenSector={(id) => { setView(id); setGuideOpen(false); }}
+      />
     </>
   );
 }

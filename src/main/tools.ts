@@ -87,20 +87,82 @@ export async function probeTools(): Promise<ToolStatus[]> {
   const tools: ToolStatus[] = [
     {
       id: "obsidian", name: "Obsidian", icon: "🧠",
-      status: obsRunning ? "live" : exists(vault) ? "ready" : "off",
-      detail: obsRunning ? "brain vault open" + (vaultFresh ? " · synced recently" : "") : exists(vault) ? "vault present (app closed)" : "no vault",
+      status: (() => {
+        const lockPath = path.join(vault, ".lock");
+        const lockExists = exists(lockPath);
+        if (lockExists) return "live"; // vault is open
+        if (obsRunning) return "ready"; // Obsidian running but vault not open? we can't tell, assume ready
+        if (exists(vault)) return "ready";
+        return "off";
+      })(),
+      detail: (() => {
+        const lockPath = path.join(vault, ".lock");
+        if (exists(lockPath)) {
+          return "vault open in Obsidian" + (vaultFresh ? " · synced recently" : "");
+        }
+        if (obsRunning) {
+          return "Obsidian running" + (exists(vault) ? " · vault closed" : " · no vault");
+        }
+        if (exists(vault)) {
+          return "vault present" + (vaultFresh ? " · synced recently" : "") + " (app closed)";
+        }
+        return "no vault";
+      })(),
       action: exists(vault) ? "shell:open-obsidian" : undefined,
     },
     {
       id: "graphify", name: "Graphify", icon: "🕸️",
-      status: graphPid && graphPid !== "-" ? "live" : graphPid === "-" ? "ready" : "off",
-      detail: graphPid && graphPid !== "-" ? `launchd agent live (pid ${graphPid})` : graphPid === "-" ? "loaded, idle" : "not loaded",
+      status: (() => {
+        const digestPath = path.join(graphifyOut, "_GRAPHIFY_DIGEST.md");
+        const digestExists = exists(digestPath);
+        const digestRecent = digestExists && (minsAgo(fs.statSync(digestPath).mtimeMs) < 30);
+        let agentRunning = false;
+        if (graphPid !== null && graphPid !== "-") {
+          agentRunning = true;
+        }
+        if (agentRunning) {
+          return digestRecent ? "live" : "ready";
+        }
+        if (digestExists) return "ready";
+        return "off";
+      })(),
+      detail: (() => {
+        let parts = [];
+        if (graphPid === "-") {
+          parts.push("loaded, idle");
+        } else if (graphPid !== null && graphPid !== "-") {
+          parts.push(`live (pid ${graphPid})`);
+        } else {
+          parts.push("not loaded");
+        }
+        const digestPath = path.join(graphifyOut, "_GRAPHIFY_DIGEST.md");
+        if (exists(digestPath)) {
+          const mtime = fs.statSync(digestPath).mtimeMs;
+          const mins = minsAgo(mtime);
+          parts.push(`digest updated ${mins.toFixed(1)} min ago`);
+        } else {
+          parts.push("no digest");
+        }
+        return parts.join(" · ");
+      })(),
       action: exists(graphifyOut) ? "shell:open-graphify" : undefined,
     },
     {
       id: "ruflo", name: "Ruflo", icon: "🤖",
-      status: ruvFresh ? "live" : exists(ruvectorDbs[0]) || exists(ruvectorDbs[1]) ? "ready" : "off",
-      detail: ruvFresh ? "HNSW memory active" : "memory + agents — click to ignite",
+      status: (() => {
+        if (ruvFresh) return "live";
+        if (exists(ruvectorDbs[0]) || exists(ruvectorDbs[1])) return "ready";
+        return "off";
+      })(),
+      detail: (() => {
+        if (ruvFresh) {
+          return `Ruflo active (DB updated ${minsAgo(newestMtime(ruvectorDbs)).toFixed(1)} min ago)`;
+        }
+        if (exists(ruvectorDbs[0]) || exists(ruvectorDbs[1])) {
+          return "Ruflo DB present — click to ignite";
+        }
+        return "Ruflo not installed";
+      })(),
       action: `arm:ruflo status@${HOME}`,
     },
     {
@@ -111,9 +173,24 @@ export async function probeTools(): Promise<ToolStatus[]> {
     },
     {
       id: "godmode", name: "GODMODE", icon: "🜲",
-      status: exists(codeDir("godmode-lab")) ? "ready" : "off",
-      detail: "3D / web3 / perf stack — click: claude in godmode-lab",
-      action: exists(codeDir("godmode-lab")) ? `term:claude@${codeDir("godmode-lab")}` : undefined,
+      status: (() => {
+        const godmodeLab = path.join(HOME, "code", "godmode-lab");
+        if (!exists(godmodeLab)) return "off";
+        const activeInGodmode = sessions.some(s => s.idle_min < 3 && s.cwd && s.cwd.startsWith(godmodeLab));
+        if (activeInGodmode) return "live";
+        return "ready";
+      })(),
+      detail: (() => {
+        const godmodeLab = path.join(HOME, "code", "godmode-lab");
+        if (!exists(godmodeLab)) return "no godmode-lab";
+        const activeInGodmode = sessions.some(s => s.idle_min < 3 && s.cwd && s.cwd.startsWith(godmodeLab));
+        if (activeInGodmode) {
+          const count = sessions.filter(s => s.idle_min < 3 && s.cwd && s.cwd.startsWith(godmodeLab)).length;
+          return `${count} active session(s) in godmode-lab`;
+        }
+        return "3D / web3 / perf stack — click: claude in godmode-lab";
+      })(),
+      action: exists(path.join(HOME, "code", "godmode-lab")) ? `term:claude@${path.join(HOME, "code", "godmode-lab")}` : undefined,
     },
     {
       id: "radar", name: "GitHub Radar", icon: "📡",
