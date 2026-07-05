@@ -15,11 +15,14 @@
 .shell[data-sector="support"]  { --sector-accent: var(--brand-gold); }
 
 /* ---- main grid: left rail · view · right rail ---- */
-.shell { max-width: none; padding: 14px 16px 8px; }
+/* titlebar (38px) is in normal flow — subtract it so the status bar is always
+   on-screen (legacy 100vh pushed the footer below the fold) */
+.shell { max-width: none; padding: 14px 16px 8px; height: calc(100vh - 38px); }
 .shell-main {
   flex: 1; min-height: 0;
   display: grid;
   grid-template-columns: var(--rail-left-w) minmax(0, 1fr) var(--rail-right-w);
+  grid-template-rows: minmax(0, 100%);
   gap: 12px;
 }
 .shell-main.no-right { grid-template-columns: var(--rail-left-w) minmax(0, 1fr); }
