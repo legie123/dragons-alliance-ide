@@ -17,7 +17,7 @@ import { CredentialsVault } from "./components/CredentialsVault";
 import { EcosystemBar } from "./components/EcosystemBar";
 import { GodModePanel } from "./components/GodModePanel";
 import { AdminPanel, type AdminTab } from "./components/AdminPanel";
-import { InteractiveGuide } from "./components/InteractiveGuide";
+import { GuidePanel } from "./components/GuidePanel";
 import { DragonEmblem } from "./components/DragonEmblem";
 import dragonMark from "./assets/dragon-mark.png";
 import { LeftRail } from "./components/shell/LeftRail";
@@ -27,7 +27,7 @@ import { StatusBar } from "./components/shell/StatusBar";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects, fetchGDriveStatus, broadcast } from "./api";
 import { IcCrown, IcGem, IcSearch, IcTerminal, IcBot, IcSigil } from "./components/icons";
-import { CORE_SECTORS } from "./registry";
+import { CORE_SECTORS, type SectorId } from "./registry";
 import { isView, SECTOR_FOR_VIEW, type View } from "./views";
 
 // Monaco is ~5MB — keep it out of the initial bundle, load only when Code opens.
@@ -42,6 +42,7 @@ export default function App() {
   const [vaultOpen, setVaultOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [guideTarget, setGuideTarget] = useState<SectorId | null>(null);
   const [godOpen, setGodOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminTab, setAdminTab] = useState<AdminTab>("settings");
@@ -222,7 +223,7 @@ export default function App() {
           </main>
 
           {sector !== "support" && (
-            <RightRail sector={sector} onHelp={() => setGuideOpen(true)} />
+            <RightRail sector={sector} onHelp={(s) => { setGuideTarget(s); setGuideOpen(true); }} />
           )}
         </div>
 
@@ -234,11 +235,12 @@ export default function App() {
       <CredentialsVault open={vaultOpen} onClose={() => setVaultOpen(false)} />
       <GodModePanel open={godOpen} onClose={() => setGodOpen(false)} onCommand={() => setPaletteOpen(true)} />
       <AdminPanel open={adminOpen} tab={adminTab} onClose={() => setAdminOpen(false)} onTab={setAdminTab} />
-      <InteractiveGuide
+      <GuidePanel
         open={guideOpen}
         current={view}
-        onClose={() => setGuideOpen(false)}
-        onOpenSector={(id) => { setView(id); setGuideOpen(false); }}
+        target={guideTarget}
+        onClose={() => { setGuideOpen(false); setGuideTarget(null); }}
+        onOpenSector={(id) => { setView(id); setGuideOpen(false); setGuideTarget(null); }}
       />
     </>
   );
