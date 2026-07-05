@@ -231,7 +231,7 @@ export const TerminalPane = forwardRef<PaneHandle, {
         </span>
         {inChannel && <span className="tchan" title="interconnected — co-typing channel"><IcNodes size={11} /></span>}
         <span className="tcwd">{term.cwd.replace(/^\/Users\/[^/]+/, "~")}</span>
-        {!isMaster && <button className="tx" onClick={onClose} title="kill terminal">✕</button>}
+        {!isMaster && <button className="tx" onClick={onClose} title="kill terminal" aria-label="Kill terminal">✕</button>}
       </div>
       {term.cmd === "claude" ? (
         <div className="term-infobar">

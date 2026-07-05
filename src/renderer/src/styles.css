@@ -653,50 +653,13 @@ button { transition: transform var(--dur-fast) var(--ease); }
 .drv-act-s { color: var(--muted); font-size: 11px; margin-left: auto; }
 .drv-act-src { color: var(--faint); font-size: 10.5px; }
 
-/* ---------- ecosystem status strip — smart chips with crystal state ---------- */
-.eco-bar {
-  display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
-  padding: 8px 14px; border-radius: var(--r-md);
-  background: linear-gradient(90deg, rgba(67, 224, 192, 0.04), rgba(141, 92, 255, 0.04), rgba(212, 175, 55, 0.04));
-  border: 1px solid var(--panel-border);
-}
-.eco-label { font-size: 10px; font-weight: 750; letter-spacing: 0.14em; color: var(--muted); white-space: nowrap; }
+/* ---------- ecosystem leftovers kept live: gauge label + indicator pulse ---------- */
+/* (.eco-bar/.eco-pill/.eco-crystal chips superseded by the sp-dock — removed) */
 .eco-live { color: var(--teal); margin-left: 4px; }
-.eco-pills { display: flex; gap: 7px; flex-wrap: wrap; }
-.eco-pill {
-  display: flex; align-items: center; gap: 6px;
-  background: linear-gradient(180deg, rgba(42, 13, 22, 0.30), rgba(18, 8, 13, 0.45));
-  border: 1px solid var(--panel-border);
-  border-radius: 999px; padding: 4px 11px 4px 8px; font-size: 11.5px; color: var(--muted);
-  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
-              box-shadow var(--dur-med) var(--ease), background var(--dur-fast) var(--ease);
-}
-.eco-pill.live { color: var(--text); border-color: rgba(67, 224, 192, 0.30); background: rgba(67, 224, 192, 0.06); }
-.eco-pill.needs { border-color: rgba(210, 74, 54, 0.30); }
-.eco-pill.off { opacity: 0.4; }
-.eco-pill.clickable { cursor: pointer; }
-/* hover: the module's crystal lights up */
-.eco-pill.clickable:hover { border-color: var(--accent); color: #fff; box-shadow: var(--glow-gold); }
-.eco-pill.clickable:hover .eco-crystal { filter: brightness(1.4) drop-shadow(0 0 6px var(--cr)); }
-.eco-pill:disabled { cursor: default; }
-
-/* crystal state — faceted system gem (clip-path), colored by module status.
-   Breathes ONLY when live: a quiet 3s pulse, indicator-grade, not a toy. */
-.eco-crystal {
-  width: 9px; height: 12px; flex: 0 0 auto;
-  clip-path: polygon(50% 0%, 100% 32%, 50% 100%, 0% 32%);
-  background: linear-gradient(160deg, #fff3 0%, var(--cr) 38%, color-mix(in srgb, var(--cr) 55%, #000) 100%);
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--cr) 60%, transparent));
-  transition: filter var(--dur-fast) var(--ease);
-}
-.eco-crystal.live { animation: crystalbreath 3s var(--ease) infinite; }
-.eco-crystal.off { filter: none; opacity: 0.6; }
 @keyframes crystalbreath {
   0%, 100% { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--cr) 50%, transparent)); transform: scale(1); }
   50%      { filter: drop-shadow(0 0 7px var(--cr)); transform: scale(1.12); }
 }
-.eco-ic { font-size: 12px; }
-.eco-name { font-weight: 600; white-space: nowrap; }
 
 /* ---------- ⌘K command palette ---------- */
 .cmdk-btn, .guide-btn {
@@ -1609,7 +1572,6 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 .more-item.active .more-item-label { color: #f6dd92; }
 
 /* ecosystem health — "N live" reads as a system gauge */
-.eco-label { display: inline-flex; align-items: center; gap: 6px; }
 .eco-live { border: 1px solid rgba(67,224,192,0.35); background: rgba(67,224,192,0.08);
   border-radius: 999px; padding: 1px 8px; font-weight: 750; }
 
@@ -1656,22 +1618,13 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 @media (prefers-reduced-motion: reduce) { .fx-ember { display: none; } }
 
 /* ==================== DE-TOY: military tags + instrument depth ==================== */
-/* eco chips: notched command tags, not candy pills */
-.eco-pill { border-radius: 7px !important;
-  clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
-  padding: 5px 12px 5px 9px !important; }
-.eco-ic { display: inline-flex; color: var(--muted); }
-.eco-pill.live .eco-ic { color: var(--teal); }
-.eco-pill:hover .eco-ic { color: var(--gold-soft); }
 /* nav buttons: icon + label aligned, instrument spacing */
 .viewswitch button, .phone-btn-top, .cmdk-btn, .guide-btn { display: inline-flex; align-items: center; gap: 7px; }
 /* obsidian bevel — material depth on every command surface (no glow needed) */
-.eco-bar, .nm-toolbar, .master-zone, .broadcast, .mc-mission, .drv-bar,
+.nm-toolbar, .master-zone, .broadcast, .mc-mission, .drv-bar,
 .mc-list, .mc-transcript, .nm-body, .proj-rail, .da-sechead, .rs-list, .rs-reader {
   box-shadow: inset 0 1px 0 rgba(240, 199, 94, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.45), var(--shadow-1);
 }
-/* glow discipline: hover glows only where it means something */
-.eco-pill { box-shadow: none; }
 
 /* ==================== ETAPA 2: Code = engineering cockpit (graphite/green) ==================== */
 .code-repo { display: inline-flex; align-items: center; gap: 6px; margin-right: 10px;

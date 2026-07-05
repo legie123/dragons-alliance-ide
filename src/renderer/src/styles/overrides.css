@@ -39,3 +39,12 @@
 .set-body { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
 .set-row { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--text-secondary); }
 .set-label { font-weight: 600; }
+
+/* ---- micro-interactions polish (motion-gated by tokens/reduced-motion) ---- */
+.more-item:hover, .sp-act:hover:not(:disabled), .guide-nav-item:hover { transform: translateY(-1px); }
+.more-item, .sp-act, .guide-nav-item { transition: transform var(--duration-fast) var(--ease-premium),
+  color var(--duration-fast) var(--ease-premium), border-color var(--duration-fast) var(--ease-premium),
+  background var(--duration-fast) var(--ease-premium); }
+.lrail-item:hover { transform: translateX(1px); }
+/* status word changes settle gently */
+.sp-st, .da-opbadge { transition: color var(--duration-normal) var(--ease-premium); }

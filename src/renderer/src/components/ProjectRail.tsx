@@ -98,7 +98,7 @@ export const ProjectRail = memo(function ProjectRail({
                   </span>
                 )}
                 {!isEditing && (
-                  <span className="pr-edit" onClick={(e) => startEdit(p, e)} title="rename">✎</span>
+                  <span className="pr-edit" role="button" aria-label={`Rename ${p.name}`} onClick={(e) => startEdit(p, e)} title="rename">✎</span>
                 )}
                 {p.terminals.length > 0 && <span className="pr-term">{p.terminals.length}⊟</span>}
               </div>
