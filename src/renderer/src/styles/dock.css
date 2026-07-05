@@ -1,0 +1,70 @@
+/* ============================================================================
+   SUPERPOWERS DOCK — premium cards (layered over legacy .sp-chip rules).
+   Status is ALWAYS dot + word; pulse only for live/checking (motion-gated).
+   ========================================================================== */
+
+/* card layout: icon block + two-line text (name / status word) */
+.sp-chip.sp-card {
+  align-items: center; gap: 9px; padding: 6px 12px 6px 10px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(42, 13, 22, 0.4), rgba(18, 8, 13, 0.6));
+  transition: color var(--duration-fast) var(--ease-premium),
+              border-color var(--duration-fast) var(--ease-premium),
+              box-shadow var(--duration-normal) var(--ease-premium),
+              transform var(--duration-fast) var(--ease-premium);
+}
+.sp-card .sp-ic { color: var(--text-secondary); transition: color var(--duration-fast) var(--ease-premium); }
+.sp-card:hover .sp-ic, .sp-card.open .sp-ic { color: var(--text-gold); }
+.sp-card-tx { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; line-height: 1.15; }
+.sp-card .sp-name { font-size: 11.5px; font-weight: 700; letter-spacing: 0.03em; }
+.sp-card .sp-st { display: inline-flex; align-items: center; gap: 5px; }
+.sp-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-panel); }
+
+/* state accents on the card edge — reinforced by the visible status word */
+.sp-card.st-live { border-color: color-mix(in srgb, var(--state-live) 40%, transparent); }
+.sp-card.st-error { border-color: color-mix(in srgb, var(--state-error) 45%, transparent); }
+.sp-card.st-setup-required { border-style: dashed; border-color: color-mix(in srgb, var(--state-setup) 45%, transparent); }
+.sp-card.st-partial { border-color: color-mix(in srgb, var(--state-checking) 40%, transparent); }
+
+/* pulse ONLY live + checking; killed by reduced-motion (global + data-motion) */
+.sp-card.st-live .sp-dot { animation: crystalbreath 3s var(--ease) infinite; }
+.sp-card.checking .sp-dot { animation: crystalbreath 1.4s var(--ease) infinite; }
+
+/* hover micro-panel — plain-language explanation, CSS-revealed */
+.sp-wrap .sp-hover {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 70; width: 230px;
+  display: flex; flex-direction: column; gap: 3px; padding: 10px 12px;
+  border: 1px solid var(--border-subtle); border-top-color: var(--border-gold);
+  border-radius: var(--r-md); background: var(--bg-tooltip);
+  box-shadow: var(--shadow-command);
+  opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity var(--duration-normal) var(--ease-premium),
+              transform var(--duration-normal) var(--ease-premium),
+              visibility 0s linear var(--duration-normal);
+  pointer-events: none;
+}
+.sp-wrap:hover .sp-hover, .sp-wrap:focus-within .sp-hover {
+  opacity: 1; visibility: visible; transform: translateY(0);
+  transition-delay: 350ms; /* deliberate hover, not flicker */
+}
+.sp-wrap.panel-open .sp-hover { display: none; }
+.sp-hover b { font-size: 12px; letter-spacing: 0.04em; }
+.sp-hover-role { font-size: 10px; color: var(--text-secondary); }
+.sp-hover-explain { font-size: 10px; font-style: normal; }
+.sp-hover-hint { font-size: 9px; font-style: normal; color: var(--text-muted); margin-top: 3px; }
+
+/* quick panel additions */
+.sp-panel-badge { margin-left: auto; }
+.sp-panel-explain { font-size: 10px; color: var(--text-secondary); padding: 7px 4px 0; }
+
+/* ---- OpStatusBadge (shared) ---- */
+.da-opbadge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border-subtle);
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.da-opbadge.sm { padding: 1px 7px; font-size: 9px; }
+.da-opdot { width: 6px; height: 6px; border-radius: 50%; background: var(--state-idle); flex: 0 0 auto; }
+.da-opbadge.checking { color: var(--state-checking); border-color: color-mix(in srgb, var(--state-checking) 40%, transparent); }
+.da-opbadge.checking .da-opdot { background: var(--state-checking); animation: crystalbreath 1.4s var(--ease) infinite; }

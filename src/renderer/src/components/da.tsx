@@ -1,6 +1,30 @@
 // Dragons Alliance design system — small, real, reusable presentational parts.
 // No state, no data fetching: views pass real data in; these render it premium.
 import type { ReactNode } from "react";
+import { STATUS_META, type OpStatus } from "../registry";
+
+// ---- OpStatusBadge — THE standard rendering of an OpStatus: dot + word,
+// never color alone. `checking` overrides everything (first probe pending). ----
+export function OpStatusBadge({ status, checking, size }: { status: OpStatus; checking?: boolean; size?: "sm" | "md" }) {
+  if (checking) {
+    return (
+      <span className={`da-opbadge checking${size === "sm" ? " sm" : ""}`} role="status">
+        <span className="da-opdot" aria-hidden />checking…
+      </span>
+    );
+  }
+  const meta = STATUS_META[status];
+  return (
+    <span
+      className={`da-opbadge st-${status}${size === "sm" ? " sm" : ""}`}
+      role="status"
+      style={{ color: meta.color, borderColor: `color-mix(in srgb, ${meta.color} 40%, transparent)` }}
+    >
+      <span className="da-opdot" aria-hidden style={{ background: meta.color }} />
+      {meta.label}
+    </span>
+  );
+}
 
 // ---- PremiumButton — gold CTA / ghost / danger, with loading + disabled ----
 export function PremiumButton({

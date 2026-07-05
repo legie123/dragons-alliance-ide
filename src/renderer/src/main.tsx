@@ -6,6 +6,7 @@ import { queryClient as qc } from "./queryClient";
 import "./styles.css";
 import "./styles/tokens.css";
 import "./styles/shell.css";
+import "./styles/dock.css";
 import "./styles/overrides.css";
 
 createRoot(document.getElementById("root")!).render(
