@@ -97,7 +97,7 @@ export function GodModePanel({ open, onClose, onCommand }: { open: boolean; onCl
           {top ? (
             <div className="gm-mission">
               <b>{top.title || "(untitled)"}</b>
-              <span>{top.model} · {top.cwd} · {top.idle_min < 1 ? "now" : `${Math.floor(top.idle_min)}m idle`} · goal {top.goalPct}%</span>
+              <span>{top.model} · {top.cwd} · {top.idle_min < 1 ? "now" : `${Math.floor(top.idle_min)}m idle`} · goal {Math.round(top.goalPct)}%</span>
             </div>
           ) : (
             <div className="gm-mission empty">no active mission — launch an agent below</div>

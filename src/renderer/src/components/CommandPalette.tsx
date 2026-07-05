@@ -74,6 +74,15 @@ export function CommandPalette({
     }
   }, [open]);
 
+  // Escape must close the palette even when focus left the input
+  // (a11y rule: ESC closes panels — the input's onKey only covers focused state).
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); onClose(); } };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [open, onClose]);
+
   const results = useMemo(() => {
     if (!open) return [];
     const all = [...paletteCommands(), ...files];

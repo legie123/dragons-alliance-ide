@@ -56,6 +56,12 @@
 /* quick panel additions */
 .sp-panel-badge { margin-left: auto; }
 .sp-panel-explain { font-size: 10px; color: var(--text-secondary); padding: 7px 4px 0; }
+.sp-panel-meta {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 9px; color: var(--text-muted); padding: 4px 4px 0;
+  letter-spacing: 0.03em;
+}
+.sp-panel-next { color: var(--text-gold); font-weight: 600; }
 
 /* ---- OpStatusBadge (shared) ---- */
 .da-opbadge {

@@ -24,7 +24,17 @@ export const STATUS_EXPLAIN: Record<OpStatus, string> = {
   disabled: "Disabled",
 };
 
-function QuickPanel({ sp, status, checking, onClose }: { sp: SuperpowerDef; status: OpStatus; checking: boolean; onClose: () => void }) {
+/** honest next-step per state — names the FIRST real action, never invents one */
+function nextAction(sp: SuperpowerDef, status: OpStatus): string | null {
+  if (status === "live" || status === "running") return null; // already operational
+  const first = sp.actions.find((a) => a.run);
+  if (!first) return null;
+  if (status === "setup-required" || status === "partial") return first.label;
+  return null; // idle/local-only need no nudge
+}
+
+function QuickPanel({ sp, status, checking, lastChecked, onClose }: { sp: SuperpowerDef; status: OpStatus; checking: boolean; lastChecked: number; onClose: () => void }) {
+  const next = nextAction(sp, status);
   return (
     <div className="sp-panel" role="menu" aria-label={`${sp.label} quick actions`}>
       <div className="sp-panel-head">
@@ -36,6 +46,10 @@ function QuickPanel({ sp, status, checking, onClose }: { sp: SuperpowerDef; stat
         <span className="sp-panel-badge"><OpStatusBadge status={status} checking={checking} size="sm" /></span>
       </div>
       <div className="sp-panel-explain">{checking ? "Probing…" : STATUS_EXPLAIN[status]}</div>
+      <div className="sp-panel-meta">
+        <span>last check {lastChecked ? new Date(lastChecked).toLocaleTimeString() : "—"}</span>
+        {next && <span className="sp-panel-next">next: {next}</span>}
+      </div>
       <div className="sp-panel-actions">
         {sp.actions.map((a) => a.run ? (
           <button key={a.id} className={`sp-act${a.danger ? " danger" : ""}`}
@@ -52,7 +66,7 @@ function QuickPanel({ sp, status, checking, onClose }: { sp: SuperpowerDef; stat
 }
 
 export function EcosystemBar() {
-  const { env, statuses, liveCount, total, checking } = useOps();
+  const { env, statuses, liveCount, total, checking, lastChecked } = useOps();
   const [open, setOpen] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -112,7 +126,7 @@ export function EcosystemBar() {
                   <i className="sp-hover-hint">{sp.id === "godmode" ? "click to open GODMODE" : "click for quick actions"}</i>
                 </div>
               )}
-              {isOpen && <QuickPanel sp={sp} status={st} checking={checking} onClose={() => setOpen(null)} />}
+              {isOpen && <QuickPanel sp={sp} status={st} checking={checking} lastChecked={lastChecked} onClose={() => setOpen(null)} />}
             </div>
           );
         })}
