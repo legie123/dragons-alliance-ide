@@ -2,10 +2,16 @@
 // Settings (persisted config), Audit (append-only trail), Permissions (local
 // team/role model), Team Sync (git engine over the vault), API Health (per-
 // service Google probes). Opens via the `dai:admin` event with detail = tab id.
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { DaiSettings, PermissionsState, PermRole, VaultSyncResult } from "@shared/ipc";
+import type { PermissionsState, PermRole, VaultSyncResult } from "@shared/ipc";
 import { IcSigil } from "./icons";
+import { useEscape } from "../hooks/useEscape";
+import {
+  SETTINGS_CATS, type SettingsCat,
+  AppearanceSection, IdeConfigSection, SuperpowersSection,
+  IntegrationsSection, ShortcutsSection, DeveloperSection,
+} from "./settings/SettingsSections";
 
 export type AdminTab = "settings" | "audit" | "perms" | "team" | "health";
 const TABS: { id: AdminTab; label: string }[] = [
@@ -20,13 +26,7 @@ const ROLES: PermRole[] = ["owner", "editor", "viewer"];
 export function AdminPanel({ open, tab, onClose, onTab }: {
   open: boolean; tab: AdminTab; onClose: () => void; onTab: (t: AdminTab) => void;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); onClose(); } };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [open, onClose]);
-
+  useEscape(open, onClose);
   if (!open) return null;
   return (
     <div className="cmdk-backdrop" onClick={onClose}>
@@ -56,37 +56,25 @@ export function AdminPanel({ open, tab, onClose, onTab }: {
   );
 }
 
-// ---- Settings ----
+// ---- Settings (categorized — sections live in settings/SettingsSections) ----
 function SettingsTab() {
-  const qc = useQueryClient();
-  const { data: s } = useQuery({ queryKey: ["settings"], queryFn: () => window.dai.settings.get() });
-  const [draft, setDraft] = useState<DaiSettings | null>(null);
-  const v = draft ?? s;
-  if (!v) return <div className="empty">loading…</div>;
-  const num = (k: keyof DaiSettings) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setDraft({ ...v, [k]: Number(e.target.value) });
-  const save = async () => {
-    await window.dai.settings.set(v);
-    setDraft(null);
-    qc.invalidateQueries({ queryKey: ["settings"] });
-  };
+  const [cat, setCat] = useState<SettingsCat>("appearance");
   return (
-    <section className="vault-card">
-      <div className="vault-card-h">IDE configuration <span className="vault-badge on">persisted · 0600</span></div>
-      <div className="admin-grid">
-        <label>Terminal font size (px)<input className="vault-in slim" type="number" min={9} max={24} value={v.terminalFontSize} onChange={num("terminalFontSize")} /></label>
-        <label>Sessions active window (min)<input className="vault-in slim" type="number" min={15} max={1440} value={v.sessionsActiveMin} onChange={num("sessionsActiveMin")} /></label>
-        <label>Audit retention (days)<input className="vault-in slim" type="number" min={1} max={365} value={v.auditRetentionDays} onChange={num("auditRetentionDays")} /></label>
-        <label>Vault auto-sync (min, 0 = manual)<input className="vault-in slim" type="number" min={0} max={1440} value={v.vaultAutoSyncMin} onChange={num("vaultAutoSyncMin")} /></label>
-        <label>Default terminal cwd<input className="vault-in" value={v.defaultCwd} onChange={(e) => setDraft({ ...v, defaultCwd: e.target.value })} /></label>
-        <label className="admin-check"><input type="checkbox" checked={v.radarAutoRefresh} onChange={(e) => setDraft({ ...v, radarAutoRefresh: e.target.checked })} /> Radar auto-refresh on open</label>
+    <div className="set-wrap">
+      <nav className="set-nav" aria-label="Settings categories">
+        {SETTINGS_CATS.map((c) => (
+          <button key={c.id} className={"set-nav-item" + (cat === c.id ? " on" : "")} onClick={() => setCat(c.id)}>{c.label}</button>
+        ))}
+      </nav>
+      <div className="set-body">
+        {cat === "appearance" && <AppearanceSection />}
+        {cat === "ide" && <IdeConfigSection />}
+        {cat === "superpowers" && <SuperpowersSection />}
+        {cat === "integrations" && <IntegrationsSection />}
+        {cat === "shortcuts" && <ShortcutsSection />}
+        {cat === "developer" && <DeveloperSection />}
       </div>
-      <div className="vault-row">
-        <button className="drv-btn accent" onClick={save} disabled={!draft}>Save settings</button>
-        {draft && <button className="drv-btn ghost" onClick={() => setDraft(null)}>Discard</button>}
-      </div>
-      <div className="vault-steps">Stored at <code>~/.config/dai/settings.json</code>. Values apply live on next view refresh.</div>
-    </section>
+    </div>
   );
 }
 

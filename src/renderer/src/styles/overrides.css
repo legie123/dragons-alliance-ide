@@ -21,3 +21,21 @@
 }
 .cmdk-row.disabled { opacity: 0.5; cursor: not-allowed; }
 .cmdk-row.disabled .cmdk-sub { color: var(--state-setup); }
+
+/* ---- categorized settings ---- */
+.set-wrap { display: grid; grid-template-columns: 132px 1fr; gap: 12px; min-height: 320px; }
+.set-nav { display: flex; flex-direction: column; gap: 2px; border-right: 1px solid var(--border-subtle); padding-right: 8px; }
+.set-nav-item {
+  text-align: left; padding: 7px 10px; border-radius: 8px; cursor: pointer;
+  font-size: 11.5px; font-weight: 600; color: var(--text-secondary);
+  background: transparent; border: 1px solid transparent;
+}
+.set-nav-item:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.04); }
+.set-nav-item.on {
+  color: var(--text-gold);
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.12), transparent);
+  border-color: rgba(212, 175, 55, 0.3);
+}
+.set-body { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.set-row { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--text-secondary); }
+.set-label { font-weight: 600; }
