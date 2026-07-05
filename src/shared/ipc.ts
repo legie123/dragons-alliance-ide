@@ -100,6 +100,9 @@ export const CH = {
   GOOGLE_HEALTH: "google:health",              // invoke() → GServiceHealth[]
   // screenshot (main captures the window → ~/Desktop)
   SHOT_CAPTURE: "shot:capture",                // invoke() → ShotResult
+  // superpowers — real engine health probes + digest open (honest, timeout-guarded)
+  SP_HEALTH: "sp:health",                      // invoke(id) → SpHealth (ruflo | graphify)
+  SP_OPEN_DIGEST: "sp:opendigest",             // invoke() → SpResult (opens real graph digest)
 } as const;
 
 // ---- types ----
@@ -302,6 +305,18 @@ export type GServiceHealth = { service: string; ok: boolean; status: number | nu
 // ---- Screenshot ----
 export type ShotResult = { ok: boolean; path?: string; error?: string };
 
+// ---- Superpowers health (real CLI/file probes; never throws to UI) ----
+export type SpHealthStatus = "live" | "ready" | "missing" | "error";
+export type SpHealth = {
+  id: string;                 // superpower id ("ruflo" | "graphify")
+  ok: boolean;                // engine reachable / digest present
+  status: SpHealthStatus;
+  message: string;            // one-line honest headline for the toast
+  details: string[];          // extra honest lines (version, counts, mtime, error head)
+  lastCheckedAt: number;
+};
+export type SpResult = { ok: boolean; message: string; path?: string };
+
 // ---- Neo browser (Preview) ----
 export type NeoStatus = { connected: boolean; browser?: string; error?: string };
 export type NeoTab = { index: number; targetId: string; title: string; url: string };
@@ -413,6 +428,10 @@ export interface DaiApi {
     setRemote(url: string): Promise<VaultSyncStatus>;
   };
   shot: { capture(): Promise<ShotResult> };
+  superpowers: {
+    health(id: string): Promise<SpHealth>;
+    openDigest(): Promise<SpResult>;
+  };
 }
 
 declare global {

@@ -8,6 +8,7 @@ import {
   IcSearch, IcRadar, IcGem, IcNodes, IcCrown, IcPlug, IcKey, IcPhone, IcZap,
   IcSnake, IcSigil, IcFlask, IcUsers, IcSend, IcFolder,
 } from "./components/icons";
+import { pushToast, updateToast } from "./toast";
 
 // ---- status model (49) ----
 export type OpStatus =
@@ -77,6 +78,57 @@ export const armTerm = (typed: string, cwd: string) => () => {
 };
 export const openObsidian = () => window.dai.tools.action("open-obsidian");
 export const openGraphify = () => window.dai.tools.action("open-graphify");
+
+/** Nudge the dock's live probes to re-run right after an action changed state. */
+export const refreshTools = () => window.dispatchEvent(new CustomEvent("dai:refresh-tools"));
+
+/**
+ * Ignite Ruflo — real IPC health probe (`ruflo status` in HOME, timeout-guarded).
+ * Shows CHECKING, then an HONEST result toast (engine ready / running / error),
+ * then refreshes the dock. No fake LIVE, no command that errors by construction.
+ */
+export const rufloIgnite = () => async () => {
+  const id = pushToast({ kind: "checking", title: "Igniting Ruflo…", detail: "checking engine" });
+  try {
+    const h = await window.dai.superpowers.health("ruflo");
+    updateToast(id, {
+      kind: h.ok ? "success" : "error",
+      title: h.message,
+      detail: h.details.join(" · ") || undefined,
+      ttl: 6000,
+    });
+    window.dai.audit.log("ruflo-ignite", `${h.status}: ${h.message}`);
+  } catch (e) {
+    updateToast(id, { kind: "error", title: "Ruflo check failed", detail: String(e), ttl: 6000 });
+  }
+  refreshTools();
+};
+
+/** Arm a REAL command in a terminal AND toast what was launched (never silent). */
+export const armTermToast = (typed: string, cwd: string, title: string) => () => {
+  armTerm(typed, cwd)();
+  pushToast({ kind: "info", title, detail: `running: ${typed}`, ttl: 3800 });
+};
+
+/** Open the real graph digest via IPC — honest toast when it isn't generated yet. */
+export const graphifyOpenDigest = () => async () => {
+  const id = pushToast({ kind: "checking", title: "Opening graph digest…" });
+  try {
+    const r = await window.dai.superpowers.openDigest();
+    updateToast(id, { kind: r.ok ? "success" : "error", title: r.message, ttl: r.ok ? 3500 : 6500 });
+    window.dai.audit.log("graphify-open-digest", r.message);
+  } catch (e) {
+    updateToast(id, { kind: "error", title: "Could not open digest", detail: String(e), ttl: 6000 });
+  }
+};
+
+/** Regenerate the digest by running the REAL graphify pipeline in the repo, visibly. */
+export const graphifyRegen = () => () => {
+  armTerm("graphify update .", "~/code/dragons-alliance-ide")();
+  pushToast({ kind: "info", title: "Regenerating graph digest", detail: "graphify update . — watch the terminal", ttl: 4500 });
+  window.dai.audit.log("graphify-regen", "armed graphify update . in repo");
+  setTimeout(refreshTools, 8000);
+};
 export const admin = (tab: string) => () => window.dispatchEvent(new CustomEvent("dai:admin", { detail: tab }));
 const vaultChatPrompt =
   "You are inside Dragons Alliance IDE. Build a local-only vault chat/RAG plan for ~/Documents/Obsidian/Antigravity-Brain. First inspect files, existing IPC, neuromap graph, security boundaries, and config. Do not invent credentials. Return a safe phased implementation with tests.";
@@ -112,7 +164,8 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     statusOf: ({ tool }) => (tool("graphify") === "live" ? "live" : tool("graphify") === "ready" ? "idle" : "setup-required"),
     actions: [
       { id: "gv-map", label: "Open Map (Neuromap)", run: goto("neuromap") },
-      { id: "gv-digest", label: "Open Graph Digest", run: openGraphify },
+      { id: "gv-digest", label: "Open Graph Digest", run: graphifyOpenDigest() },
+      { id: "gv-regen", label: "Regenerate Digest", run: graphifyRegen() },
       { id: "gv-research", label: "Show Research Lens", run: goto("research") },
       { id: "gv-agents", label: "Show Agents Layer", run: goto("neuromap") },
     ],
@@ -121,10 +174,10 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     id: "ruflo", label: "Ruflo", icon: (p) => <IcBot {...p} />, role: "workflow orchestrator",
     statusOf: ({ tool }) => (tool("ruflo") === "live" ? "live" : tool("ruflo") === "ready" ? "idle" : "setup-required"),
     actions: [
-      { id: "rf-ignite", label: "Ignite (ruflo status)", run: armTerm("ruflo status", "~") },
+      { id: "rf-ignite", label: "Ignite (health check)", run: rufloIgnite() },
       { id: "rf-mission", label: "Broadcast Mission (Agents)", run: goto("agents") },
-      { id: "rf-queue", label: "View Task Queue", run: armTerm("ruflo task list", "~") },
-      { id: "rf-flows", label: "Continue Flow", run: armTerm("ruflo session list", "~") },
+      { id: "rf-queue", label: "View Task Queue", run: armTermToast("ruflo task list", "~", "Ruflo task queue") },
+      { id: "rf-flows", label: "Continue Flow", run: armTermToast("ruflo session list", "~", "Ruflo sessions") },
     ],
   },
   {

@@ -24,6 +24,7 @@ import { vaultStatus, vaultSync, vaultSetRemote } from "./vaultSync";
 import { gHealth } from "./google";
 import * as fsN from "node:fs";
 import { neoStatus, neoEnsure, neoTabs, neoOpen, neoNavigate, neoReload, neoBack, neoForward, neoAsk, neoClick, neoScroll, neoSnap } from "./neo";
+import { superpowerHealth, openGraphDigest } from "./superpowers";
 import type { NeuroGraphOpts, NeuroLayer } from "../shared/ipc";
 
 type LiveTerm = { id: string; cwd: string; is_master: boolean };
@@ -80,6 +81,9 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
       }
     }
   });
+  // ---- superpowers: real engine health probes + digest open ----
+  ipcMain.handle(CH.SP_HEALTH, (_e, id: string) => superpowerHealth(String(id)));
+  ipcMain.handle(CH.SP_OPEN_DIGEST, () => openGraphDigest());
   ipcMain.handle(CH.HOST_INFO, () => ({
     shell: process.env.SHELL || "/bin/zsh",
     home: os.homedir(),

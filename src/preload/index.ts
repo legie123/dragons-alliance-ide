@@ -179,6 +179,10 @@ const dai: DaiApi = {
     setRemote: (url) => ipcRenderer.invoke(CH.VAULT_SET_REMOTE, url),
   },
   shot: { capture: () => ipcRenderer.invoke(CH.SHOT_CAPTURE) },
+  superpowers: {
+    health: (id) => ipcRenderer.invoke(CH.SP_HEALTH, id),
+    openDigest: () => ipcRenderer.invoke(CH.SP_OPEN_DIGEST),
+  },
 };
 
 contextBridge.exposeInMainWorld("dai", dai);

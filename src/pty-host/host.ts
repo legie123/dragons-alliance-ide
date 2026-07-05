@@ -120,11 +120,18 @@ function create(opts: TermOpts): void {
     // would run as shell commands. This closes that path.
     opts.cmd === "claude" ? ["-l", "-c", "exec claude"] : ["-l"];
 
+  // Expand a leading "~" / "~/…" to the real home dir. node-pty does NOT do
+  // shell tilde expansion, so an unexpanded "~/code/x" cwd silently fell back to
+  // HOME — armed commands then ran in the wrong directory. Expand, then guard.
+  const wantCwd = opts.cwd === "~" || opts.cwd.startsWith("~/")
+    ? path.join(os.homedir(), opts.cwd.slice(1))
+    : opts.cwd;
+
   let proc: nodePty.IPty;
   try {
     proc = nodePty.spawn(shell, args, {
       name: "xterm-256color",
-      cwd: existsSync(opts.cwd) ? opts.cwd : os.homedir(),
+      cwd: existsSync(wantCwd) ? wantCwd : os.homedir(),
       env: { ...process.env, TERM: "xterm-256color", COLORTERM: "truecolor" },
       cols: 80,
       rows: 24,

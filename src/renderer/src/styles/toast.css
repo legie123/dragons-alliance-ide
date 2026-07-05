@@ -1,0 +1,66 @@
+/* Superpower action feedback toasts — subtle, bottom-right, brand tokens. */
+.toast-host {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 360px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--bg-tooltip, #1a0f18);
+  border: 1px solid var(--panel-border);
+  border-left: 2px solid var(--muted);
+  border-radius: 10px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  animation: toast-in 160ms ease-out;
+  font: inherit;
+  color: inherit;
+}
+.toast:hover { border-color: var(--panel-border-strong); }
+.toast-checking { border-left-color: var(--state-checking); }
+.toast-success { border-left-color: var(--teal); }
+.toast-error { border-left-color: var(--st-error); }
+.toast-info { border-left-color: var(--gold-soft); }
+
+.toast-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex: 0 0 auto;
+  background: var(--muted);
+}
+.toast-success .toast-dot { background: var(--teal); box-shadow: 0 0 8px var(--teal); }
+.toast-error .toast-dot { background: var(--st-error); }
+.toast-info .toast-dot { background: var(--gold-soft); }
+.toast-checking .toast-dot {
+  background: transparent;
+  border: 2px solid var(--state-checking);
+  border-top-color: transparent;
+  box-sizing: border-box;
+}
+.toast-dot.spin { animation: toast-spin 700ms linear infinite; }
+
+.toast-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.toast-title { font-size: 12.5px; font-weight: 650; color: var(--text); line-height: 1.3; }
+.toast-detail { font-size: 11px; color: var(--muted); line-height: 1.35; word-break: break-word; }
+
+@keyframes toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes toast-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+  .toast-dot.spin { animation: none; }
+}

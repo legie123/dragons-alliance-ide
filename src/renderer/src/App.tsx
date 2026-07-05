@@ -18,6 +18,7 @@ import { EcosystemBar } from "./components/EcosystemBar";
 import { GodModePanel } from "./components/GodModePanel";
 import { AdminPanel, type AdminTab } from "./components/AdminPanel";
 import { GuidePanel } from "./components/GuidePanel";
+import { ToastHost } from "./components/ToastHost";
 import { DragonEmblem } from "./components/DragonEmblem";
 import dragonMark from "./assets/dragon-mark.png";
 import { LeftRail } from "./components/shell/LeftRail";
@@ -79,12 +80,15 @@ export default function App() {
       if (t) setAdminTab(t);
       setAdminOpen(true);
     };
+    // superpower actions ask the dock to re-probe after they change state
+    const refreshTools = () => { queryClient.invalidateQueries({ queryKey: ["tools"] }); };
     window.addEventListener("dai:admin", admin);
     window.addEventListener("dai:goto", goto);
     window.addEventListener("dai:vault", vault);
     window.addEventListener("dai:phone", phone);
     window.addEventListener("dai:godmode", god);
     window.addEventListener("dai:more", more);
+    window.addEventListener("dai:refresh-tools", refreshTools);
     return () => {
       window.removeEventListener("dai:admin", admin);
       window.removeEventListener("dai:goto", goto);
@@ -92,6 +96,7 @@ export default function App() {
       window.removeEventListener("dai:phone", phone);
       window.removeEventListener("dai:godmode", god);
       window.removeEventListener("dai:more", more);
+      window.removeEventListener("dai:refresh-tools", refreshTools);
     };
   }, []);
 
@@ -264,6 +269,7 @@ export default function App() {
         onClose={() => { setGuideOpen(false); setGuideTarget(null); }}
         onOpenSector={(id) => { setView(id); setGuideOpen(false); setGuideTarget(null); }}
       />
+      <ToastHost />
     </>
   );
 }

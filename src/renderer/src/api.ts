@@ -75,6 +75,15 @@ export function toolAction(id: string) {
   window.dai.tools.action(id);
 }
 
+// ---- superpower engine health (real probes, honest feedback) ----
+export type { SpHealth, SpResult } from "@shared/ipc";
+export async function fetchSpHealth(id: string) {
+  return window.dai.superpowers.health(id);
+}
+export async function spOpenDigest() {
+  return window.dai.superpowers.openDigest();
+}
+
 export async function broadcast(data: string, enter: boolean, ids?: string[]) {
   return window.dai.term.broadcast(data, enter, ids);
 }

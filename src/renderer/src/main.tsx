@@ -8,6 +8,7 @@ import "./styles/tokens.css";
 import "./styles/shell.css";
 import "./styles/dock.css";
 import "./styles/guide.css";
+import "./styles/toast.css";
 import "./styles/overrides.css";
 
 createRoot(document.getElementById("root")!).render(

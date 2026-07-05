@@ -120,10 +120,11 @@ export async function probeTools(): Promise<ToolStatus[]> {
         if (graphPid !== null && graphPid !== "-") {
           agentRunning = true;
         }
+        const reportExists = exists(path.join(graphifyOut, "GRAPH_REPORT.md"));
         if (agentRunning) {
           return digestRecent ? "live" : "ready";
         }
-        if (digestExists) return "ready";
+        if (digestExists || reportExists) return "ready";
         return "off";
       })(),
       detail: (() => {
@@ -136,12 +137,14 @@ export async function probeTools(): Promise<ToolStatus[]> {
           parts.push("not loaded");
         }
         const digestPath = path.join(graphifyOut, "_GRAPHIFY_DIGEST.md");
+        const reportPath = path.join(graphifyOut, "GRAPH_REPORT.md");
         if (exists(digestPath)) {
-          const mtime = fs.statSync(digestPath).mtimeMs;
-          const mins = minsAgo(mtime);
-          parts.push(`digest updated ${mins.toFixed(1)} min ago`);
+          parts.push(`digest updated ${minsAgo(fs.statSync(digestPath).mtimeMs).toFixed(1)} min ago`);
+        } else if (exists(reportPath)) {
+          // digest lives in the vault; the repo carries GRAPH_REPORT.md — say so honestly
+          parts.push(`report updated ${minsAgo(fs.statSync(reportPath).mtimeMs).toFixed(1)} min ago (digest in vault)`);
         } else {
-          parts.push("no digest");
+          parts.push("no report yet — run Regenerate");
         }
         return parts.join(" · ");
       })(),
