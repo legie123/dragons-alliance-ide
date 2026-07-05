@@ -6,9 +6,15 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchSessions, fetchAgentHealth, gradeColor, human, idleLabel } from "../api";
 import type { Session, AgentHealth } from "../api";
 import { AgentTranscript } from "../components/AgentTranscript";
+import { SectionHeader, EmptyState } from "../components/da";
+import { IcBot, IcZap, IcAlert } from "../components/icons";
+import { deployTerm, armTerm } from "../registry";
+import { useT } from "../hooks/useAppearance";
 
+// status colors from the shared token namespace — no raw hex
 const STATUS_COLOR: Record<AgentHealth["status"], string> = {
-  working: "#34d399", done: "#7c8cff", error: "#f43f5e", stalled: "#fbbf24", idle: "#59617a",
+  working: "var(--green)", done: "var(--sector-agents)", error: "var(--state-error)",
+  stalled: "var(--orange)", idle: "var(--faint)",
 };
 
 /** Per-agent health badge — goal% + status dot + problem count. */
@@ -24,7 +30,7 @@ function HealthBadge({ file }: { file?: string }) {
     <span className="mc-health" title={`${h.status} · goal ${h.goalPct}% · ${h.problems.length} problem(s)`}>
       <span className="mc-health-status" style={{ background: STATUS_COLOR[h.status] }} />
       <span className="mc-health-ring" style={{ color: gradeColor(h.goalPct) }}>{h.goalPct}%</span>
-      {h.problems.length > 0 && <span className="mc-problem">⚠{h.problems.length}</span>}
+      {h.problems.length > 0 && <span className="mc-problem"><IcAlert size={10} />{h.problems.length}</span>}
     </span>
   );
 }
@@ -94,9 +100,47 @@ export function AgentsView({ onOpenFile }: { onOpenFile?: (p: string) => void })
     return () => { alive = false; clearInterval(iv); };
   }, [autopilot]);
 
+  // right-rail "Inspect Transcripts" → select the top live agent
+  useEffect(() => {
+    const h = (e: Event) => {
+      if ((e as CustomEvent).detail !== "agents:select-first") return;
+      const first = sessRef.current.find((s) => s.file);
+      if (first?.file) setSelectedFile(first.file);
+    };
+    window.addEventListener("dai:sector-action", h);
+    return () => window.removeEventListener("dai:sector-action", h);
+  }, []);
+
+  const t = useT();
   const selected = sessions.find((s) => s.file === selectedFile) || null;
+  const liveNow = sessions.filter((s) => s.idle_min < 3).length;
+
+  if (sessions.length === 0) {
+    return (
+      <>
+        <SectionHeader icon={<IcBot />} title="AGENTS"
+          sub={t({ en: "AI mission control", ro: "Centru de comanda AI" })}
+          status="idle" />
+        <EmptyState icon={<IcBot size={34} />}
+          title={t({ en: "No active swarm", ro: "Niciun swarm activ" })}
+          hint={t({
+            en: "Agents are configured but no Claude sessions are running. Launch one to see its live transcript, health and score here.",
+            ro: "Agentii sunt configurati dar nu ruleaza nicio sesiune Claude. Lanseaza una ca sa vezi aici transcript live, health si scor.",
+          })}
+          actions={[
+            { label: t({ en: "Launch Agent", ro: "Lanseaza agent" }), onClick: deployTerm("claude", "~"), primary: true },
+            { label: t({ en: "Open Ruflo Status", ro: "Deschide status Ruflo" }), onClick: armTerm("ruflo status", "~") },
+          ]} />
+      </>
+    );
+  }
 
   return (
+    <>
+    <SectionHeader icon={<IcBot />} title="AGENTS"
+      sub={t({ en: "AI mission control", ro: "Centru de comanda AI" })}
+      status={liveNow > 0 ? "live" : "idle"}
+      right={<span className="mc-list-count">{liveNow} live · {sessions.length} total</span>} />
     <div className="mc-view" style={{ display: "grid", gridTemplateColumns: "320px 1fr" }}>
       <div className="mc-list">
         <div className="mc-list-head">
@@ -107,7 +151,7 @@ export function AgentsView({ onOpenFile }: { onOpenFile?: (p: string) => void })
         {/* Autopilot control */}
         <button className={`mc-autopilot${autopilot ? " on" : ""}`} onClick={() => setAutopilot((a) => !a)}
           title="auto-watch + auto-nudge · heuristic self-repair">
-          🛠️ Autopilot {autopilot ? "ON" : "OFF"}
+          <IcZap size={13} /> Autopilot {autopilot ? "ON" : "OFF"}
           <span className="mc-autopilot-sub">auto-watch + nudge · heuristic</span>
         </button>
         {autopilot && log.length > 0 && (
@@ -127,7 +171,7 @@ export function AgentsView({ onOpenFile }: { onOpenFile?: (p: string) => void })
             <button key={s.id} className={`mc-agent${sel ? " sel" : ""}`}
               onClick={() => s.file && setSelectedFile(s.file)} disabled={!s.file}>
               <div className="mc-agent-row1">
-                <span className="mc-agent-dot" style={{ background: live ? "#34d399" : "#59617a" }} />
+                <span className="mc-agent-dot" style={{ background: live ? "var(--green)" : "var(--faint)" }} />
                 <span className="mc-agent-name">{s.title}</span>
                 <HealthBadge file={s.file} />
               </div>
@@ -144,5 +188,6 @@ export function AgentsView({ onOpenFile }: { onOpenFile?: (p: string) => void })
 
       <AgentTranscript file={selectedFile} title={selected?.title} onOpenFile={onOpenFile} />
     </div>
+    </>
   );
 }

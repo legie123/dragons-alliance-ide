@@ -4,6 +4,11 @@ import { AnimatePresence } from "motion/react";
 import { fetchSessions, human } from "../api";
 import { SessionCard } from "../components/SessionCard";
 import { ReasoningStream } from "../components/ReasoningStream";
+import { SectionHeader, EmptyState } from "../components/da";
+import { IcChart, IcAlert } from "../components/icons";
+import { deployTerm } from "../registry";
+import { queryClient } from "../queryClient";
+import { useT } from "../hooks/useAppearance";
 
 const WINDOWS = [60, 240, 1440];
 
@@ -32,8 +37,13 @@ export function MetricsView() {
   const selSession = sessions.find((s) => s.id === selId) ?? top;
   const selFile = selSession?.file ?? null;
 
+  const t = useT();
+
   return (
     <div className="metrics-view">
+      <SectionHeader icon={<IcChart />} title="METRICS"
+        sub={t({ en: "Live session observability", ro: "Observabilitate sesiuni live" })}
+        status={isError ? "error" : liveCount > 0 ? "live" : "idle"} />
       <div className="mv-bar">
         <div className="stats">
           <div className="mv-stat"><div className="v">{sessions.length}</div><div className="l">agents</div></div>
@@ -52,9 +62,26 @@ export function MetricsView() {
       </div>
 
       {isError ? (
-        <div className="empty">api offline</div>
+        <EmptyState icon={<IcAlert size={34} />}
+          title={t({ en: "Metrics API offline", ro: "API metrics offline" })}
+          hint={t({
+            en: "The session probe did not answer. Retry, or check the audit log for errors.",
+            ro: "Sonda de sesiuni nu a raspuns. Reincearca sau verifica audit log pentru erori.",
+          })}
+          actions={[
+            { label: t({ en: "Retry", ro: "Reincearca" }), onClick: () => { queryClient.invalidateQueries({ queryKey: ["sessions"] }); }, primary: true },
+          ]} />
       ) : sessions.length === 0 ? (
-        <div className="empty">no active sessions in the last {active < 1440 ? `${active} min` : "24h"}</div>
+        <EmptyState icon={<IcChart size={34} />}
+          title={t({ en: "No active sessions", ro: "Nicio sesiune activa" })}
+          hint={t({
+            en: `No Claude sessions in the last ${active < 1440 ? `${active} minutes` : "24 hours"}. Launch one and its score, context and output land here live.`,
+            ro: `Nicio sesiune Claude in ultimele ${active < 1440 ? `${active} minute` : "24 de ore"}. Lanseaza una si scorul, contextul si output-ul apar aici live.`,
+          })}
+          actions={[
+            { label: t({ en: "Launch Claude Session", ro: "Lanseaza sesiune Claude" }), onClick: deployTerm("claude", "~"), primary: true },
+            { label: "24h", onClick: () => setActive(1440) },
+          ]} />
       ) : (
         <div className="mv-split">
           <div className="mv-grid">

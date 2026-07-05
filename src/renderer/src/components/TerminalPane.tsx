@@ -7,6 +7,7 @@ import "@xterm/xterm/css/xterm.css";
 import { useQuery } from "@tanstack/react-query";
 import { Term, fetchTermSession, modelGrade, MODEL_KEYS, human, broadcast } from "../api";
 import { Crystal } from "./Crystal";
+import { IcNodes } from "./icons";
 
 const THEME = {
   background: "#0a0c12",
@@ -228,7 +229,7 @@ export const TerminalPane = forwardRef<PaneHandle, {
         <span className="tname">
           {isMaster ? "MASTER" : element ? element.name : term.cmd === "claude" ? "claude" : "zsh"}
         </span>
-        {inChannel && <span className="tchan" title="interconnected — co-typing channel">🔗</span>}
+        {inChannel && <span className="tchan" title="interconnected — co-typing channel"><IcNodes size={11} /></span>}
         <span className="tcwd">{term.cwd.replace(/^\/Users\/[^/]+/, "~")}</span>
         {!isMaster && <button className="tx" onClick={onClose} title="kill terminal">✕</button>}
       </div>

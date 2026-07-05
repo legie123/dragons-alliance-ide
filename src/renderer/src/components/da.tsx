@@ -59,16 +59,31 @@ export function StatusPill({ state, children }: { state: PillState; children?: R
   );
 }
 
-// ---- SectionHeader — sector identity strip: icon, title, live right side ----
-export function SectionHeader({ icon, title, sub, right }: {
+// ---- SectionHeader — sector identity strip: icon, title, description,
+// live status, primary CTA, custom right side, contextual "?" help ----
+export function SectionHeader({ icon, title, sub, right, status, checking, cta, onHelp }: {
   icon: ReactNode; title: string; sub?: string; right?: ReactNode;
+  status?: OpStatus; checking?: boolean;
+  cta?: { label: string; onClick: () => void; disabled?: boolean; reason?: string };
+  onHelp?: () => void;
 }) {
   return (
     <div className="da-sechead">
       <span className="da-sechead-ic">{icon}</span>
       <span className="da-sechead-title">{title}</span>
       {sub && <span className="da-sechead-sub">{sub}</span>}
+      {status && <OpStatusBadge status={status} checking={checking} size="sm" />}
       {right && <span className="da-sechead-right">{right}</span>}
+      {cta && (
+        <button className="da-btn gold sm da-sechead-cta" onClick={cta.onClick}
+          disabled={cta.disabled} title={cta.disabled ? cta.reason : undefined}>
+          {cta.label}
+        </button>
+      )}
+      {onHelp && (
+        <button className="da-sechead-help" onClick={onHelp}
+          title="Open guide for this sector" aria-label={`Open guide for ${title}`}>?</button>
+      )}
     </div>
   );
 }

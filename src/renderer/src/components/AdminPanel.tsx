@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DaiSettings, PermissionsState, PermRole, VaultSyncResult } from "@shared/ipc";
+import { IcSigil } from "./icons";
 
 export type AdminTab = "settings" | "audit" | "perms" | "team" | "health";
 const TABS: { id: AdminTab; label: string }[] = [
@@ -31,7 +32,7 @@ export function AdminPanel({ open, tab, onClose, onTab }: {
     <div className="cmdk-backdrop" onClick={onClose}>
       <div className="vault admin" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Admin panel">
         <div className="vault-head">
-          <span className="vault-glyph">🛡️</span>
+          <span className="vault-glyph"><IcSigil size={22} /></span>
           <div>
             <h2>Admin</h2>
             <div className="vault-sub">settings · audit · permissions · team sync · API health — all local, all real</div>

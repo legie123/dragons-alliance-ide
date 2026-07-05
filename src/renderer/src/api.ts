@@ -105,11 +105,6 @@ export async function fetchProjects(): Promise<Project[]> {
   }
 }
 
-export const TYPE_ICON: Record<string, string> = {
-  node: "⬢", rust: "🦀", go: "🐹", python: "🐍", flutter: "🐦",
-  ruby: "💎", php: "🐘", dir: "📁",
-};
-
 // ---- filesystem ----
 export type FsEntry = IpcFsEntry;
 export type FsList = IpcFsList;

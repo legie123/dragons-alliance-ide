@@ -38,7 +38,7 @@ export const SECTOR_ACTIONS: Record<SectorId, SectorAction[]> = {
     { id: "t-run", label: "Run Command", icon: () => <IcPlay />, primary: true, run: sectorEvent("term:focus-master") },
     { id: "t-runall", label: "Mirror to Workers", icon: () => <IcBroadcast />, run: sectorEvent("term:toggle-sync") },
     { id: "t-worker", label: "Start Worker", icon: () => <IcTerminal />, run: deployTerm("shell", "~") },
-    { id: "t-clear", label: "Clear Terminal", icon: () => <IcEraser />, run: sectorEvent("term:clear") },
+    { id: "t-clear", label: "Clear Master", icon: () => <IcEraser />, run: sectorEvent("term:clear") },
     { id: "t-logs", label: "Open Logs (Audit)", icon: () => <IcFile />, run: admin("audit") },
   ],
   agents: [

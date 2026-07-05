@@ -3,7 +3,7 @@
 // over CDP (via window.dai.neo): a live screenshot frame you can click/scroll into,
 // reload/back/forward controls, and a chat-agent wired to Neo's Magic Page.
 import { useEffect, useRef, useState } from "react";
-import { IcMonitor } from "../components/icons";
+import { IcMonitor, IcPlay, IcRefresh, IcExternal, IcZap, IcBot, IcTerminal } from "../components/icons";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProjects } from "../api";
 import type { NeoStatus, NeoSnap } from "@shared/ipc";
@@ -100,6 +100,17 @@ export function PreviewView() {
     }
   }
 
+  // right-rail actions: pv:refresh → reload, pv:external → open in system browser
+  useEffect(() => {
+    const h = (e: Event) => {
+      const a = (e as CustomEvent).detail;
+      if (a === "pv:refresh") reload();
+      else if (a === "pv:external" && /^https?:\/\//.test(url)) window.dai.shell?.open?.(url);
+    };
+    window.addEventListener("dai:sector-action", h);
+    return () => window.removeEventListener("dai:sector-action", h);
+  });
+
   const showNeoFrame = isNeo && live;
   const showIframe = !isNeo && live && /^https?:\/\//.test(url);
 
@@ -112,18 +123,18 @@ export function PreviewView() {
           {projects.map((p) => <option key={p.path} value={p.path}>{p.name}</option>)}
         </select>
         <select className="pv-sel" value={browser} onChange={(e) => { setBrowser(e.target.value); setLive(false); setSnap(null); }}>
-          {BROWSERS.map((b) => <option key={b} value={b}>{b}{b === "Neo" ? " ⚡" : ""}</option>)}
+          {BROWSERS.map((b) => <option key={b} value={b}>{b}{b === "Neo" ? " · CDP" : ""}</option>)}
         </select>
         <input className="pv-url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="dev server url (e.g. http://localhost:3000)" />
-        <button className="pv-go" onClick={start} disabled={neoBusy}>{neoBusy ? "…" : "▶ Start"}</button>
-        <button className="pv-btn" onClick={reload} disabled={!live}>⟳ Reload</button>
+        <button className="pv-go" onClick={start} disabled={neoBusy}>{neoBusy ? "…" : <><IcPlay size={11} /> Start</>}</button>
+        <button className="pv-btn" onClick={reload} disabled={!live}><IcRefresh size={11} /> Reload</button>
         {isNeo && (
           <>
-            <button className="pv-btn" onClick={() => window.dai.neo.back().then(() => setTimeout(refreshSnap, 500))} disabled={!live || !neoConn?.connected} title="Neo back">←</button>
-            <button className="pv-btn" onClick={() => window.dai.neo.forward().then(() => setTimeout(refreshSnap, 500))} disabled={!live || !neoConn?.connected} title="Neo forward">→</button>
+            <button className="pv-btn" onClick={() => window.dai.neo.back().then(() => setTimeout(refreshSnap, 500))} disabled={!live || !neoConn?.connected} title="Neo back" aria-label="Neo back">←</button>
+            <button className="pv-btn" onClick={() => window.dai.neo.forward().then(() => setTimeout(refreshSnap, 500))} disabled={!live || !neoConn?.connected} title="Neo forward" aria-label="Neo forward">→</button>
           </>
         )}
-        <button className="pv-btn" onClick={() => window.dai.shell?.open?.(url)} disabled={!/^https?:\/\//.test(url)}>↗ Open external</button>
+        <button className="pv-btn" onClick={() => window.dai.shell?.open?.(url)} disabled={!/^https?:\/\//.test(url)}><IcExternal size={11} /> Open external</button>
       </div>
 
       <div className="pv-body">
@@ -147,10 +158,10 @@ export function PreviewView() {
             ) : (
               <div className="pv-empty">
                 <div>Neo isn’t on its debug port yet.</div>
-                <div className="pv-empty-hint">{neoErr || "Click ▶ Start to (re)launch Neo with debugging."}</div>
+                <div className="pv-empty-hint">{neoErr || "Click Start to (re)launch Neo with debugging."}</div>
                 <button className="pv-go" style={{ marginTop: 10 }} disabled={neoBusy}
                   onClick={async () => { setNeoBusy(true); const st = await window.dai.neo.ensure(); setNeoConn(st); setNeoErr(st.error || ""); if (st.connected && /^https?:\/\//.test(url)) { await window.dai.neo.open(url); setNonce((n) => n + 1); } setNeoBusy(false); }}>
-                  {neoBusy ? "connecting…" : "⚡ Connect Neo"}
+                  {neoBusy ? "connecting…" : <><IcZap size={11} /> Connect Neo</>}
                 </button>
               </div>
             )
@@ -158,7 +169,7 @@ export function PreviewView() {
             <iframe key={nonce} className="pv-iframe" src={url} title="preview" sandbox="allow-scripts allow-same-origin allow-forms" />
           ) : (
             <div className="pv-empty">
-              <div>Start a dev server for the selected project, enter its URL, then ▶ Start.</div>
+              <div>Start a dev server for the selected project, enter its URL, then press Start.</div>
               <div className="pv-empty-hint">
                 {isNeo
                   ? "Neo mode drives the real Neo browser — you can click & scroll right in this frame."
@@ -170,7 +181,7 @@ export function PreviewView() {
 
         <aside className="pv-side">
           <div className="pv-panel">
-            <div className="pv-panel-head">💬 {isNeo ? "Neo Magic Page" : "Preview Chat-Agent"}</div>
+            <div className="pv-panel-head"><IcBot size={12} /> {isNeo ? "Neo Magic Page" : "Preview Chat-Agent"}</div>
             <div className="pv-chat-log">
               {isNeo ? (
                 chatLog.length === 0 ? (
@@ -195,7 +206,7 @@ export function PreviewView() {
           </div>
 
           <div className="pv-panel">
-            <div className="pv-panel-head">⌘ Micro Terminal <span className="pv-cwd">{activeProj ? activeProj.name : "no project"}</span></div>
+            <div className="pv-panel-head"><IcTerminal size={12} /> Micro Terminal <span className="pv-cwd">{activeProj ? activeProj.name : "no project"}</span></div>
             <div className="pv-micro-out">Project-scoped quick commands. Runs in the selected project's cwd.
               <br />Executes via the terminal host — pick a project to enable.</div>
             <div className="pv-micro-in">

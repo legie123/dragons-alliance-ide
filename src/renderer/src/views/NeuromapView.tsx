@@ -6,22 +6,26 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchNeuroGraph, fetchNeuroNode } from "../api";
 import type { NeuroLayer, NeuroMode, NeuroLens, NeuroNode, NeuroNodeDetail } from "../api";
+import { SectionHeader, EmptyState } from "../components/da";
+import { IcBrain, IcUsers, IcX, IcExternal, IcNodes } from "../components/icons";
+import { openGraphify, openObsidian } from "../registry";
+import { useT } from "../hooks/useAppearance";
 
-// Executive intelligence palette — mature cluster colors (spec):
-// core=gold · agents=purple · projects=blue · research/shared=teal · inactive=grey smoke
+// Executive intelligence palette — token-sourced (SVG attrs need literals, so
+// these mirror tokens.css values; keep in sync with --sector-*/--accent-*).
 const LAYER_COLOR: Record<NeuroLayer, string> = {
-  core: "#d4af37", projects: "#5ea2ef", "agents-notes": "#8d5cff", all: "#746a70",
+  core: "var(--accent)", projects: "var(--blue)", "agents-notes": "var(--accent-violet)", all: "var(--faint)",
 };
 const FOLDER_COLOR = (folder: string): string => {
   const f = folder.toLowerCase();
-  if (f.includes("research")) return "#43e0c0";
-  if (f.includes("memory")) return "#f0c75e";
-  if (f.includes("meta") || f.includes("map")) return "#d4af37";
-  if (f.includes("project")) return "#5ea2ef";
-  if (f.includes("agent") || f.includes("claude")) return "#8d5cff";
-  if (f.includes("decision")) return "#d24a36";
-  if (f.includes("architect")) return "#b8860b";
-  return "#746a70";
+  if (f.includes("research")) return "#43e0c0";  /* --teal */
+  if (f.includes("memory")) return "#f0c75e";    /* --gold-soft */
+  if (f.includes("meta") || f.includes("map")) return "#d4af37"; /* --accent */
+  if (f.includes("project")) return "#5ea2ef";   /* --blue */
+  if (f.includes("agent") || f.includes("claude")) return "#8d5cff"; /* --accent-violet */
+  if (f.includes("decision")) return "#d24a36";  /* --accent-ember */
+  if (f.includes("architect")) return "#b8860b"; /* --gold-deep */
+  return "#746a70";                              /* --faint */
 };
 
 type Pos = { x: number; y: number };
@@ -104,10 +108,44 @@ export function NeuromapView() {
 
   const posOf = (id: string) => positions.get(id) || { x: 600, y: 380 };
 
+  // right-rail actions: nm:focus (dim to selected hood), nm:reset (recenter)
+  useEffect(() => {
+    const h = (e: Event) => {
+      const a = (e as CustomEvent).detail;
+      if (a === "nm:focus") setFocusMode((f) => !f);
+      else if (a === "nm:reset") { setTx(0); setTy(0); setScale(1); setFocusMode(false); }
+    };
+    window.addEventListener("dai:sector-action", h);
+    return () => window.removeEventListener("dai:sector-action", h);
+  }, []);
+
+  const t = useT();
+
+  if (graph && nodes.length === 0) {
+    return (
+      <div className="nm-view">
+        <SectionHeader icon={<IcBrain />} title="NEUROMAP"
+          sub={t({ en: "Neural intelligence map", ro: "Harta inteligentei neuronale" })}
+          status="idle" />
+        <EmptyState icon={<IcNodes size={34} />}
+          title={t({ en: "No graph data", ro: "Niciun graf" })}
+          hint={t({
+            en: "The vault layer returned no notes. Regenerate the Graphify digest or open the vault to add notes.",
+            ro: "Layer-ul din vault nu are note. Regenereaza digestul Graphify sau deschide vault-ul si adauga note.",
+          })}
+          actions={[
+            { label: t({ en: "Open Graph Digest", ro: "Deschide digestul" }), onClick: openGraphify, primary: true },
+            { label: t({ en: "Open Vault", ro: "Deschide vault" }), onClick: openObsidian },
+            { label: t({ en: "Show All Layers", ro: "Toate layerele" }), onClick: () => setLayer("all") },
+          ]} />
+      </div>
+    );
+  }
+
   return (
     <div className="nm-view">
       <div className="nm-toolbar">
-        <span className="nm-title">🧠 NEUROMAP</span>
+        <span className="nm-title"><IcBrain size={14} /> NEUROMAP</span>
         <span className="nm-stat">{nodes.length} notes · {edges.length} links {graph?.mode === "live" ? "· live" : ""}</span>
         <div className="nm-segs">
           {(["core", "projects", "agents-notes", "all"] as NeuroLayer[]).map((l) => (
@@ -179,7 +217,7 @@ export function NeuromapView() {
           {(graph?.layers ?? []).map((l) => (
             <div key={l.id} className="nm-leg-row"><span className="nm-leg-dot" style={{ background: LAYER_COLOR[l.id] }} /> {l.label} · {l.count}</div>
           ))}
-          {graph?.teamHint && <div className="nm-team">👥 {graph.teamHint}</div>}
+          {graph?.teamHint && <div className="nm-team"><IcUsers size={11} /> {graph.teamHint}</div>}
         </div>
 
         {detail && (
@@ -187,16 +225,16 @@ export function NeuromapView() {
             <div className="nm-meta-head">
               <span className="nm-leg-dot" style={{ background: FOLDER_COLOR(detail.folder) }} />
               <b>{detail.title}</b>
-              <button className="nm-meta-x" onClick={() => setSel(null)}>✕</button>
+              <button className="nm-meta-x" onClick={() => setSel(null)} aria-label="Close node detail"><IcX size={11} /></button>
             </div>
             <div className="nm-meta-type">{detail.folder}{detail.agent ? " · " + detail.agent : ""}</div>
             {/* quick actions — all real: Focus dims to this node's hood, Related jumps
                 to the first linked note, Open raises the vault in Obsidian */}
             <div className="nm-meta-actions">
-              <button className={`nm-act${focusMode ? " on" : ""}`} onClick={() => setFocusMode((f) => !f)}>◎ Focus</button>
+              <button className={`nm-act${focusMode ? " on" : ""}`} onClick={() => setFocusMode((f) => !f)}>Focus</button>
               <button className="nm-act" disabled={!detail.outlinks.length && !detail.backlinks.length}
-                onClick={() => { const t = detail.outlinks[0] || detail.backlinks[0]; if (t) setSel(t.id); }}>⇢ Related</button>
-              <button className="nm-act" title="opens the vault in Obsidian" onClick={() => window.dai.tools.action("open-obsidian")}>↗ Open</button>
+                onClick={() => { const l = detail.outlinks[0] || detail.backlinks[0]; if (l) setSel(l.id); }}>Related</button>
+              <button className="nm-act" title="opens the vault in Obsidian" onClick={() => window.dai.tools.action("open-obsidian")}><IcExternal size={10} /> Open</button>
             </div>
             <div className="nm-meta-counts">
               <span><b>{detail.backlinks.length}</b> in</span>

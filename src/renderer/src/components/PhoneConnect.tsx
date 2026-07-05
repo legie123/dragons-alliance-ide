@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import type { Project } from "../api";
+import { IcPhone, IcCommand, IcSend } from "./icons";
 
 // The cloud coding surface. Open on the phone (same Claude account as this Mac) →
 // pick a repo → drive a full Claude Code agent, exactly like on the computer.
@@ -82,7 +83,7 @@ export function PhoneConnect({
           transition={{ type: "spring", stiffness: 300, damping: 26 }}>
 
           <div className="phone-head">
-            <span className="phone-glyph">📱</span>
+            <span className="phone-glyph"><IcPhone size={22} /></span>
             <div>
               <h2>Code from your phone</h2>
               <div className="phone-sub">Same Claude account, same repos — a full agent, exactly like here.</div>
@@ -143,14 +144,14 @@ export function PhoneConnect({
               <div className="phone-sec-title">③ Communicate <span className="phone-soon">connect later</span></div>
               <div className="phone-comms">
                 <div className="phone-comm disabled">
-                  <span className="phone-comm-ic">🎮</span>
+                  <span className="phone-comm-ic"><IcCommand size={16} /></span>
                   <div>
                     <div className="phone-comm-name">Discord</div>
                     <div className="phone-comm-hint">bots &amp; channels — waiting for your connection</div>
                   </div>
                 </div>
                 <div className="phone-comm disabled">
-                  <span className="phone-comm-ic">💬</span>
+                  <span className="phone-comm-ic"><IcSend size={16} /></span>
                   <div>
                     <div className="phone-comm-name">WhatsApp</div>
                     <div className="phone-comm-hint">intake bot — waiting for your connection</div>

@@ -7,7 +7,7 @@ import type { TranscriptEvent } from "@shared/ipc";
 
 const TOOL_ICON: Record<string, string> = {
   Read: "◦", Edit: "✎", Write: "✎", Bash: "⌘",
-  Grep: "⌕", Glob: "⌕", TodoWrite: "☑", Task: "⚙", WebFetch: "🌐",
+  Grep: "⌕", Glob: "⌕", TodoWrite: "☑", Task: "⚙", WebFetch: "◍",
 };
 const toolIcon = (tool?: string): string => (tool && TOOL_ICON[tool]) || "⚒";
 

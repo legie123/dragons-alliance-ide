@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IcSigil, IcZap, IcFolder, IcSend } from "./icons";
 import { broadcast, Project } from "../api";
 
@@ -10,6 +10,14 @@ export function MissionBar({ projects }: { projects: Project[] }) {
   const [msg, setMsg] = useState("");
   const [flash, setFlash] = useState("");
   const [launchOpen, setLaunchOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // right-rail "Broadcast Mission" → focus the mission input
+  useEffect(() => {
+    const h = (e: Event) => { if ((e as CustomEvent).detail === "agents:focus-broadcast") inputRef.current?.focus(); };
+    window.addEventListener("dai:sector-action", h);
+    return () => window.removeEventListener("dai:sector-action", h);
+  }, []);
 
   async function claudeIds(): Promise<string[]> {
     const terms = await window.dai.term.list();
@@ -24,7 +32,7 @@ export function MissionBar({ projects }: { projects: Project[] }) {
     // Broadcast sends real keystrokes (+Enter) into every live agent — confirm first.
     if (!window.confirm(`Send this prompt to ${ids.length} live agent${ids.length === 1 ? "" : "s"}?\n\n${t}`)) return;
     const r = await broadcast(t, true, ids);
-    toast(`📡 sent to ${r.sent} agent${r.sent === 1 ? "" : "s"}`);
+    toast(`sent to ${r.sent} agent${r.sent === 1 ? "" : "s"}`);
     setMsg("");
   }
 
@@ -42,14 +50,14 @@ export function MissionBar({ projects }: { projects: Project[] }) {
   async function launch(cwd: string, name: string) {
     if ((await liveClaudeCwds()).has(cwd)) { toast(`already running in ${name}`); setLaunchOpen(false); return; }
     spawn(cwd);
-    toast(`🜲 launched claude in ${name}`);
+    toast(`launched claude in ${name}`);
     setLaunchOpen(false);
   }
   async function launchAll() {
     const live = await liveClaudeCwds();
     const fresh = projects.filter((p) => !live.has(p.path));
     for (const p of fresh) spawn(p.path);
-    toast(fresh.length ? `🜲 launched claude in ${fresh.length} project${fresh.length === 1 ? "" : "s"}` : "all projects already running");
+    toast(fresh.length ? `launched claude in ${fresh.length} project${fresh.length === 1 ? "" : "s"}` : "all projects already running");
     setLaunchOpen(false);
   }
 
@@ -73,6 +81,7 @@ export function MissionBar({ projects }: { projects: Project[] }) {
         {CHIPS.map((c) => <button key={c} className="mc-chip" onClick={() => send(c)}>{c}</button>)}
       </div>
       <input
+        ref={inputRef}
         className="mc-mission-input"
         value={msg}
         onChange={(e) => setMsg(e.target.value)}

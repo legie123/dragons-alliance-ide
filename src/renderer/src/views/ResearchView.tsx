@@ -91,7 +91,7 @@ export function ResearchView() {
             <pre className="rs-reader-body">{open.body.trim().slice(0, 60000)}</pre>
           </article>
         ) : (
-          <div className="rs-hint">Pick a note — full markdown + frontmatter. These same notes are the teal research nodes in 🧠 Neuromap.</div>
+          <div className="rs-hint">Pick a note — full markdown + frontmatter. These same notes are the teal research nodes in Neuromap.</div>
         )}
       </div>
     </div>

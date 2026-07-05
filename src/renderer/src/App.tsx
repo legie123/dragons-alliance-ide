@@ -26,7 +26,7 @@ import { RightRail } from "./components/shell/RightRail";
 import { StatusBar } from "./components/shell/StatusBar";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects, fetchGDriveStatus, broadcast } from "./api";
-import { IcCrown, IcGem, IcSearch, IcTerminal } from "./components/icons";
+import { IcCrown, IcGem, IcSearch, IcTerminal, IcBot, IcSigil } from "./components/icons";
 import { CORE_SECTORS } from "./registry";
 import { isView, SECTOR_FOR_VIEW, type View } from "./views";
 
@@ -149,8 +149,8 @@ export default function App() {
       let seq = 0;
       const launch = (cwd: string, id: string) => window.dai.term.create({ id: `mck${Date.now().toString(36)}${seq++}`, cmd: "claude", cwd });
       return [
-        { id: "mc:agents", title: "Mission-Control: open Agents cockpit", category: "Action", icon: "🤖", run: () => setView("agents") },
-        ...projects.map((p): Cmd => ({ id: "mc:launch:" + p.path, title: "Launch claude in " + p.name, subtitle: p.path.replace(/^\/Users\/[^/]+/, "~"), category: "Action", icon: "🜲", run: () => { launch(p.path, p.path); setView("agents"); } })),
+        { id: "mc:agents", title: "Mission-Control: open Agents cockpit", category: "Action", icon: <IcBot size={13} />, run: () => setView("agents") },
+        ...projects.map((p): Cmd => ({ id: "mc:launch:" + p.path, title: "Launch claude in " + p.name, subtitle: p.path.replace(/^\/Users\/[^/]+/, "~"), category: "Action", icon: <IcSigil size={13} />, run: () => { launch(p.path, p.path); setView("agents"); } })),
       ];
     });
   }, [projects]);

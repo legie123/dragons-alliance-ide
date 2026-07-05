@@ -4,7 +4,7 @@ import "../monaco-setup";
 import { useQuery } from "@tanstack/react-query";
 import { fetchHost, fetchProjects, fsRead, fsWrite, langFromPath, FsEntry } from "../api";
 import { FileTree } from "../components/FileTree";
-import { IcCode, IcBranch } from "../components/icons";
+import { IcCode, IcBranch, IcX } from "../components/icons";
 
 type OpenFile = { path: string; name: string; content: string; dirty: boolean; lang: string };
 type OpenSignal = { path: string; n: number } | null;
@@ -75,13 +75,15 @@ export function CodeView({ openFile }: { openFile?: OpenSignal }) {
 
   function flash(m: string) { setToast(m); setTimeout(() => setToast(""), 1900); }
 
-  // Cmd/Ctrl+S
+  // Cmd/Ctrl+S + right-rail "Save File" (dai:sector-action code:save)
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); save(); }
     };
+    const act = (e: Event) => { if ((e as CustomEvent).detail === "code:save") save(); };
     window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
+    window.addEventListener("dai:sector-action", act);
+    return () => { window.removeEventListener("keydown", h); window.removeEventListener("dai:sector-action", act); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   });
 
@@ -99,7 +101,7 @@ export function CodeView({ openFile }: { openFile?: OpenSignal }) {
             <div key={f.path} className={`code-tab${f.path === activePath ? " active" : ""}`} onClick={() => setActivePath(f.path)}>
               <span className="ct-name">{f.name}</span>
               {f.dirty && <span className="ct-dot" />}
-              <span className="ct-x" onClick={(e) => { e.stopPropagation(); closeFile(f.path); }}>✕</span>
+              <span className="ct-x" role="button" aria-label={`Close ${f.name}`} onClick={(e) => { e.stopPropagation(); closeFile(f.path); }}><IcX size={10} /></span>
             </div>
           ))}
           <div className="code-spacer" />

@@ -7,7 +7,7 @@ import { registerProvider, Cmd } from "../palette";
 import { elementFor } from "../elements";
 import { Crystal } from "../components/Crystal";
 import { EmptyState, StatusPill } from "../components/da";
-import { IcTerminal, IcSigil, IcSend } from "../components/icons";
+import { IcTerminal, IcSigil, IcSend, IcCrown, IcNodes, IcBroadcast, IcSheet, IcMonitor, IcCube, IcCommand, IcFolder } from "../components/icons";
 
 let SEQ = 1;
 const newId = () => `t${Date.now().toString(36)}${SEQ++}`;
@@ -133,6 +133,18 @@ export function TerminalsView() {
     setStatus((p) => { const n = { ...p }; delete n[id]; return n; });
   }
 
+  // right-rail actions: focus master input / mirror toggle / clear master
+  useEffect(() => {
+    const h = (e: Event) => {
+      const a = (e as CustomEvent).detail;
+      if (a === "term:focus-master") masterRef.current?.focus();
+      else if (a === "term:toggle-sync") setSync((s) => !s);
+      else if (a === "term:clear") masterRef.current?.clear();
+    };
+    window.addEventListener("dai:sector-action", h);
+    return () => window.removeEventListener("dai:sector-action", h);
+  }, []);
+
   async function quickSend() {
     if (!bmsg.trim()) return;
     const ids = visibleWorkers.map((w) => w.id);
@@ -150,15 +162,15 @@ export function TerminalsView() {
     const s = pref.current;
     const tilde = (p: string) => p.replace(/^\/Users\/[^/]+/, "~");
     return [
-      { id: "t:new-shell", title: "New terminal: zsh shell", category: "Terminal", icon: "🖥️", run: () => s.add("shell") },
-      { id: "t:new-claude", title: "New terminal: claude session", category: "Terminal", icon: "🜲", run: () => s.add("claude") },
-      { id: "t:sync", title: s.sync ? "Master sync — turn OFF" : "Master sync — turn ON", category: "Action", icon: "📡", run: () => s.setSync(!s.sync) },
-      { id: "t:grid", title: "Layout: grid", category: "Action", icon: "▦", run: () => s.setLayout("grid") },
-      { id: "t:focus", title: "Layout: focus", category: "Action", icon: "▭", run: () => s.setLayout("focus") },
-      { id: "t:quad", title: "Layout: tiles (adaptive up to 8)", category: "Action", icon: "⊞", run: () => s.setLayout("quad") },
-      { id: "t:all", title: "Workspace: All projects", category: "Project", icon: "⌘", run: () => s.setActiveProject(null) },
-      ...s.projects.map((p: any): Cmd => ({ id: "t:proj:" + p.path, title: "Workspace: " + p.name, subtitle: tilde(p.path), category: "Project", icon: "📁", run: () => s.setActiveProject(p.path) })),
-      ...s.workers.map((w: Term): Cmd => ({ id: "t:foc:" + w.id, title: "Focus terminal: " + (w.cmd === "claude" ? "claude" : "zsh"), subtitle: tilde(w.cwd), category: "Terminal", icon: "⌘", run: () => { s.setActiveWorker(w.id); s.setLayout("focus"); } })),
+      { id: "t:new-shell", title: "New terminal: zsh shell", category: "Terminal", icon: <IcTerminal size={13} />, run: () => s.add("shell") },
+      { id: "t:new-claude", title: "New terminal: claude session", category: "Terminal", icon: <IcSigil size={13} />, run: () => s.add("claude") },
+      { id: "t:sync", title: s.sync ? "Master sync — turn OFF" : "Master sync — turn ON", category: "Action", icon: <IcBroadcast size={13} />, run: () => s.setSync(!s.sync) },
+      { id: "t:grid", title: "Layout: grid", category: "Action", icon: <IcSheet size={13} />, run: () => s.setLayout("grid") },
+      { id: "t:focus", title: "Layout: focus", category: "Action", icon: <IcMonitor size={13} />, run: () => s.setLayout("focus") },
+      { id: "t:quad", title: "Layout: tiles (adaptive up to 8)", category: "Action", icon: <IcCube size={13} />, run: () => s.setLayout("quad") },
+      { id: "t:all", title: "Workspace: All projects", category: "Project", icon: <IcCommand size={13} />, run: () => s.setActiveProject(null) },
+      ...s.projects.map((p: any): Cmd => ({ id: "t:proj:" + p.path, title: "Workspace: " + p.name, subtitle: tilde(p.path), category: "Project", icon: <IcFolder size={13} />, run: () => s.setActiveProject(p.path) })),
+      ...s.workers.map((w: Term): Cmd => ({ id: "t:foc:" + w.id, title: "Focus terminal: " + (w.cmd === "claude" ? "claude" : "zsh"), subtitle: tilde(w.cwd), category: "Terminal", icon: <IcTerminal size={13} />, run: () => { s.setActiveWorker(w.id); s.setLayout("focus"); } })),
     ];
   }), []);
 
@@ -181,7 +193,7 @@ export function TerminalsView() {
         <div className={`master-zone${layout === "quad" ? " collapsed" : ""}`}>
           <div className="master-bar">
             <div className="mb-left">
-              <span className="crown">🜲</span>
+              <span className="crown"><IcCrown size={14} /></span>
               <span className="mb-title">MASTER TERMINAL</span>
               <StatusPill state="idle">zsh</StatusPill>
               <StatusPill state={sync ? "sync" : "off"}>{sync ? `synced · ${liveCount}` : "solo"}</StatusPill>
@@ -217,7 +229,7 @@ export function TerminalsView() {
           )}
           {channelOn && visibleWorkers.length > 0 && (
             <div className="link-picker chan-picker">
-              <span className="lp-label">🔗 open channel:</span>
+              <span className="lp-label"><IcNodes size={11} /> open channel:</span>
               {visibleWorkers.map((w, i) => {
                 const on = inChannel(w.id);
                 const el = elementFor(i);
@@ -256,9 +268,9 @@ export function TerminalsView() {
               )}
             </div>
             <div className="seg">
-              <button className={layout === "grid" ? "active" : ""} onClick={() => setLayout("grid")}>▦ grid</button>
-              <button className={layout === "focus" ? "active" : ""} onClick={() => setLayout("focus")}>▭ focus</button>
-              <button className={layout === "quad" ? "active" : ""} onClick={() => setLayout("quad")}>⊞ tiles</button>
+              <button className={layout === "grid" ? "active" : ""} onClick={() => setLayout("grid")} aria-label="Grid layout"><IcSheet size={11} /> grid</button>
+              <button className={layout === "focus" ? "active" : ""} onClick={() => setLayout("focus")} aria-label="Focus layout"><IcMonitor size={11} /> focus</button>
+              <button className={layout === "quad" ? "active" : ""} onClick={() => setLayout("quad")} aria-label="Tiles layout"><IcCube size={11} /> tiles</button>
             </div>
             <button className="addterm" onClick={() => add("shell")} disabled={visibleWorkers.length >= 8}
               title={visibleWorkers.length >= 8 ? "max 8 terminals" : "add a terminal"}>+ Add</button>
@@ -271,7 +283,7 @@ export function TerminalsView() {
             </div>
             <button className={`chanbtn${channelOn ? " on" : ""}`} onClick={() => setChannelOn((c) => !c)}
               title="open a live channel between terminals — type in any, it co-types into all">
-              🔗 Channel {channelOn ? "ON" : "OFF"}
+              <IcNodes size={11} /> Channel {channelOn ? "ON" : "OFF"}
             </button>
             {layout === "focus" && (
               <div className="tabs">
