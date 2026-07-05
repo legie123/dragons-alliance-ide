@@ -27,7 +27,9 @@ import { StatusBar } from "./components/shell/StatusBar";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects, fetchGDriveStatus, broadcast } from "./api";
 import { IcCrown, IcGem, IcSearch, IcTerminal, IcBot, IcSigil } from "./components/icons";
-import { CORE_SECTORS, type SectorId } from "./registry";
+import { CORE_SECTORS, operationalTruth, type SectorId } from "./registry";
+import { SECTOR_ACTIONS } from "./sectorActions";
+import { queryClient } from "./queryClient";
 import { isView, SECTOR_FOR_VIEW, type View } from "./views";
 
 // Monaco is ~5MB — keep it out of the initial bundle, load only when Code opens.
@@ -120,8 +122,9 @@ export default function App() {
   useEffect(() => {
     return registerProvider("app", (): Cmd[] => [
       // core sectors (from the registry — one truth)
-      ...CORE_SECTORS.map((s): Cmd => ({
-        id: "view:" + s.id, title: "Open " + s.label, category: "View", icon: s.icon(), run: () => setView(s.id as View),
+      ...CORE_SECTORS.map((s, i): Cmd => ({
+        id: "view:" + s.id, title: "Open " + s.label, category: "Sector", icon: s.icon(),
+        shortcut: `⌘${i + 1}`, run: () => setView(s.id as View),
       })),
       // superpowers
       { id: "sp:godmode", title: "Open GODMODE", subtitle: "supreme command center", category: "Superpower", icon: <IcCrown />, run: () => setGodOpen(true) },
@@ -137,12 +140,31 @@ export default function App() {
       { id: "action:phone", title: "Phone — code from your phone", subtitle: "⌘J", category: "Admin", run: () => setPhoneOpen(true) },
       { id: "action:keys", title: "Keys — credentials vault", category: "Admin", run: () => setVaultOpen(true) },
       { id: "action:audit", title: "Audit trail", subtitle: "local action log", category: "Admin", run: () => { setAdminTab("audit"); setAdminOpen(true); } },
-      { id: "action:settings", title: "Settings — IDE configuration", category: "Admin", run: () => { setAdminTab("settings"); setAdminOpen(true); } },
+      { id: "action:settings", title: "Settings — IDE configuration", category: "Settings", run: () => { setAdminTab("settings"); setAdminOpen(true); } },
       { id: "action:perms", title: "Permissions — team & roles", category: "Admin", run: () => { setAdminTab("perms"); setAdminOpen(true); } },
       { id: "action:vaultsync", title: "Sync Obsidian vault", subtitle: "git snapshot + push/pull", category: "Admin", run: () => { setAdminTab("team"); setAdminOpen(true); } },
-      { id: "guide:sectors", title: "Open interactive sector guide", subtitle: "explain every sector + hints", category: "Help", icon: <IcSearch />, run: () => setGuideOpen(true) },
+      // diagnostics — computed, never invented
+      { id: "diag:truth", title: "Operational truth", subtitle: (() => { const t = operationalTruth(); return `${t.real} real actions · ${t.pending} pending`; })(), category: "Diagnostics", run: () => setGodOpen(true) },
+      { id: "diag:check", title: "Check superpowers now", subtitle: "re-probe all health signals", category: "Diagnostics", run: () => { queryClient.invalidateQueries({ queryKey: ["tools"] }); } },
+      { id: "guide:sectors", title: "Open Dragon Guide", subtitle: "sectors · superpowers · workflows · statuses", category: "Guide", icon: <IcSearch />, run: () => setGuideOpen(true) },
     ]);
   }, []);
+
+  // Contextual provider — the active sector's right-rail actions surface as
+  // Recommended (disabled ones stay visible with their honest reason).
+  useEffect(() => {
+    const s = SECTOR_FOR_VIEW[view];
+    if (s === "support") return registerProvider("contextual", () => []);
+    return registerProvider("contextual", (): Cmd[] =>
+      SECTOR_ACTIONS[s].map((a): Cmd => ({
+        id: `rec:${s}:${a.id}`,
+        title: a.label,
+        category: "Recommended",
+        icon: a.icon(),
+        disabledReason: a.disabledReason,
+        run: a.run ?? (() => {}),
+      })));
+  }, [view]);
 
   // Mission-Control palette commands: launch agents into projects.
   useEffect(() => {

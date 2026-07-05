@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { IcCommand, IcZap, IcMonitor, IcFolder, IcFile, IcTerminal, IcCrown, IcKey } from "./icons";
+import { IcCommand, IcZap, IcMonitor, IcFolder, IcFile, IcTerminal, IcCrown, IcKey, IcBook, IcSettings, IcChart, IcPlay, IcRefresh } from "./icons";
 import { motion, AnimatePresence } from "motion/react";
-import { Cmd, paletteCommands, fuzzyScore } from "../palette";
+import { Cmd, paletteCommands, rankCommands } from "../palette";
+import { getRecents, pushRecent } from "../paletteRecents";
+import { setLastAction } from "../lastAction";
+import { OpStatusBadge } from "./da";
 import { fsWalk } from "../api";
 
 const CAT_ICON: Record<Cmd["category"], ReactNode> = {
   Action: <IcZap size={13} />, View: <IcMonitor size={13} />, Project: <IcFolder size={13} />,
   Terminal: <IcTerminal size={13} />, File: <IcFile size={13} />,
   Superpower: <IcCrown size={13} />, Admin: <IcKey size={13} />, Help: <IcCommand size={13} />,
+  Sector: <IcMonitor size={13} />, Recommended: <IcPlay size={13} />, Recent: <IcRefresh size={13} />,
+  Diagnostics: <IcChart size={13} />, Settings: <IcSettings size={13} />, Guide: <IcBook size={13} />,
 };
 const MAX = 60;
 
@@ -72,18 +77,9 @@ export function CommandPalette({
   const results = useMemo(() => {
     if (!open) return [];
     const all = [...paletteCommands(), ...files];
-    if (!query.trim()) {
-      // no query: show actions/views/projects/terminals first, few files
-      const nonFile = all.filter((c) => c.category !== "File");
-      const someFiles = files.slice(0, 8);
-      return [...nonFile, ...someFiles].slice(0, MAX);
-    }
-    return all
-      .map((c) => ({ c, s: Math.max(fuzzyScore(query, c.title) * 1.2, fuzzyScore(query, c.subtitle || "")) }))
-      .filter((x) => x.s > 0)
-      .sort((a, b) => b.s - a.s)
-      .slice(0, MAX)
-      .map((x) => x.c);
+    const ranked = rankCommands(query, all, getRecents());
+    if (!query.trim()) return [...ranked, ...files.slice(0, 8)].slice(0, MAX);
+    return ranked.slice(0, MAX);
   }, [open, query, files]);
 
   useEffect(() => { setSel(0); }, [query]);
@@ -93,12 +89,23 @@ export function CommandPalette({
 
   if (!open) return null;
 
+  const runCmd = (c: Cmd) => {
+    if (c.disabledReason) return; // honest: shows the reason, never dead-runs
+    onClose();
+    pushRecent(c.id);
+    setLastAction(c.title);
+    c.run();
+  };
+
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") { e.preventDefault(); setSel((s) => Math.min(s + 1, results.length - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setSel((s) => Math.max(s - 1, 0)); }
-    else if (e.key === "Enter") { e.preventDefault(); const c = results[sel]; if (c) { onClose(); c.run(); } }
+    else if (e.key === "Enter") { e.preventDefault(); const c = results[sel]; if (c) runCmd(c); }
     else if (e.key === "Escape") { e.preventDefault(); onClose(); }
   };
+
+  // group headers only in the browse (empty-query) view
+  const grouped = !query.trim();
 
   return (
     <AnimatePresence>
@@ -110,18 +117,28 @@ export function CommandPalette({
           <div className="cmdk-input">
             <span className="cmdk-glyph"><IcCommand size={16} /></span>
             <input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={onKey}
-              placeholder="Jump to a file, command, project, terminal…" spellCheck={false} />
+              placeholder="Jump to a file, command, sector, superpower…" spellCheck={false} />
             <span className="cmdk-hint">esc</span>
           </div>
           <div className="cmdk-list" ref={listRef}>
             {results.length === 0 && <div className="cmdk-empty">no matches</div>}
             {results.map((c, i) => (
-              <div key={c.id} data-i={i} className={`cmdk-row${i === sel ? " sel" : ""}`}
-                onMouseEnter={() => setSel(i)} onClick={() => { onClose(); c.run(); }}>
-                <span className="cmdk-ic">{c.icon || CAT_ICON[c.category]}</span>
-                <span className="cmdk-title">{c.title}</span>
-                {c.subtitle && <span className="cmdk-sub">{c.subtitle}</span>}
-                <span className="cmdk-cat">{c.category}</span>
+              <div key={c.id}>
+                {grouped && (i === 0 || results[i - 1].category !== c.category) && (
+                  <div className="cmdk-group">{c.category.toUpperCase()}</div>
+                )}
+                <div data-i={i}
+                  className={`cmdk-row${i === sel ? " sel" : ""}${c.disabledReason ? " disabled" : ""}`}
+                  aria-disabled={c.disabledReason ? "true" : undefined}
+                  title={c.disabledReason}
+                  onMouseEnter={() => setSel(i)} onClick={() => runCmd(c)}>
+                  <span className="cmdk-ic">{c.icon || CAT_ICON[c.category]}</span>
+                  <span className="cmdk-title">{c.title}</span>
+                  {c.status && <OpStatusBadge status={c.status} size="sm" />}
+                  {(c.disabledReason || c.subtitle) && <span className="cmdk-sub">{c.disabledReason || c.subtitle}</span>}
+                  {c.shortcut && <kbd className="cmdk-kbd">{c.shortcut}</kbd>}
+                  <span className="cmdk-cat">{c.category}</span>
+                </div>
               </div>
             ))}
           </div>

@@ -8,3 +8,16 @@
 .ide-pro, .mc-shell, .nm-view, .drv-view, .code-view, .cr-view, .pv-view, .rs-view {
   border-top-color: color-mix(in srgb, var(--sector-accent) 50%, transparent);
 }
+
+/* ---- command palette evolution ---- */
+.cmdk-group {
+  padding: 8px 12px 3px; font-size: 8.5px; font-weight: 800;
+  letter-spacing: 0.18em; color: var(--text-muted);
+}
+.cmdk-kbd {
+  font-size: 9px; color: var(--text-muted); font-family: ui-monospace, monospace;
+  border: 1px solid var(--border-subtle); border-radius: 4px; padding: 1px 5px;
+  margin-left: 6px; flex: 0 0 auto;
+}
+.cmdk-row.disabled { opacity: 0.5; cursor: not-allowed; }
+.cmdk-row.disabled .cmdk-sub { color: var(--state-setup); }
