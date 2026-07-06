@@ -1,53 +1,62 @@
-// Library — agents catalog, superpowers, shortcuts and smart tricks in one
-// place. Team tab is always visible; Admin tab (tips CRUD + full catalog) only
-// renders when the real "adm:library" grant resolves true, via the same
-// useMe()/teamCaps system every other admin area in this app already gates
-// on (App.tsx sectorBlocked, AdminPanel tabs, EcosystemBar, LeftRail) — this
-// is cooperative access control, not a hard security boundary (see team.ts).
-// Actual write enforcement still lives server-side in main/ipc.ts
-// (tips:upsert / tips:delete both re-check teamCan("adm:library") there).
-//
-// Support view like Research/Radar: no sector accent (SECTOR_FOR_VIEW maps it
-// to "support"), so the header reuses the same accent-free layout classes.
-import { useEffect, useState } from "react";
+// Admin Library — the empire's catalog of agents, tools and superpowers, plus a
+// shortcuts + smart-tips reference. ADMIN ONLY: the whole view is gated on the
+// real "adm:library" grant (same useMe()/teamCaps system as every other admin
+// area). Non-admins never reach it — the More entry, the dock Admin button and
+// the ⌘K command are all hidden for them — and if one navigates here anyway this
+// view renders a restricted panel. Tip writes are ALSO re-checked server-side
+// in main/ipc.ts (teamCan("adm:library")), so the gate is not renderer-only.
+import { useState } from "react";
 import { useMe } from "../hooks/useMe";
-import { IcGem } from "../components/icons";
+import { IcGem, IcLock, IcCrown } from "../components/icons";
 import { consumeLibraryTab } from "../registry";
+import { CategoryLibrary } from "../components/library/CategoryLibrary";
 import { TeamSection } from "../components/library/TeamSection";
 import { AdminSection } from "../components/library/AdminSection";
 
-type Tab = "team" | "admin";
+type Mode = "catalog" | "reference";
 
 export function LibraryView() {
-  const { can } = useMe();
+  const { can, me } = useMe();
   const isAdmin = can("adm:library");
   const canTerminals = can("act:terminals");
-  // consumed once — set by the persistent Admin-dock shortcut (EcosystemBar)
-  // so it can jump straight to the Admin tab instead of always landing on Team.
-  const [tab, setTab] = useState<Tab>(() => consumeLibraryTab() ?? "team");
+  // the persistent dock "Admin" shortcut sets pending "admin" → open on the tips editor
+  const [mode, setMode] = useState<Mode>(() => (consumeLibraryTab() === "admin" ? "reference" : "catalog"));
 
-  // if the grant disappears while Admin was open, fall back to Team
-  useEffect(() => { if (!isAdmin && tab === "admin") setTab("team"); }, [isAdmin, tab]);
+  if (!isAdmin) {
+    return (
+      <div className="lib-view">
+        <div className="lib-denied">
+          <IcLock size={26} />
+          <h2>Admin Library — restricted</h2>
+          <p>This library of agents, tools and superpowers is available to owners &amp; admins only.
+            Ask an owner to grant you <code>adm:library</code> in Settings → Team.</p>
+        </div>
+      </div>
+    );
+  }
 
-  // No app-wide "active project" concept is threaded into support views today
-  // (TerminalsView tracks its own project selection locally) — agent deploys
-  // fall back to "~" like every other registry action without a concrete cwd.
-  const activeProject: string | null = null;
+  const roleLabel = me?.member ? `${me.member.name} · ${me.member.role}` : "local admin";
 
   return (
-    <div className="radar-view">
-      <div className="radar-head">
-        <span className="radar-title"><IcGem /> LIBRARY</span>
-        <span style={{ fontSize: 12, color: "var(--muted)" }}>agents · superpowers · shortcuts · tips</span>
+    <div className="lib-view">
+      <div className="lib-topbar">
+        <div className="lib-title-wrap">
+          <span className="lib-title"><IcGem /> Admin Library</span>
+          <span className="lib-adminbadge">ADMIN ONLY</span>
+          <span className="lib-ownerbadge"><IcCrown size={11} /> {roleLabel}</span>
+        </div>
         <div className="drv-tabs">
-          <button className={`drv-tab${tab === "team" ? " on" : ""}`} onClick={() => setTab("team")}>Team</button>
-          {isAdmin && <button className={`drv-tab${tab === "admin" ? " on" : ""}`} onClick={() => setTab("admin")}>Admin</button>}
+          <button className={`drv-tab${mode === "catalog" ? " on" : ""}`} onClick={() => setMode("catalog")}>Catalog</button>
+          <button className={`drv-tab${mode === "reference" ? " on" : ""}`} onClick={() => setMode("reference")}>Shortcuts &amp; Tips</button>
         </div>
       </div>
 
-      {tab === "team"
-        ? <TeamSection activeProject={activeProject} canTerminals={canTerminals} />
-        : <AdminSection activeProject={activeProject} />}
+      {mode === "catalog"
+        ? <CategoryLibrary activeProject={null} />
+        : <>
+            <TeamSection activeProject={null} canTerminals={canTerminals} />
+            <AdminSection activeProject={null} />
+          </>}
     </div>
   );
 }

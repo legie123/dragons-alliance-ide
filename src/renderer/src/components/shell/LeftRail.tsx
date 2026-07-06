@@ -79,10 +79,15 @@ export const LeftRail = memo(function LeftRail({ view, onView, moreOpen, onMoreT
           <>
             <div className="more-backdrop" onClick={() => onMoreToggle(false)} />
             <div className="more-menu wide lrail-menu">
-              {MORE_CATEGORIES.map((cat) => (
+              {MORE_CATEGORIES.map((cat) => {
+                // cooperative gating — hide items whose capability the member lacks,
+                // and drop a category entirely once nothing in it is visible
+                const items = cat.items.filter((it) => !it.cap || can(it.cap));
+                if (items.length === 0) return null;
+                return (
                 <div key={cat.title} className="more-cat">
                   <div className="more-head">{cat.title}</div>
-                  {cat.items.map((it) => it.run ? (
+                  {items.map((it) => it.run ? (
                     <button key={it.id} className="more-item"
                       onClick={() => { it.run!(); onMoreToggle(false); }}>
                       <span className="more-item-label">{it.icon()} {it.label}
@@ -99,7 +104,8 @@ export const LeftRail = memo(function LeftRail({ view, onView, moreOpen, onMoreT
                     </button>
                   ))}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}

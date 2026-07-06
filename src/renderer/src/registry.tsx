@@ -234,12 +234,13 @@ export const SUPERPOWERS: SuperpowerDef[] = [
 export type MoreItem = {
   id: string; label: string; sub: string; icon: () => ReactNode;
   status?: OpStatus; run?: () => void; disabledReason?: string;
+  cap?: string; // team capability required to even SEE this item (LeftRail hides it otherwise)
 };
 export const MORE_CATEGORIES: { title: string; items: MoreItem[] }[] = [
   {
     title: "LIBRARY",
     items: [
-      { id: "library", label: "Library", sub: "agents · superpowers · shortcuts · tips", icon: () => <IcGem />, status: "live", run: goto("library") },
+      { id: "library", label: "Admin Library", sub: "agents · tools · superpowers · admin only", icon: () => <IcGem />, status: "live", run: goto("library"), cap: "adm:library" },
     ],
   },
   {

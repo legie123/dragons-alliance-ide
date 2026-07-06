@@ -1,7 +1,6 @@
-// Team section of Library — always visible, read/activate only. Shortcuts
-// reference, superpowers quick actions (gated on the real "terminals" perms
-// capability), and a read-only smart-tricks feed. Editing lives in AdminSection.
-import { useQuery } from "@tanstack/react-query";
+// Reference section of Library — shortcuts cheatsheet + superpowers quick actions
+// (gated on the real "act:terminals" capability). The smart-tips editor lives in
+// AdminSection, rendered right below this in the Library's "Shortcuts & Tips" tab.
 import { KEYMAP } from "../../keymap";
 import { SUPERPOWERS } from "../../registry";
 import { useOps } from "../../hooks/useOps";
@@ -10,7 +9,6 @@ import { ShortcutList } from "../ShortcutList";
 
 export function TeamSection({ activeProject, canTerminals }: { activeProject?: string | null; canTerminals: boolean }) {
   void activeProject; // superpower actions below are pre-bound in the registry — no per-project seeding here
-  const { data: tips = [] } = useQuery({ queryKey: ["tips"], queryFn: () => window.dai.tips.list() });
   const { statuses, checking } = useOps();
 
   return (
@@ -46,16 +44,6 @@ export function TeamSection({ activeProject, canTerminals }: { activeProject?: s
                 );
               })}
             </div>
-          </div>
-        ))}
-      </section>
-
-      <section className="vault-card">
-        <div className="vault-card-h">Smart tricks <span className="vault-badge on">{tips.length}</span></div>
-        {tips.length === 0 && <div className="empty">no tips yet</div>}
-        {tips.map((t) => (
-          <div key={t.id} className="audit-row">
-            <span className="audit-detail"><b>{t.title}</b>{t.category ? ` · ${t.category}` : ""} — {t.body}</span>
           </div>
         ))}
       </section>

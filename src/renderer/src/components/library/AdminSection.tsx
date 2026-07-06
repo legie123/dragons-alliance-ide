@@ -1,12 +1,11 @@
-// Admin section of Library — the full agent catalog plus a smart-tricks CRUD
-// editor. The caller (LibraryView) already checked the "adm:library" grant
-// before rendering this at all; every write still goes through the real IPC,
-// which the main process independently re-checks via teamCan("adm:library")
-// (defense in depth).
+// Admin section of Library — the smart-tricks CRUD editor (the full agent/tool
+// catalog now lives in CategoryLibrary). The caller (LibraryView) already checked
+// the "adm:library" grant before rendering this; every write still goes through
+// the real IPC, which the main process independently re-checks via
+// teamCan("adm:library") (defense in depth).
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TipEntry } from "@shared/ipc";
-import { AgentCatalog } from "./AgentCatalog";
 
 type TipDraft = { id?: string; title: string; body: string; category: string };
 
@@ -38,10 +37,9 @@ export function AdminSection({ activeProject }: { activeProject?: string | null 
     qc.invalidateQueries({ queryKey: ["tips"] });
   };
 
+  void activeProject;
   return (
     <>
-      <AgentCatalog activeProject={activeProject} />
-
       <section className="vault-card">
         <div className="vault-card-h">Smart tricks (admin) <span className="vault-badge on">{tips.length}</span></div>
         <div className="vault-steps">

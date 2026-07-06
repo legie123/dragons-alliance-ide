@@ -164,7 +164,10 @@ export default function App() {
       // support + admin
       { id: "view:research", title: "Open Research (intelligence desk)", category: "View", run: () => setView("research") },
       { id: "view:radar", title: "Open GitHub Radar + rescan", category: "View", run: () => { setView("radar"); window.dai.radar.refresh(); } },
-      { id: "view:library", title: "Open Library", subtitle: "agents · superpowers · shortcuts · tips", category: "View", icon: <IcGem />, run: () => setView("library") },
+      // Library is ADMIN ONLY — only surface the command when the member holds the grant
+      ...(canRef.current("adm:library")
+        ? [{ id: "view:library", title: "Open Admin Library", subtitle: "agents · tools · superpowers", category: "View" as const, icon: <IcGem />, run: () => setView("library") }]
+        : []),
       { id: "action:phone", title: "Phone — code from your phone", subtitle: "⌘J", category: "Admin", run: () => setPhoneOpen(true) },
       { id: "action:keys", title: "Keys — credentials vault", category: "Admin", run: () => setVaultOpen(true) },
       { id: "action:audit", title: "Audit trail", subtitle: "local action log", category: "Admin", run: () => { setAdminCat("audit"); setAdminOpen(true); } },
