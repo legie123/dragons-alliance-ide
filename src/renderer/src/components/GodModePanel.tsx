@@ -29,7 +29,7 @@ export function GodModePanel({ open, onClose, onCommand }: { open: boolean; onCl
   const { data: tools = [] } = useQuery({ queryKey: ["tools"], queryFn: fetchTools, refetchInterval: 5000, enabled: open });
   const { data: google } = useQuery({ queryKey: ["gdrive"], queryFn: fetchGDriveStatus, enabled: open });
   const { data: audit = [] } = useQuery({ queryKey: ["audit"], queryFn: () => window.dai.audit.list(200), refetchInterval: 8000, enabled: open });
-  const { data: perms } = useQuery({ queryKey: ["perms"], queryFn: () => window.dai.perms.get(), enabled: open });
+  const { data: team } = useQuery({ queryKey: ["team"], queryFn: () => window.dai.team.get(), enabled: open });
   const [gmMsg, setGmMsg] = useState("");
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export function GodModePanel({ open, onClose, onCommand }: { open: boolean; onCl
             <div className="gm-sub">supreme command · operational truth</div>
           </div>
           <span className="gm-operator"><IcUsers size={12} /> Andrei · local operator</span>
-          <span className="gm-team">{perms ? `${perms.members.length} member(s) · local roles` : "…"}</span>
+          <span className="gm-team">{team ? `${team.members.length} member(s) · team roster` : "…"}</span>
           <button className="gm-x" onClick={onClose} title="close (esc)">esc</button>
         </div>
 

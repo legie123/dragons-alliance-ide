@@ -20,7 +20,6 @@ import { metaList, metaUpsert, candidateCreate } from "./driveMeta";
 import { protonStatus, protonSetConfig } from "./proton";
 import { settingsGet, settingsSet } from "./settings";
 import { auditLog, auditList } from "./audit";
-import { permsGet, permsSet } from "./permissions";
 import { tipsList, tipsUpsert, tipsDelete } from "./tips";
 import { teamGet, teamSet, me as teamMe, identitySet, teamCan } from "./team";
 import { vaultStatus, vaultSync, vaultSetRemote } from "./vaultSync";
@@ -157,13 +156,6 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
   ipcMain.handle(CH.AUDIT_LIST, (_e, limit?: number) => auditList(limit));
   ipcMain.on(CH.AUDIT_LOG, (_e, { kind, detail }: { kind: string; detail: string }) => auditLog(kind, detail));
 
-  // ---- permissions (local team/role model) ----
-  ipcMain.handle(CH.PERMS_GET, () => permsGet());
-  ipcMain.handle(CH.PERMS_SET, (_e, state) => {
-    const next = permsSet(state);
-    auditLog("permissions", `permissions saved: ${next.members.length} member(s)`);
-    return next;
-  });
   // ---- library tips (local smart-tricks notes, admin-editable) ----
   ipcMain.handle(CH.TIPS_LIST, () => tipsList());
   ipcMain.handle(CH.TIPS_UPSERT, (_e, entry) => {

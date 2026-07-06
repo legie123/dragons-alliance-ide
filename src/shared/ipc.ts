@@ -90,8 +90,6 @@ export const CH = {
   AUDIT_LIST: "audit:list",                    // invoke(limit?) → AuditEvent[]
   AUDIT_LOG: "audit:log",                      // send({kind,detail}) — renderer-side events
   // permissions (local team/role model — ~/.config/dai/permissions.json)
-  PERMS_GET: "perms:get",                      // invoke() → PermissionsState
-  PERMS_SET: "perms:set",                      // invoke(state) → PermissionsState
   // library tips (local smart-tricks notes, admin-editable — ~/.config/dai/tips.json)
   TIPS_LIST: "tips:list",                      // invoke() → TipEntry[]
   TIPS_UPSERT: "tips:upsert",                  // invoke(entry) → TipEntry | { error: string }
@@ -289,16 +287,6 @@ export type DaiSettings = {
 // ---- Audit trail (append-only local action log) ----
 export type AuditEvent = { ts: number; kind: string; detail: string; actor: string };
 
-// ---- Permissions (local team/role model — enforcement-ready) ----
-export type PermRole = "owner" | "editor" | "viewer";
-export type PermCapability =
-  | "terminals" | "broadcast" | "credentials" | "drive-write" | "vault-sync" | "emergency-stop";
-export type PermMember = { id: string; name: string; role: PermRole };
-export type PermissionsState = {
-  members: PermMember[];
-  matrix: Record<PermRole, PermCapability[]>;
-};
-
 // ---- Library tips (local smart-tricks notes, admin-editable) ----
 export type TipEntry = { id: string; title: string; body: string; category?: string; createdAt: number; updatedAt: number };
 
@@ -439,10 +427,6 @@ export interface DaiApi {
   audit: {
     list(limit?: number): Promise<AuditEvent[]>;
     log(kind: string, detail: string): void;
-  };
-  perms: {
-    get(): Promise<PermissionsState>;
-    set(state: PermissionsState): Promise<PermissionsState>;
   };
   tips: {
     list(): Promise<TipEntry[]>;

@@ -172,10 +172,6 @@ const dai: DaiApi = {
     list: (limit) => ipcRenderer.invoke(CH.AUDIT_LIST, limit),
     log: (kind, detail) => ipcRenderer.send(CH.AUDIT_LOG, { kind, detail }),
   },
-  perms: {
-    get: () => ipcRenderer.invoke(CH.PERMS_GET),
-    set: (state) => ipcRenderer.invoke(CH.PERMS_SET, state),
-  },
   tips: {
     list: () => ipcRenderer.invoke(CH.TIPS_LIST),
     upsert: (entry) => ipcRenderer.invoke(CH.TIPS_UPSERT, entry),
