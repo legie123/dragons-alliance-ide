@@ -98,6 +98,8 @@ export const CH = {
   VAULT_SET_REMOTE: "vaultsync:setremote",     // invoke(url) → VaultSyncStatus
   // google per-service health probe
   GOOGLE_HEALTH: "google:health",              // invoke() → GServiceHealth[]
+  // generic PATH command existence check (renderer status probes — Ollama/Codex/etc.)
+  SYSTEM_CHECK_COMMAND: "system:check-command", // invoke(cmd) → boolean
   // screenshot (main captures the window → ~/Desktop)
   SHOT_CAPTURE: "shot:capture",                // invoke() → ShotResult
   // superpowers — real engine health probes + digest open (honest, timeout-guarded)
@@ -355,6 +357,7 @@ export interface DaiApi {
   radar: { status(): Promise<RadarStatus>; refresh(): void };
   host: { info(): Promise<HostInfo> };
   tools: { status(): Promise<ToolStatus[]>; action(id: string): void };
+  system: { checkCommand(cmd: string): Promise<boolean> };
   win: { minimize(): void; maxToggle(): void; close(): void };
   shell: { open(url: string): void };
   neuromap: {

@@ -36,6 +36,61 @@ export function TerminalsView() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [bmsg, setBmsg] = useState("");
   const [flash, setFlash] = useState("");
+  const [ollamaStatus, setOllamaStatus] = useState<{ available: boolean; models: string[]; error?: string }>({ available: false, models: [] });
+  const [hermesStatus, setHermesStatus] = useState<{ available: boolean; model?: string }>({ available: false });
+  const [codexStatus, setCodexStatus] = useState<{ available: boolean }>({ available: false });
+  const [ollamaModelPickerOpen, setOllamaModelPickerOpen] = useState(false);
+  const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>('');
+
+  // --- Status checking for Ollama, Hermes, Codex ---
+  const checkOllamaStatus = async () => {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+      const response = await fetch('http://127.0.0.1:11434/api/tags', { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      const models = data.models?.map((m: { name: string }) => m.name) || [];
+      const hermesModel = models.find((m: string) => m.toLowerCase().includes('hermes'));
+      setOllamaStatus({ available: models.length > 0, models, error: undefined });
+      setHermesStatus({ available: !!hermesModel, model: hermesModel });
+    } catch (err) {
+      setOllamaStatus({ available: false, models: [], error: err instanceof Error ? err.message : String(err) });
+      setHermesStatus({ available: false, model: undefined });
+    }
+  };
+
+  const checkCodexStatus = async () => {
+    try {
+      // Renderer has no direct Node/Electron access (contextIsolation) — go
+      // through the preload bridge, same pattern as every other window.dai.* call.
+      const result = await window.dai.system.checkCommand("codex");
+      setCodexStatus({ available: !!result });
+    } catch (err) {
+      setCodexStatus({ available: false });
+    }
+  };
+
+  useEffect(() => {
+    // Initial check
+    (async () => {
+      await checkOllamaStatus();
+      await checkCodexStatus();
+    })();
+
+    // Set up interval to poll every 5 seconds
+    const interval = setInterval(() => {
+      (async () => {
+        await checkOllamaStatus();
+        await checkCodexStatus();
+      })();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []); // empty deps to run once on mount
   const [status, setStatus] = useState<Record<string, "open" | "closed">>({});
 
   const masterRef = useRef<PaneHandle>(null);
@@ -262,8 +317,94 @@ export function TerminalsView() {
               {menuOpen && (
                 <div className="menu">
                   <div className="menu-sep">into {activeProject ? activeName : "~ home"}</div>
-                  <div className="menu-row" onClick={() => add("shell")}><IcTerminal /> <b>zsh shell</b></div>
-                  <div className="menu-row" onClick={() => add("claude")}><IcSigil /> <b>claude session</b></div>
+                  {/* Existing items */}
+                  <div className="menu-row" onClick={() => add("shell")}><IcTerminal /><b>zsh shell</b></div>
+                  <div className="menu-row" onClick={() => add("claude")}><IcSigil /><b>claude session</b></div>
+                  {/* New items */}
+                  {/* Ollama session */}
+                  <div className="menu-row" onClick={() => {
+                    if (!ollamaStatus.available) {
+                      // Show error? We'll just not open a terminal and maybe show a toast? For now, do nothing.
+                      return;
+                    }
+                    if (ollamaStatus.models.length === 0) {
+                      // No models available
+                      return;
+                    }
+                    setOllamaModelPickerOpen(true);
+                  }}>
+                    <IcTerminal />
+                    <b>ollama session</b>
+                    {ollamaStatus.available ? (
+                      <span className="status-dot" style={{ backgroundColor: '#4ade80', display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '8px' }} />
+                    ) : (
+                      <span className="status-dot" style={{ backgroundColor: '#6b7280', display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '8px' }} />
+                    )}
+                    {ollamaStatus.available && ollamaStatus.models.length > 0 && (
+                      <span className="model-list" style={{ fontSize: '0.75em', color: '#6b7280', marginLeft: '8px' }}>
+                        {ollamaStatus.models.slice(0, 3).join(', ')}{ollamaStatus.models.length > 3 ? '...' : ''}
+                      </span>
+                    )}
+                  </div>
+                  {/* Hermes session */}
+                  <div className="menu-row" onClick={() => {
+                    if (!hermesStatus.available) {
+                      return;
+                    }
+                    const command = `ollama run ${hermesStatus.model}`;
+                    add(command);
+                  }}>
+                    <IcTerminal />
+                    <b>hermes session</b>
+                    {hermesStatus.available ? (
+                      <span className="status-dot" style={{ backgroundColor: '#4ade80', display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '8px' }} />
+                    ) : (
+                      <span className="status-dot" style={{ backgroundColor: '#6b7280', display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '8px' }} />
+                    )}
+                    {hermesStatus.available && hermesStatus.model && (
+                      <span className="model-list" style={{ fontSize: '0.75em', color: '#6b7280', marginLeft: '8px' }}>
+                        {hermesStatus.model}
+                      </span>
+                    )}
+                  </div>
+                  {/* Codex session */}
+                  <div className="menu-row" onClick={() => {
+                    if (!codexStatus.available) {
+                      return;
+                    }
+                    add('codex');
+                  }}>
+                    <IcTerminal />
+                    <b>codex session</b>
+                    {codexStatus.available ? (
+                      <span className="status-dot" style={{ backgroundColor: '#4ade80', display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '8px' }} />
+                    ) : (
+                      <span className="status-dot" style={{ backgroundColor: '#6b7280', display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '8px' }} />
+                    )}
+                  </div>
+                  {/* Ollama model picker (shown when ollama model picker is open) */}
+                  {ollamaModelPickerOpen && (
+                    <>
+                      <div className="menu-sep">Select Ollama Model</div>
+                      {ollamaStatus.models.map((model) => (
+                        <div
+                          key={model}
+                          className="menu-row"
+                          onClick={() => {
+                            const command = `ollama run ${model}`;
+                            add(command);
+                            setOllamaModelPickerOpen(false);
+                          }}
+                        >
+                          <IcTerminal />
+                          <b>{model}</b>
+                        </div>
+                      ))}
+                      <div className="menu-row" onClick={() => setOllamaModelPickerOpen(false)}>
+                        <i>Cancel</i>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>

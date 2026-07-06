@@ -3,6 +3,7 @@
 // and flows over a MessagePort — it never passes through here.
 import { ipcMain, BrowserWindow, shell } from "electron";
 import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import os from "node:os";
 import path from "node:path";
 import { CH } from "../shared/ipc";
@@ -26,6 +27,8 @@ import * as fsN from "node:fs";
 import { neoStatus, neoEnsure, neoTabs, neoOpen, neoNavigate, neoReload, neoBack, neoForward, neoAsk, neoClick, neoScroll, neoSnap } from "./neo";
 import { superpowerHealth, openGraphDigest } from "./superpowers";
 import type { NeuroGraphOpts, NeuroLayer } from "../shared/ipc";
+
+const execFileP = promisify(execFile);
 
 type LiveTerm = { id: string; cwd: string; is_master: boolean };
 
@@ -175,6 +178,16 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
 
   // ---- google per-service health ----
   ipcMain.handle(CH.GOOGLE_HEALTH, () => gHealth());
+
+  // ---- command existence check (for renderer status probes) ----
+  ipcMain.handle(CH.SYSTEM_CHECK_COMMAND, async (_e, command: string) => {
+    try {
+      const { stdout } = await execFileP("which", [command]);
+      return stdout.trim() !== "";
+    } catch {
+      return false;
+    }
+  });
 
   // ---- screenshot (window capture → ~/Desktop) ----
   ipcMain.handle(CH.SHOT_CAPTURE, async () => {

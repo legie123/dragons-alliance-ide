@@ -96,6 +96,9 @@ const dai: DaiApi = {
     status: () => ipcRenderer.invoke(CH.TOOLS_STATUS),
     action: (id) => ipcRenderer.send(CH.TOOLS_ACTION, id),
   },
+  system: {
+    checkCommand: (cmd) => ipcRenderer.invoke(CH.SYSTEM_CHECK_COMMAND, cmd),
+  },
   win: {
     minimize: () => ipcRenderer.send(CH.WIN_MIN),
     maxToggle: () => ipcRenderer.send(CH.WIN_MAXTOGGLE),
