@@ -89,7 +89,6 @@ export const CH = {
   // audit trail (append-only JSONL — ~/.config/dai/audit.jsonl, 0600)
   AUDIT_LIST: "audit:list",                    // invoke(limit?) → AuditEvent[]
   AUDIT_LOG: "audit:log",                      // send({kind,detail}) — renderer-side events
-  // permissions (local team/role model — ~/.config/dai/permissions.json)
   // library tips (local smart-tricks notes, admin-editable — ~/.config/dai/tips.json)
   TIPS_LIST: "tips:list",                      // invoke() → TipEntry[]
   TIPS_UPSERT: "tips:upsert",                  // invoke(entry) → TipEntry | { error: string }
