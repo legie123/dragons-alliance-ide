@@ -17,6 +17,7 @@ import { CredentialsVault } from "./components/CredentialsVault";
 import { EcosystemBar } from "./components/EcosystemBar";
 import { GodModePanel } from "./components/GodModePanel";
 import { AdminPanel } from "./components/AdminPanel";
+import { FirstRunIdentity } from "./components/FirstRunIdentity";
 import type { SettingsCat } from "./components/settings/SettingsSections";
 import { GuidePanel } from "./components/GuidePanel";
 import { ToastHost } from "./components/ToastHost";
@@ -61,7 +62,7 @@ export default function App() {
 
   // cooperative access control — resolved grants for the current member. Kept in
   // a ref so the mount-time keyboard/palette closures always read fresh grants.
-  const { can } = useMe();
+  const { can, me } = useMe();
   const canRef = useRef(can);
   canRef.current = can;
 
@@ -306,6 +307,9 @@ export default function App() {
         onOpenSector={(id) => { setView(id); setGuideOpen(false); }}
       />
       <ToastHost />
+      {/* first-run identity — resolves WHO this install is before gating applies;
+          mounted last so it layers above every other panel */}
+      <FirstRunIdentity open={!!me?.needsIdentity} onDone={() => queryClient.invalidateQueries({ queryKey: ["me"] })} />
     </>
   );
 }
