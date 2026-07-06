@@ -21,6 +21,7 @@ import { protonStatus, protonSetConfig } from "./proton";
 import { settingsGet, settingsSet } from "./settings";
 import { auditLog, auditList } from "./audit";
 import { permsGet, permsSet } from "./permissions";
+import { teamGet, teamSet, me as teamMe, identitySet } from "./team";
 import { vaultStatus, vaultSync, vaultSetRemote } from "./vaultSync";
 import { gHealth } from "./google";
 import * as fsN from "node:fs";
@@ -162,6 +163,12 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
     auditLog("permissions", `permissions saved: ${next.members.length} member(s)`);
     return next;
   });
+
+  // ---- team access control (roster + per-member grants, synced via vault) ----
+  ipcMain.handle(CH.TEAM_GET, () => teamGet());
+  ipcMain.handle(CH.TEAM_SET, (_e, cfg) => teamSet(cfg));
+  ipcMain.handle(CH.TEAM_ME, () => teamMe());
+  ipcMain.handle(CH.IDENTITY_SET, (_e, memberId: string) => identitySet(String(memberId)));
 
   // ---- vault sync (git engine over the Obsidian vault) ----
   ipcMain.handle(CH.VAULT_STATUS, () => vaultStatus());
