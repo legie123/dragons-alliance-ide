@@ -31,6 +31,7 @@ import { IcCrown, IcGem, IcSearch, IcTerminal, IcBot, IcSigil } from "./componen
 import { CORE_SECTORS, operationalTruth } from "./registry";
 import { SECTOR_ACTIONS } from "./sectorActions";
 import { queryClient } from "./queryClient";
+import { useMe } from "./hooks/useMe";
 import { isView, SECTOR_FOR_VIEW, type View } from "./views";
 
 // Monaco is ~5MB — keep it out of the initial bundle, load only when Code opens.
@@ -57,6 +58,12 @@ export default function App() {
   const [godOpen, setGodOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminCat, setAdminCat] = useState<SettingsCat>("appearance");
+
+  // cooperative access control — resolved grants for the current member. Kept in
+  // a ref so the mount-time keyboard/palette closures always read fresh grants.
+  const { can } = useMe();
+  const canRef = useRef(can);
+  canRef.current = can;
 
   // Auto-open the secure credentials pop-up on first run when Google isn't set up.
   useEffect(() => {
@@ -117,7 +124,12 @@ export default function App() {
       else if (k === "j") { e.preventDefault(); setPhoneOpen((o) => !o); }
       else if (k >= "1" && k <= "8" && !e.shiftKey && !e.altKey) {
         const s = CORE_SECTORS[Number(k) - 1];
-        if (s) { e.preventDefault(); setView(s.id); }
+        if (s) {
+          e.preventDefault();
+          // cooperative gate — a member can't jump to a sector they lack
+          if (canRef.current("sector:" + s.id)) setView(s.id);
+          else window.dai.audit.log("access-denied", `⌘${k} → sector:${s.id} (not granted)`);
+        }
       }
     };
     window.addEventListener("keydown", h);
@@ -169,14 +181,17 @@ export default function App() {
     const s = SECTOR_FOR_VIEW[view];
     if (s === "support") return registerProvider("contextual", () => []);
     return registerProvider("contextual", (): Cmd[] =>
-      SECTOR_ACTIONS[s].map((a): Cmd => ({
-        id: `rec:${s}:${a.id}`,
-        title: a.label,
-        category: "Recommended",
-        icon: a.icon(),
-        disabledReason: a.disabledReason,
-        run: a.run ?? (() => {}),
-      })));
+      SECTOR_ACTIONS[s].map((a): Cmd => {
+        const denied = !!a.cap && !canRef.current(a.cap); // cooperative gate
+        return {
+          id: `rec:${s}:${a.id}`,
+          title: a.label,
+          category: "Recommended",
+          icon: a.icon(),
+          disabledReason: denied ? "restricted — ask an owner" : a.disabledReason,
+          run: denied ? () => {} : (a.run ?? (() => {})),
+        };
+      }));
   }, [view]);
 
   // Mission-Control palette commands: launch agents into projects.
@@ -198,6 +213,13 @@ export default function App() {
   }, [host]);
 
   const sector = SECTOR_FOR_VIEW[view];
+  // cooperative gate — a core sector the member lacks renders a restricted panel
+  // instead of the view. LeftRail hides it and ⌘1-8 blocks it; this render check
+  // also catches dai:goto and any indirect navigation. Logged to the audit trail.
+  const sectorBlocked = CORE_SECTORS.some((s) => s.id === view) && !can("sector:" + view);
+  useEffect(() => {
+    if (sectorBlocked) window.dai.audit.log("access-denied", `viewed restricted sector:${view}`);
+  }, [sectorBlocked, view]);
 
   return (
     <>
@@ -229,32 +251,43 @@ export default function App() {
           />
 
           <main className="shell-view">
-            <div style={{ display: view === "ide" ? "flex" : "none", flex: 1, minHeight: 0, flexDirection: "column" }}>
+            {/* ide stays mounted (terminals survive view switches); hidden when
+                inactive or when the member lacks sector:ide */}
+            <div style={{ display: view === "ide" && !sectorBlocked ? "flex" : "none", flex: 1, minHeight: 0, flexDirection: "column" }}>
               <TerminalsView />
             </div>
-            {view === "agents" && (
-              <div className="mc-shell">
-                <AgentsView onOpenFile={goOpenFile} />
-                <MissionBar projects={projects} />
+            {sectorBlocked ? (
+              <div className="empty restricted-panel">
+                <div className="restricted-title">Access restricted</div>
+                <div className="restricted-sub">The <b>{CORE_SECTORS.find((s) => s.id === view)?.label ?? view}</b> sector isn't granted to you. Ask an owner to enable it — changes arrive through Team Sync.</div>
               </div>
+            ) : (
+              <>
+                {view === "agents" && (
+                  <div className="mc-shell">
+                    <AgentsView onOpenFile={goOpenFile} />
+                    <MissionBar projects={projects} />
+                  </div>
+                )}
+                {view === "radar" && <RadarView />}
+                {view === "code" && (
+                  <Suspense fallback={
+                    <div className="empty brand-loading">
+                      <DragonEmblem size={44} />
+                      <span>loading editor…</span>
+                    </div>
+                  }>
+                    <CodeView openFile={openFile} />
+                  </Suspense>
+                )}
+                {view === "metrics" && <MetricsView />}
+                {view === "neuromap" && <NeuromapView />}
+                {view === "preview" && <PreviewView />}
+                {view === "research" && <ResearchView />}
+                {view === "creative" && <CreativeView />}
+                {view === "drive" && <DriveView />}
+              </>
             )}
-            {view === "radar" && <RadarView />}
-            {view === "code" && (
-              <Suspense fallback={
-                <div className="empty brand-loading">
-                  <DragonEmblem size={44} />
-                  <span>loading editor…</span>
-                </div>
-              }>
-                <CodeView openFile={openFile} />
-              </Suspense>
-            )}
-            {view === "metrics" && <MetricsView />}
-            {view === "neuromap" && <NeuromapView />}
-            {view === "preview" && <PreviewView />}
-            {view === "research" && <ResearchView />}
-            {view === "creative" && <CreativeView />}
-            {view === "drive" && <DriveView />}
           </main>
         </div>
 

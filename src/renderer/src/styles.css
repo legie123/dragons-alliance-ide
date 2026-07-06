@@ -1864,3 +1864,13 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 .team-grant .team-dot { font-size: 8px; color: var(--faint); }
 .team-grant.on .team-dot { color: var(--teal); }
 .team-hint { color: var(--gold-soft); }
+
+/* ---- cooperative gating visuals ---- */
+/* a superpower an owner hasn't granted: visually disabled, honest, non-interactive */
+.sp-chip.restricted { opacity: 0.42; cursor: default; filter: grayscale(0.5); }
+.sp-chip.restricted:hover { border-color: var(--panel-border); }
+/* restricted-sector main-area panel (shown instead of a gated view) */
+.restricted-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 60px 24px; }
+.restricted-title { font-size: 15px; font-weight: 700; color: var(--gold-soft); letter-spacing: 0.02em; }
+.restricted-sub { font-size: 12.5px; color: var(--muted); max-width: 420px; line-height: 1.55; }
+.restricted-sub code { color: #93c5fd; }

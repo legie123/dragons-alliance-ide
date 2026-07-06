@@ -6,6 +6,7 @@ import { CORE_SECTORS, MORE_CATEGORIES, STATUS_META, type SectorId } from "../..
 import { fetchSessions, fetchGDriveStatus } from "../../api";
 import type { View } from "../../views";
 import { IcBook, IcSettings } from "../icons";
+import { useMe } from "../../hooks/useMe";
 
 const SHORTCUT: Record<SectorId, string> = {
   ide: "⌘1", agents: "⌘2", code: "⌘3", neuromap: "⌘4",
@@ -25,6 +26,8 @@ export const LeftRail = memo(function LeftRail({ view, onView, moreOpen, onMoreT
   // same query keys as the dock — React Query dedupes, zero extra polling
   const { data: sess } = useQuery({ queryKey: ["dock-sessions"], queryFn: () => fetchSessions(240), refetchInterval: 5000 });
   const { data: google } = useQuery({ queryKey: ["gdrive"], queryFn: fetchGDriveStatus, refetchInterval: 6000 });
+  // cooperative gating — a member only sees the sectors they're granted
+  const { can } = useMe();
 
   const dot = (id: SectorId): { color: string; label: string } | null => {
     if (id === "agents" || id === "ide") {
@@ -41,7 +44,7 @@ export const LeftRail = memo(function LeftRail({ view, onView, moreOpen, onMoreT
   return (
     <nav className="lrail" aria-label="Core sectors">
       <div className="lrail-head">SECTORS</div>
-      {CORE_SECTORS.map((s) => {
+      {CORE_SECTORS.filter((s) => can("sector:" + s.id)).map((s) => {
         const d = dot(s.id);
         return (
           <button

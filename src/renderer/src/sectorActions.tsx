@@ -22,6 +22,9 @@ export type SectorAction = {
   disabledReason?: string;
   /** rendered as the sector-accented primary CTA */
   primary?: boolean;
+  /** sensitive-capability id (act:*) — the palette disables this action when the
+   *  current member lacks the grant (cooperative gating, honest reason shown). */
+  cap?: string;
 };
 
 /** In-view actions travel over a renderer-local event; the owning view
@@ -37,23 +40,23 @@ export const SECTOR_ACTIONS: Record<SectorId, SectorAction[]> = {
   ide: [
     { id: "t-run", label: "Run Command", icon: () => <IcPlay />, primary: true, run: sectorEvent("term:focus-master") },
     { id: "t-runall", label: "Mirror to Workers", icon: () => <IcBroadcast />, run: sectorEvent("term:toggle-sync") },
-    { id: "t-worker", label: "Start Worker", icon: () => <IcTerminal />, run: deployTerm("shell", "~") },
+    { id: "t-worker", label: "Start Worker", icon: () => <IcTerminal />, run: deployTerm("shell", "~"), cap: "act:terminals" },
     { id: "t-clear", label: "Clear Master", icon: () => <IcEraser />, run: sectorEvent("term:clear") },
     { id: "t-logs", label: "Open Logs (Audit)", icon: () => <IcFile />, run: admin("audit") },
   ],
   agents: [
-    { id: "a-launch", label: "Launch Agent", icon: () => <IcBot />, primary: true, run: deployTerm("claude", "~") },
-    { id: "a-broadcast", label: "Broadcast Mission", icon: () => <IcSend />, run: sectorEvent("agents:focus-broadcast") },
+    { id: "a-launch", label: "Launch Agent", icon: () => <IcBot />, primary: true, run: deployTerm("claude", "~"), cap: "act:terminals" },
+    { id: "a-broadcast", label: "Broadcast Mission", icon: () => <IcSend />, run: sectorEvent("agents:focus-broadcast"), cap: "act:broadcast" },
     { id: "a-continue", label: "Continue Mission", icon: () => <IcPlay />, run: armTerm("claude --continue", "~") },
     { id: "a-inspect", label: "Inspect Transcripts", icon: () => <IcFile />, run: sectorEvent("agents:select-first") },
     { id: "a-stop", label: "Stop Failed", icon: () => <IcEraser />, disabledReason: "per-session kill not exposed — use Terminal stop controls" },
   ],
   code: [
     { id: "c-save", label: "Save File", icon: () => <IcSave />, primary: true, run: sectorEvent("code:save") },
-    { id: "c-build", label: "Arm Build Terminal", icon: () => <IcCode />, run: armTerm("npm run build", "~") },
+    { id: "c-build", label: "Arm Build Terminal", icon: () => <IcCode />, run: armTerm("npm run build", "~"), cap: "act:terminals" },
     { id: "c-typecheck", label: "Typecheck", icon: () => <IcCode />, disabledReason: "no typecheck script in package.json" },
     { id: "c-tests", label: "Run Tests", icon: () => <IcCode />, disabledReason: "no test script in package.json" },
-    { id: "c-diff", label: "Arm Git Diff", icon: () => <IcBranch />, run: armTerm("git diff", "~") },
+    { id: "c-diff", label: "Arm Git Diff", icon: () => <IcBranch />, run: armTerm("git diff", "~"), cap: "act:terminals" },
   ],
   neuromap: [
     { id: "n-focus", label: "Focus Core", icon: () => <IcBrain />, primary: true, run: sectorEvent("nm:focus") },

@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SUPERPOWERS, STATUS_META, type SuperpowerDef, type OpStatus } from "../registry";
 import { useOps } from "../hooks/useOps";
+import { useMe } from "../hooks/useMe";
 import { IcNodes } from "./icons";
 import { DragonEmblem } from "./DragonEmblem";
 import { OpStatusBadge } from "./da";
@@ -67,6 +68,7 @@ function QuickPanel({ sp, status, checking, lastChecked, onClose }: { sp: Superp
 
 export function EcosystemBar() {
   const { env, statuses, liveCount, total, checking, lastChecked } = useOps();
+  const { can } = useMe();
   const [open, setOpen] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -94,13 +96,18 @@ export function EcosystemBar() {
           const st = statuses[sp.id] ?? sp.statusOf(env);
           const meta = STATUS_META[st];
           const isOpen = open === sp.id;
+          // cooperative gating — a power an owner hasn't granted renders restricted
+          // (visually disabled) with an honest reason; no quick panel, no action.
+          const allowed = can("sp:" + sp.id);
           return (
             <div key={sp.id} className={`sp-wrap${isOpen ? " panel-open" : ""}`}>
               <button
-                className={`sp-chip sp-card st-${st}${checking ? " checking" : ""}${isOpen ? " open" : ""}${sp.id === "godmode" ? " god" : ""}`}
+                className={`sp-chip sp-card st-${st}${checking ? " checking" : ""}${isOpen ? " open" : ""}${sp.id === "godmode" ? " god" : ""}${allowed ? "" : " restricted"}`}
                 aria-expanded={isOpen}
-                aria-label={`${sp.label} — ${sp.role} · ${checking ? "checking" : meta.label}`}
+                aria-disabled={!allowed}
+                aria-label={allowed ? `${sp.label} — ${sp.role} · ${checking ? "checking" : meta.label}` : `${sp.label} — not granted to you by an owner`}
                 onClick={() => {
+                  if (!allowed) return; // restricted — cooperative gate
                   if (sp.id === "godmode") { sp.actions[0].run?.(); setOpen(null); return; }
                   setOpen(isOpen ? null : sp.id);
                 }}
@@ -120,13 +127,13 @@ export function EcosystemBar() {
                 <div className="sp-hover" role="tooltip">
                   <b>{sp.label}</b>
                   <span className="sp-hover-role">{sp.role}</span>
-                  <em className="sp-hover-explain" style={{ color: checking ? "var(--state-checking)" : meta.color }}>
-                    {checking ? "Probing…" : STATUS_EXPLAIN[st]}
+                  <em className="sp-hover-explain" style={{ color: !allowed ? "var(--faint)" : checking ? "var(--state-checking)" : meta.color }}>
+                    {!allowed ? "Not granted to you by an owner" : checking ? "Probing…" : STATUS_EXPLAIN[st]}
                   </em>
-                  <i className="sp-hover-hint">{sp.id === "godmode" ? "click to open GODMODE" : "click for quick actions"}</i>
+                  <i className="sp-hover-hint">{!allowed ? "cooperative access — ask an owner" : sp.id === "godmode" ? "click to open GODMODE" : "click for quick actions"}</i>
                 </div>
               )}
-              {isOpen && <QuickPanel sp={sp} status={st} checking={checking} lastChecked={lastChecked} onClose={() => setOpen(null)} />}
+              {isOpen && allowed && <QuickPanel sp={sp} status={st} checking={checking} lastChecked={lastChecked} onClose={() => setOpen(null)} />}
             </div>
           );
         })}
