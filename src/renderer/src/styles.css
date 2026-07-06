@@ -1837,3 +1837,30 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 .brand-loading { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .brand-loading .dragon-emblem { animation: sigilbreathe 2.2s ease-in-out infinite alternate; }
 @keyframes sigilbreathe { 0% { box-shadow: 0 0 10px var(--dragon-glow); } 100% { box-shadow: 0 0 26px var(--dragon-glow); } }
+
+/* ============ Team access control (Settings › Team) ============
+   Owner-authored permission matrix + a non-owner's read-only "your access".
+   Cooperative gating — shapes the default UI, not a hard security boundary. */
+.team-matrix-wrap { overflow-x: auto; border: 1px solid var(--panel-border); border-radius: 10px; margin: 4px 0 2px; }
+.team-matrix { border-collapse: collapse; font-size: 10.5px; }
+.team-matrix th, .team-matrix td { border-bottom: 1px solid var(--panel-border); border-right: 1px solid rgba(255,255,255,0.04); }
+.team-matrix thead th { background: #12070c; color: var(--muted); font-weight: 700; padding: 4px 6px; text-align: center; white-space: nowrap; vertical-align: bottom; }
+.team-grp-col { color: var(--gold-soft) !important; text-transform: uppercase; letter-spacing: 0.05em; font-size: 9px; border-bottom: 1px solid var(--panel-border-strong) !important; }
+.team-cap-col span { display: inline-block; max-width: 68px; overflow: hidden; text-overflow: ellipsis; }
+.team-corner { text-align: left !important; position: sticky; left: 0; z-index: 1; }
+.team-member-cell { text-align: left; padding: 5px 8px; white-space: nowrap; background: #0d0509; position: sticky; left: 0; z-index: 1; }
+.team-member-name { font-weight: 700; color: var(--text); margin-right: 6px; }
+.team-member-cell .vault-in.slim { width: 74px; margin-right: 6px; }
+.team-rm { padding: 3px 8px; font-size: 10px; }
+.team-cell { text-align: center; padding: 3px 6px; }
+.team-cell input { accent-color: var(--accent); cursor: pointer; margin: 0; }
+.team-cell input:disabled { cursor: default; opacity: 0.7; }
+.team-grp { margin-top: 6px; }
+.team-grp-h { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gold-soft); margin-bottom: 4px; }
+.team-grants { display: flex; flex-wrap: wrap; gap: 6px; }
+.team-grant { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--faint);
+  background: rgba(255,255,255,0.03); border: 1px solid var(--panel-border); border-radius: 7px; padding: 3px 8px; }
+.team-grant.on { color: var(--text); border-color: rgba(67,224,192,0.35); }
+.team-grant .team-dot { font-size: 8px; color: var(--faint); }
+.team-grant.on .team-dot { color: var(--teal); }
+.team-hint { color: var(--gold-soft); }
