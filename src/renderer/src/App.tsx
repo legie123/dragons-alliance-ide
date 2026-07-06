@@ -16,7 +16,8 @@ import { PhoneConnect } from "./components/PhoneConnect";
 import { CredentialsVault } from "./components/CredentialsVault";
 import { EcosystemBar } from "./components/EcosystemBar";
 import { GodModePanel } from "./components/GodModePanel";
-import { AdminPanel, type AdminTab } from "./components/AdminPanel";
+import { AdminPanel } from "./components/AdminPanel";
+import type { SettingsCat } from "./components/settings/SettingsSections";
 import { GuidePanel } from "./components/GuidePanel";
 import { ToastHost } from "./components/ToastHost";
 import { DragonEmblem } from "./components/DragonEmblem";
@@ -37,6 +38,15 @@ const CodeView = lazy(() => import("./views/CodeView").then((m) => ({ default: m
 
 export type OpenFileSignal = { path: string; n: number } | null;
 
+// The `dai:admin` event carries a category id. Legacy tab ids (from the old
+// 5-tab AdminPanel, still dispatched by registry/guide/sector actions) are
+// remapped to the consolidated Settings categories; new ids pass through.
+const ADMIN_CAT_MAP: Record<string, SettingsCat> = {
+  settings: "appearance", perms: "team", team: "teamsync", audit: "audit", health: "apihealth",
+  appearance: "appearance", ide: "ide", teamsync: "teamsync", superpowers: "superpowers",
+  integrations: "integrations", shortcuts: "shortcuts", apihealth: "apihealth", developer: "developer",
+};
+
 export default function App() {
   const [view, setView] = useState<View>("ide");
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -46,7 +56,7 @@ export default function App() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [godOpen, setGodOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [adminTab, setAdminTab] = useState<AdminTab>("settings");
+  const [adminCat, setAdminCat] = useState<SettingsCat>("appearance");
 
   // Auto-open the secure credentials pop-up on first run when Google isn't set up.
   useEffect(() => {
@@ -74,8 +84,8 @@ export default function App() {
     const god = () => setGodOpen(true);
     const more = () => setMoreOpen(true);
     const admin = (e: Event) => {
-      const t = (e as CustomEvent).detail as AdminTab | undefined;
-      if (t) setAdminTab(t);
+      const raw = (e as CustomEvent).detail as string | undefined;
+      if (raw) setAdminCat(ADMIN_CAT_MAP[raw] ?? "appearance");
       setAdminOpen(true);
     };
     // superpower actions ask the dock to re-probe after they change state
@@ -142,10 +152,10 @@ export default function App() {
       { id: "view:radar", title: "Open GitHub Radar + rescan", category: "View", run: () => { setView("radar"); window.dai.radar.refresh(); } },
       { id: "action:phone", title: "Phone — code from your phone", subtitle: "⌘J", category: "Admin", run: () => setPhoneOpen(true) },
       { id: "action:keys", title: "Keys — credentials vault", category: "Admin", run: () => setVaultOpen(true) },
-      { id: "action:audit", title: "Audit trail", subtitle: "local action log", category: "Admin", run: () => { setAdminTab("audit"); setAdminOpen(true); } },
-      { id: "action:settings", title: "Settings — IDE configuration", category: "Settings", run: () => { setAdminTab("settings"); setAdminOpen(true); } },
-      { id: "action:perms", title: "Permissions — team & roles", category: "Admin", run: () => { setAdminTab("perms"); setAdminOpen(true); } },
-      { id: "action:vaultsync", title: "Sync Obsidian vault", subtitle: "git snapshot + push/pull", category: "Admin", run: () => { setAdminTab("team"); setAdminOpen(true); } },
+      { id: "action:audit", title: "Audit trail", subtitle: "local action log", category: "Admin", run: () => { setAdminCat("audit"); setAdminOpen(true); } },
+      { id: "action:settings", title: "Settings — IDE configuration", category: "Settings", run: () => { setAdminCat("ide"); setAdminOpen(true); } },
+      { id: "action:perms", title: "Team & permissions", subtitle: "roster · per-member access", category: "Admin", run: () => { setAdminCat("team"); setAdminOpen(true); } },
+      { id: "action:vaultsync", title: "Sync Obsidian vault", subtitle: "git snapshot + push/pull", category: "Admin", run: () => { setAdminCat("teamsync"); setAdminOpen(true); } },
       // diagnostics — computed, never invented
       { id: "diag:truth", title: "Operational truth", subtitle: (() => { const t = operationalTruth(); return `${t.real} real actions · ${t.pending} pending`; })(), category: "Diagnostics", run: () => setGodOpen(true) },
       { id: "diag:check", title: "Check superpowers now", subtitle: "re-probe all health signals", category: "Diagnostics", run: () => { queryClient.invalidateQueries({ queryKey: ["tools"] }); } },
@@ -203,7 +213,7 @@ export default function App() {
       <div className="shell" data-sector={sector}>
         <TopBar
           onPalette={() => setPaletteOpen(true)}
-          onSettings={() => { setAdminTab("settings"); setAdminOpen(true); }}
+          onSettings={() => { setAdminCat("appearance"); setAdminOpen(true); }}
         />
 
         <EcosystemBar />
@@ -215,7 +225,7 @@ export default function App() {
             moreOpen={moreOpen}
             onMoreToggle={setMoreOpen}
             onGuide={() => setGuideOpen(true)}
-            onSettings={() => { setAdminTab("settings"); setAdminOpen(true); }}
+            onSettings={() => { setAdminCat("appearance"); setAdminOpen(true); }}
           />
 
           <main className="shell-view">
@@ -255,7 +265,7 @@ export default function App() {
       <PhoneConnect open={phoneOpen} onClose={() => setPhoneOpen(false)} projects={projects} />
       <CredentialsVault open={vaultOpen} onClose={() => setVaultOpen(false)} />
       <GodModePanel open={godOpen} onClose={() => setGodOpen(false)} onCommand={() => setPaletteOpen(true)} />
-      <AdminPanel open={adminOpen} tab={adminTab} onClose={() => setAdminOpen(false)} onTab={setAdminTab} />
+      <AdminPanel open={adminOpen} cat={adminCat} onClose={() => setAdminOpen(false)} onCat={setAdminCat} />
       <GuidePanel
         open={guideOpen}
         current={view}

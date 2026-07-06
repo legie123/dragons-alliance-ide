@@ -4,7 +4,7 @@
 // or a real action. No fake settings are ever saved.
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { DaiSettings } from "@shared/ipc";
+import type { DaiSettings, VaultSyncResult } from "@shared/ipc";
 import { useAppearance, setAppearance, type Appearance } from "../../hooks/useAppearance";
 import { useOps } from "../../hooks/useOps";
 import { KEYMAP } from "../../keymap";
@@ -12,14 +12,26 @@ import { SUPERPOWERS, operationalTruth, admin, vault, goto } from "../../registr
 import { queryClient } from "../../queryClient";
 import { OpStatusBadge } from "../da";
 
-export type SettingsCat = "appearance" | "ide" | "superpowers" | "integrations" | "shortcuts" | "developer";
-export const SETTINGS_CATS: { id: SettingsCat; label: string }[] = [
+export { TeamSection } from "./TeamSection";
+
+// Categories for the single Settings surface. `cap` (an adm:* capability id)
+// gates an admin category — the nav hides it when the current member lacks the
+// grant. Non-admin categories have no cap. The Team category is intentionally
+// always visible: a non-owner sees their own resolved access there, read-only.
+export type SettingsCat =
+  | "appearance" | "ide" | "team" | "teamsync" | "superpowers"
+  | "integrations" | "shortcuts" | "audit" | "apihealth" | "developer";
+export const SETTINGS_CATS: { id: SettingsCat; label: string; cap?: string }[] = [
   { id: "appearance", label: "Appearance" },
   { id: "ide", label: "IDE Config" },
+  { id: "team", label: "Team" },
+  { id: "teamsync", label: "Team Sync", cap: "adm:teamsync" },
   { id: "superpowers", label: "Superpowers" },
   { id: "integrations", label: "Integrations" },
   { id: "shortcuts", label: "Shortcuts" },
-  { id: "developer", label: "Developer" },
+  { id: "audit", label: "Audit", cap: "adm:audit" },
+  { id: "apihealth", label: "API Health", cap: "adm:apihealth" },
+  { id: "developer", label: "Developer", cap: "adm:developer" },
 ];
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -163,6 +175,98 @@ export function DeveloperSection() {
         <button className="drv-btn ghost" onClick={() => queryClient.invalidateQueries()}>Invalidate all caches</button>
       </div>
       <div className="vault-steps">Logs: audit JSONL at <code>~/.config/dai/audit.jsonl</code> · settings at <code>~/.config/dai/settings.json</code>.</div>
+    </section>
+  );
+}
+
+// ---- Audit (lifted from the old AdminPanel tab) ----
+export function AuditSection() {
+  const { data: events = [] } = useQuery({ queryKey: ["audit"], queryFn: () => window.dai.audit.list(200), refetchInterval: 5000 });
+  return (
+    <section className="vault-card">
+      <div className="vault-card-h">Action trail <span className="vault-badge on">{events.length} events</span></div>
+      <div className="vault-steps">Append-only JSONL at <code>~/.config/dai/audit.jsonl</code> — terminal launches, credential changes, drive writes, vault syncs, settings and team-permission edits.</div>
+      <div className="audit-list">
+        {events.length === 0 && <div className="empty">no events yet — actions will appear here as you work</div>}
+        {events.map((e, i) => (
+          <div key={e.ts + "-" + i} className="audit-row">
+            <span className="audit-ts">{new Date(e.ts).toLocaleString()}</span>
+            <span className="audit-kind">{e.kind}</span>
+            <span className="audit-detail" title={e.detail}>{e.detail}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ---- Team Sync — vault git engine (lifted from the old AdminPanel tab) ----
+export function TeamSyncSection() {
+  const qc = useQueryClient();
+  const { data: st } = useQuery({ queryKey: ["vaultsync"], queryFn: () => window.dai.vaultSync.status(), refetchInterval: 8000 });
+  const [remote, setRemote] = useState("");
+  const [result, setResult] = useState<VaultSyncResult | null>(null);
+  const [busy, setBusy] = useState(false);
+  const sync = async () => {
+    setBusy(true); setResult(null);
+    const r = await window.dai.vaultSync.sync();
+    setResult(r); setBusy(false);
+    qc.invalidateQueries({ queryKey: ["vaultsync"] });
+  };
+  const saveRemote = async () => {
+    await window.dai.vaultSync.setRemote(remote.trim());
+    setRemote("");
+    qc.invalidateQueries({ queryKey: ["vaultsync"] });
+  };
+  return (
+    <section className="vault-card">
+      <div className="vault-card-h">Obsidian vault sync
+        <span className={"vault-badge " + (st?.remote ? "on" : st?.isRepo ? "mid" : "off")}>
+          {st?.remote ? "shared (remote set)" : st?.isRepo ? "local snapshots" : "not a repo"}
+        </span>
+      </div>
+      <div className="vault-steps">This is how a saved Team roster reaches teammates: it commits and pushes the vault (including <code>_team/team.json</code>) over the existing git channel.</div>
+      {st?.isRepo ? (
+        <div className="vault-steps">
+          branch <code>{st.branch ?? "?"}</code> · {st.dirty} changed file(s)
+          {st.remote ? <> · ahead {st.ahead} / behind {st.behind}</> : " · no remote"}
+          {st.lastCommit && <> · last: <code>{st.lastCommit}</code></>}
+          {st.lastSyncTs && <> · synced {new Date(st.lastSyncTs).toLocaleString()}</>}
+        </div>
+      ) : (
+        <div className="vault-steps">The vault at <code>~/Documents/Obsidian/Antigravity-Brain</code> is not a git repository.</div>
+      )}
+      <div className="vault-row">
+        <button className="drv-btn accent" onClick={sync} disabled={busy || !st?.isRepo}>{busy ? "syncing…" : "Sync now"}</button>
+      </div>
+      {result && (
+        <div className="vault-steps">{result.ok ? "✓ " + result.detail : "✗ " + (result.error ?? "failed") + (result.detail ? " · " + result.detail : "")}</div>
+      )}
+      <div className="vault-steps">Team mode needs a private remote. Paste an SSH/HTTPS git URL (e.g. a private GitHub repo) — push/pull engage automatically after.</div>
+      <div className="vault-row">
+        <input className="vault-in" value={remote} onChange={(e) => setRemote(e.target.value)} placeholder={st?.remote ?? "git@github.com:you/antigravity-brain.git"} spellCheck={false} />
+        <button className="drv-btn" onClick={saveRemote} disabled={!remote.trim()}>Set remote</button>
+      </div>
+    </section>
+  );
+}
+
+// ---- API Health (lifted from the old AdminPanel tab) ----
+export function ApiHealthSection() {
+  const { data: rows, isFetching, refetch } = useQuery({ queryKey: ["ghealth"], queryFn: () => window.dai.google.health() });
+  return (
+    <section className="vault-card">
+      <div className="vault-card-h">Google per-service probes
+        <button className="drv-btn ghost" onClick={() => refetch()} disabled={isFetching}>{isFetching ? "probing…" : "Re-probe"}</button>
+      </div>
+      <div className="vault-steps">Cheap authenticated calls against each API — proves the token and that the API is enabled, service by service.</div>
+      {(rows ?? []).map((r) => (
+        <div key={r.service} className="audit-row">
+          <span className="audit-kind" style={{ color: r.ok ? "var(--teal)" : "var(--st-error)" }}>{r.ok ? "● ok" : "● fail"}</span>
+          <span className="audit-detail"><b>{r.service}</b> — {r.detail}{r.status != null ? ` (HTTP ${r.status})` : ""}</span>
+        </div>
+      ))}
+      {!rows && <div className="empty">probing…</div>}
     </section>
   );
 }
