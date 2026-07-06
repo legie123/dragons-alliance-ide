@@ -94,7 +94,8 @@ export function agentHealth(file: string): AgentHealth {
         for (const b of cont) {
           if (!b || typeof b !== "object") continue;
           if (b.type === "thinking") {
-            lastThinking = String(b.thinking || "").slice(0, 160);
+            const tk = String(b.thinking || "").trim();
+            if (tk) lastThinking = tk.slice(0, 160);
             continue;
           }
           if (b.type === "text") {
