@@ -38,6 +38,7 @@ export const TEAM_CAPS: TeamCap[] = [
   { id: "adm:audit", group: "admin", label: "Audit", description: "Action trail" },
   { id: "adm:apihealth", group: "admin", label: "API Health", description: "Google service probes" },
   { id: "adm:developer", group: "admin", label: "Developer", description: "Diagnostics & doctor" },
+  { id: "adm:library", group: "admin", label: "Library admin", description: "Manage agent catalog & smart tips" },
 ];
 
 export const ALL_CAP_IDS: TeamCapId[] = TEAM_CAPS.map((c) => c.id);

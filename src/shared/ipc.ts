@@ -92,6 +92,10 @@ export const CH = {
   // permissions (local team/role model — ~/.config/dai/permissions.json)
   PERMS_GET: "perms:get",                      // invoke() → PermissionsState
   PERMS_SET: "perms:set",                      // invoke(state) → PermissionsState
+  // library tips (local smart-tricks notes, admin-editable — ~/.config/dai/tips.json)
+  TIPS_LIST: "tips:list",                      // invoke() → TipEntry[]
+  TIPS_UPSERT: "tips:upsert",                  // invoke(entry) → TipEntry | { error: string }
+  TIPS_DELETE: "tips:delete",                  // invoke(id: string) → boolean
   // team access control (roster + per-member capability grants, synced via vault)
   TEAM_GET: "team:get",                        // invoke() → TeamConfig
   TEAM_SET: "team:set",                        // invoke(config) → TeamConfig (owner-authored)
@@ -295,6 +299,9 @@ export type PermissionsState = {
   matrix: Record<PermRole, PermCapability[]>;
 };
 
+// ---- Library tips (local smart-tricks notes, admin-editable) ----
+export type TipEntry = { id: string; title: string; body: string; category?: string; createdAt: number; updatedAt: number };
+
 // ---- Team access control ----
 import type { TeamCapId, TeamRole } from "./teamCaps";
 export type { TeamCapId, TeamRole };
@@ -436,6 +443,11 @@ export interface DaiApi {
   perms: {
     get(): Promise<PermissionsState>;
     set(state: PermissionsState): Promise<PermissionsState>;
+  };
+  tips: {
+    list(): Promise<TipEntry[]>;
+    upsert(entry: Partial<TipEntry> & { title: string; body: string }): Promise<TipEntry | { error: string }>;
+    delete(id: string): Promise<boolean>;
   };
   team: {
     get(): Promise<TeamConfig>;

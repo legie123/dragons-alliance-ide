@@ -3,11 +3,11 @@
 import type { SectorId } from "./registry";
 
 /** Support views live under "More"; core sectors come from the registry. */
-export type SupportView = "research" | "radar";
+export type SupportView = "research" | "radar" | "library";
 export type View = SectorId | SupportView;
 
 const CORE: readonly SectorId[] = ["ide", "agents", "code", "neuromap", "drive", "metrics", "preview", "creative"];
-const SUPPORT: readonly SupportView[] = ["research", "radar"];
+const SUPPORT: readonly SupportView[] = ["research", "radar", "library"];
 const ALL: readonly string[] = [...CORE, ...SUPPORT];
 
 export function isView(v: unknown): v is View {
@@ -18,7 +18,7 @@ export function isView(v: unknown): v is View {
 export const SECTOR_FOR_VIEW: Record<View, SectorId | "support"> = {
   ide: "ide", agents: "agents", code: "code", neuromap: "neuromap",
   drive: "drive", metrics: "metrics", preview: "preview", creative: "creative",
-  research: "support", radar: "support",
+  research: "support", radar: "support", library: "support",
 };
 
 /** CSS accent slug per sector (matches --sector-* tokens). */

@@ -224,6 +224,12 @@ export type MoreItem = {
 };
 export const MORE_CATEGORIES: { title: string; items: MoreItem[] }[] = [
   {
+    title: "LIBRARY",
+    items: [
+      { id: "library", label: "Library", sub: "agents · superpowers · shortcuts · tips", icon: () => <IcGem />, status: "live", run: goto("library") },
+    ],
+  },
+  {
     title: "INTELLIGENCE",
     items: [
       { id: "research", label: "Research", sub: "vault intelligence desk", icon: () => <IcSearch />, status: "live", run: goto("research") },

@@ -176,6 +176,11 @@ const dai: DaiApi = {
     get: () => ipcRenderer.invoke(CH.PERMS_GET),
     set: (state) => ipcRenderer.invoke(CH.PERMS_SET, state),
   },
+  tips: {
+    list: () => ipcRenderer.invoke(CH.TIPS_LIST),
+    upsert: (entry) => ipcRenderer.invoke(CH.TIPS_UPSERT, entry),
+    delete: (id) => ipcRenderer.invoke(CH.TIPS_DELETE, id),
+  },
   team: {
     get: () => ipcRenderer.invoke(CH.TEAM_GET),
     set: (config) => ipcRenderer.invoke(CH.TEAM_SET, config),

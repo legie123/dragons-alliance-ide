@@ -21,7 +21,8 @@ import { protonStatus, protonSetConfig } from "./proton";
 import { settingsGet, settingsSet } from "./settings";
 import { auditLog, auditList } from "./audit";
 import { permsGet, permsSet } from "./permissions";
-import { teamGet, teamSet, me as teamMe, identitySet } from "./team";
+import { tipsList, tipsUpsert, tipsDelete } from "./tips";
+import { teamGet, teamSet, me as teamMe, identitySet, teamCan } from "./team";
 import { vaultStatus, vaultSync, vaultSetRemote } from "./vaultSync";
 import { gHealth } from "./google";
 import * as fsN from "node:fs";
@@ -162,6 +163,20 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
     const next = permsSet(state);
     auditLog("permissions", `permissions saved: ${next.members.length} member(s)`);
     return next;
+  });
+  // ---- library tips (local smart-tricks notes, admin-editable) ----
+  ipcMain.handle(CH.TIPS_LIST, () => tipsList());
+  ipcMain.handle(CH.TIPS_UPSERT, (_e, entry) => {
+    if (!teamCan("adm:library")) return { error: "not permitted" };
+    const saved = tipsUpsert(entry);
+    auditLog("tips", `tip saved: ${saved.title}`);
+    return saved;
+  });
+  ipcMain.handle(CH.TIPS_DELETE, (_e, id) => {
+    if (!teamCan("adm:library")) return false;
+    const ok = tipsDelete(id);
+    if (ok) auditLog("tips", `tip deleted: ${id}`);
+    return ok;
   });
 
   // ---- team access control (roster + per-member grants, synced via vault) ----

@@ -8,6 +8,7 @@ import type { DaiSettings, VaultSyncResult } from "@shared/ipc";
 import { useAppearance, setAppearance, type Appearance } from "../../hooks/useAppearance";
 import { useOps } from "../../hooks/useOps";
 import { KEYMAP } from "../../keymap";
+import { ShortcutList } from "../ShortcutList";
 import { SUPERPOWERS, operationalTruth, admin, vault, goto } from "../../registry";
 import { queryClient } from "../../queryClient";
 import { OpStatusBadge } from "../da";
@@ -144,13 +145,7 @@ export function ShortcutsSection() {
     <section className="vault-card">
       <div className="vault-card-h">Keyboard shortcuts <span className="vault-badge mid">fixed bindings</span></div>
       <div className="vault-steps">One keymap drives the app handler, the rail hints and the guide. Rebinding lands in a future pass.</div>
-      {KEYMAP.map((k) => (
-        <div key={k.keys} className="audit-row">
-          <span className="audit-kind" style={{ fontFamily: "ui-monospace, monospace" }}>{k.keys}</span>
-          <span className="audit-detail">{k.label.en}</span>
-          <span className="audit-ts">{k.scope}</span>
-        </div>
-      ))}
+      <ShortcutList items={KEYMAP} />
     </section>
   );
 }
