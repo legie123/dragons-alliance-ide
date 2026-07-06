@@ -276,6 +276,7 @@ export async function sessionForTerm(termCwd: string): Promise<import("../shared
   return {
     model: s.model, ctx: s.ctx, out: s.out, capacity: s.capacity, score: s.score,
     goalPct: s.goalPct, understanding: s.understanding, ambiguous: matches.length > 1,
+    file: s.file || "",
   };
 }
 
