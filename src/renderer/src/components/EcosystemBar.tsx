@@ -3,10 +3,10 @@
 // with a plain-language explanation, click → quick panel of REAL actions.
 // No fake status: everything derives from live probe data (useOps).
 import { useEffect, useRef, useState } from "react";
-import { SUPERPOWERS, STATUS_META, type SuperpowerDef, type OpStatus } from "../registry";
+import { SUPERPOWERS, STATUS_META, openLibraryAdmin, type SuperpowerDef, type OpStatus } from "../registry";
 import { useOps } from "../hooks/useOps";
 import { useMe } from "../hooks/useMe";
-import { IcNodes } from "./icons";
+import { IcNodes, IcGem } from "./icons";
 import { DragonEmblem } from "./DragonEmblem";
 import { OpStatusBadge } from "./da";
 
@@ -69,6 +69,7 @@ function QuickPanel({ sp, status, checking, lastChecked, onClose }: { sp: Superp
 export function EcosystemBar() {
   const { env, statuses, liveCount, total, checking, lastChecked } = useOps();
   const { can } = useMe();
+  const canLibraryAdmin = can("adm:library");
   const [open, setOpen] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -138,6 +139,13 @@ export function EcosystemBar() {
           );
         })}
       </div>
+      {canLibraryAdmin && (
+        <button className="sp-tools" title="Library — admin: agent catalog & smart tips"
+          aria-label="Open Library admin"
+          onClick={openLibraryAdmin}>
+          <IcGem size={13} /> Admin
+        </button>
+      )}
       <button className="sp-tools" title="support tools · admin · experimental"
         aria-label="Open support tools"
         onClick={() => window.dispatchEvent(new CustomEvent("dai:more"))}>

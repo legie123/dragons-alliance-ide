@@ -12,6 +12,7 @@
 import { useEffect, useState } from "react";
 import { useMe } from "../hooks/useMe";
 import { IcGem } from "../components/icons";
+import { consumeLibraryTab } from "../registry";
 import { TeamSection } from "../components/library/TeamSection";
 import { AdminSection } from "../components/library/AdminSection";
 
@@ -21,7 +22,9 @@ export function LibraryView() {
   const { can } = useMe();
   const isAdmin = can("adm:library");
   const canTerminals = can("act:terminals");
-  const [tab, setTab] = useState<Tab>("team");
+  // consumed once — set by the persistent Admin-dock shortcut (EcosystemBar)
+  // so it can jump straight to the Admin tab instead of always landing on Team.
+  const [tab, setTab] = useState<Tab>(() => consumeLibraryTab() ?? "team");
 
   // if the grant disappears while Admin was open, fall back to Team
   useEffect(() => { if (!isAdmin && tab === "admin") setTab("team"); }, [isAdmin, tab]);

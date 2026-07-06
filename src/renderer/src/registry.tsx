@@ -56,6 +56,19 @@ export const goto = (v: string) => () => window.dispatchEvent(new CustomEvent("d
 export const vault = () => window.dispatchEvent(new CustomEvent("dai:vault"));
 export const phone = () => window.dispatchEvent(new CustomEvent("dai:phone"));
 export const godmode = () => window.dispatchEvent(new CustomEvent("dai:godmode"));
+
+// LibraryView reads this once on mount (lazy useState initializer) — avoids a
+// dai:goto / dai:library-tab race where the target view hasn't mounted yet.
+let pendingLibraryTab: "team" | "admin" | null = null;
+export function consumeLibraryTab(): "team" | "admin" | null {
+  const t = pendingLibraryTab;
+  pendingLibraryTab = null;
+  return t;
+}
+export const openLibraryAdmin = () => {
+  pendingLibraryTab = "admin";
+  goto("library")();
+};
 let SEQ = 1;
 export const deployTerm = (cmd: string, cwd: string) => () => {
   window.dai.term.create({ id: `ign${Date.now().toString(36)}${SEQ++}`, cmd, cwd });
