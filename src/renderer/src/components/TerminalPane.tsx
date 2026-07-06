@@ -5,9 +5,10 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { WebglAddon } from "@xterm/addon-webgl";
 import "@xterm/xterm/css/xterm.css";
 import { useQuery } from "@tanstack/react-query";
-import { Term, fetchTermSession, modelGrade, MODEL_KEYS, human, broadcast } from "../api";
+import { Term, fetchTermSession, modelGrade, MODEL_KEYS, human, broadcast, gradeColor } from "../api";
 import { Crystal } from "./Crystal";
 import { IcNodes } from "./icons";
+import { useIdleRecap } from "../idleRecap";
 
 const THEME = {
   background: "#0a0c12",
@@ -43,6 +44,8 @@ export const TerminalPane = forwardRef<PaneHandle, {
   const xtermRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
   const [focused, setFocused] = useState(false);
+  const lastActivityRef = useRef(Date.now());
+  const exitedRef = useRef(false);
 
   // per-terminal live session (only claude terminals own a claude session)
   const { data: sess } = useQuery({
@@ -65,6 +68,7 @@ export const TerminalPane = forwardRef<PaneHandle, {
     switchTimer.current = setTimeout(() => setSwitching(null), 4000);
   };
   const grade = sess ? modelGrade(sess.model) : null;
+  const recap = useIdleRecap({ cmd: term.cmd, focused, sess: sess ?? null, exitedRef, xtermRef, lastActivityRef });
 
   useImperativeHandle(ref, () => ({
     setMirror(on: boolean, scope: string = "all", ids?: string[]) {
@@ -83,7 +87,7 @@ export const TerminalPane = forwardRef<PaneHandle, {
     if (host.clientWidth < 40 || host.clientHeight < 40) return; // not laid out yet
     try {
       fit.fit();
-      window.dai.term.resize(term.id, xt.cols, xt.rows);
+      // xt.onResize fires after fit.fit() and handles PTY resize IPC
     } catch {}
   }
 
@@ -160,10 +164,13 @@ export const TerminalPane = forwardRef<PaneHandle, {
       if (buffer) xt.write(typeof buffer === "string" ? buffer : new Uint8Array(buffer));
 
       offData = window.dai.term.onData((tid, data) => {
-        if (tid === term.id) xt.write(data, () => window.dai.term.ack(term.id, data.byteLength));
+        if (tid !== term.id) return;
+        lastActivityRef.current = Date.now();
+        xt.write(data, () => window.dai.term.ack(term.id, data.byteLength));
       });
       offExit = window.dai.term.onExit((tid) => {
         if (tid === term.id) {
+          exitedRef.current = true;
           xt.writeln("\r\n\x1b[2m[ closed ]\x1b[0m");
           onStatus?.("closed");
         }
@@ -172,7 +179,10 @@ export const TerminalPane = forwardRef<PaneHandle, {
       safeFit();
       onStatus?.("open");
 
-      xt.onData((d) => window.dai.term.write(term.id, d));
+      xt.onData((d) => {
+        lastActivityRef.current = Date.now();
+        window.dai.term.write(term.id, d);
+      });
       xt.onResize(({ cols, rows }) => window.dai.term.resize(term.id, cols, rows));
 
       ro = new ResizeObserver(() => safeFit());
@@ -264,6 +274,32 @@ export const TerminalPane = forwardRef<PaneHandle, {
       ) : (
         <div className="term-infobar">
           <span className="ti-agent">⌘ shell</span>
+        </div>
+      )}
+      {recap && (
+        <div className="term-recap">
+          <span className="tr-tag">auto recap · idle 2m</span>
+          {recap.unavailable ? (
+            <span className="tr-line tr-muted">Recap unavailable — not enough activity yet.</span>
+          ) : (
+            <>
+              <span className="tr-line"><b>Session:</b> {recap.session}</span>
+              <span className="tr-line"><b>Status:</b> {recap.status}</span>
+              {recap.context && <span className="tr-line">{recap.context}</span>}
+              {recap.reason && <span className="tr-line"><b>Reason:</b> {recap.reason}</span>}
+              {typeof recap.understanding === "number" && (
+                <span className="pr-bar-row">
+                  <span className="pr-bar-label">UNDR</span>
+                  <span className="pr-bar">
+                    <span className="pr-bar-fill" style={{ width: `${recap.understanding}%`, background: gradeColor(recap.understanding) }} />
+                  </span>
+                  <span className="pr-bar-val">{recap.understanding.toFixed(0)}%</span>
+                </span>
+              )}
+              {recap.lastAction && <span className="tr-line"><b>Last action:</b> {recap.lastAction}</span>}
+              {recap.next && <span className="tr-line"><b>Next:</b> {recap.next}</span>}
+            </>
+          )}
         </div>
       )}
       <div className="term-body" ref={hostRef} onMouseDown={focusMe} />

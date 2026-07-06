@@ -69,6 +69,8 @@ export function agentHealth(file: string): AgentHealth {
     let lastTodos: any[] | null = null;
     let lastActivityMs = 0;
     let cwdFull = "";
+    let lastThinking: string | undefined;
+    let lastAction: string | undefined;
     // raw problems in chronological order; { kind, detail, ts, sig }
     const raw: (AgentProblem & { sig: string })[] = [];
 
@@ -90,12 +92,28 @@ export function agentHealth(file: string): AgentHealth {
         const cont = d.message?.content;
         if (!Array.isArray(cont)) continue;
         for (const b of cont) {
-          if (!b || typeof b !== "object" || b.type !== "tool_use") continue;
+          if (!b || typeof b !== "object") continue;
+          if (b.type === "thinking") {
+            const tk = String(b.thinking || "").trim();
+            if (tk) lastThinking = tk.slice(0, 160);
+            continue;
+          }
+          if (b.type === "text") {
+            const t = String(b.text || "").trim();
+            if (t) lastAction = t.slice(0, 160);
+            continue;
+          }
+          if (b.type !== "tool_use") continue;
           toolCount += 1;
           if (b.id) toolUses.set(b.id, { name: b.name, input: b.input || {}, ts });
           if (b.name === "TodoWrite" && Array.isArray(b.input?.todos)) {
             lastTodos = b.input.todos;
           }
+          const inp = b.input || {};
+          const target = String(
+            inp.file_path ?? inp.path ?? inp.command ?? inp.pattern ?? inp.query ?? inp.url ?? inp.description ?? "",
+          ).slice(0, 120);
+          lastAction = target ? `${b.name}: ${target}` : b.name;
         }
       } else if (d.type === "user") {
         const cont = d.message?.content ?? d.content;
@@ -178,7 +196,10 @@ export function agentHealth(file: string): AgentHealth {
     else if (now - lastActivityMs < WORKING_MS) status = "working";
     else status = "idle";
 
-    return { goalPct, status, problems: problems.slice(0, MAX_PROBLEMS), lastActivityMs, cwd_full: cwdFull };
+    return {
+      goalPct, status, problems: problems.slice(0, MAX_PROBLEMS), lastActivityMs, cwd_full: cwdFull,
+      lastThinking, lastAction,
+    };
   } catch {
     return { goalPct: 0, status: "idle", problems: [], lastActivityMs: 0 };
   }
