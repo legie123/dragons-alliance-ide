@@ -143,7 +143,7 @@ export type Session = {
 // Per-terminal session join (info bar): the claude session owning a terminal's cwd.
 export type TermSession = {
   model: string; ctx: number; out: number; capacity: number; score: number;
-  goalPct: number; understanding: number; ambiguous: boolean;
+  goalPct: number; understanding: number; ambiguous: boolean; file: string;
 } | null;
 export type SessionsPayload = { now: number; active_min: number; live: number; sessions: Session[] };
 
@@ -180,6 +180,8 @@ export type AgentHealth = {
   problems: AgentProblem[];
   lastActivityMs: number;
   cwd_full?: string;                                  // for terminal targeting (autopilot)
+  lastThinking?: string;                              // last "thinking" block excerpt (idle-recap)
+  lastAction?: string;                                // last tool_use or assistant text (idle-recap)
 };
 
 // Ecosystem super-tool live status (real signals — running proc / launchd / recent write).
