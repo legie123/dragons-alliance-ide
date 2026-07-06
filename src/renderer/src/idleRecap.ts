@@ -21,6 +21,8 @@ const NEXT_BY_STATUS: Record<string, string | undefined> = {
   done: "review the result",
   working: undefined,
   idle: undefined,
+  running: undefined,
+  unknown: undefined,
 };
 
 function lastBufferLine(xt: Terminal | null): string {
@@ -98,7 +100,7 @@ export function useIdleRecap(opts: {
               context: s.ambiguous ? "· ambiguous (2+ sessions share this folder)" : "",
               reason: h.lastThinking,
               understanding: s.understanding,
-              lastAction: h.lastAction || h.problems[0]?.detail || "",
+              lastAction: h.lastAction || "",
               next: NEXT_BY_STATUS[h.status],
             };
           }

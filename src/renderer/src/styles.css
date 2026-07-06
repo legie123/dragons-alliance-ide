@@ -996,8 +996,9 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 .term-recap {
   flex: 0 0 auto; display: flex; flex-direction: column; gap: 2px;
   padding: 5px 12px; font-size: 10.5px; color: var(--faint);
-  background: rgba(0,0,0,0.18); border-bottom: 1px solid var(--panel-border);
+  background: rgba(0,0,0,0.22); border-bottom: 1px solid var(--panel-border);
 }
+.term-infobar:has(+ .term-recap) { border-bottom: none; }
 .tr-tag { text-transform: uppercase; letter-spacing: 0.08em; font-size: 8.5px; color: var(--faint); opacity: 0.7; }
 .tr-line { color: var(--faint); }
 .tr-line b { color: var(--faint); font-weight: 650; }
