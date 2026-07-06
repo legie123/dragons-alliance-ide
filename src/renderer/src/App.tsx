@@ -23,12 +23,11 @@ import { DragonEmblem } from "./components/DragonEmblem";
 import dragonMark from "./assets/dragon-mark.png";
 import { LeftRail } from "./components/shell/LeftRail";
 import { TopBar } from "./components/shell/TopBar";
-import { RightRail } from "./components/shell/RightRail";
 import { StatusBar } from "./components/shell/StatusBar";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects, fetchGDriveStatus, broadcast } from "./api";
 import { IcCrown, IcGem, IcSearch, IcTerminal, IcBot, IcSigil } from "./components/icons";
-import { CORE_SECTORS, operationalTruth, type SectorId } from "./registry";
+import { CORE_SECTORS, operationalTruth } from "./registry";
 import { SECTOR_ACTIONS } from "./sectorActions";
 import { queryClient } from "./queryClient";
 import { isView, SECTOR_FOR_VIEW, type View } from "./views";
@@ -45,7 +44,6 @@ export default function App() {
   const [vaultOpen, setVaultOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const [guideTarget, setGuideTarget] = useState<SectorId | null>(null);
   const [godOpen, setGodOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminTab, setAdminTab] = useState<AdminTab>("settings");
@@ -155,7 +153,7 @@ export default function App() {
     ]);
   }, []);
 
-  // Contextual provider — the active sector's right-rail actions surface as
+  // Contextual provider — the active sector's actions surface in the palette as
   // Recommended (disabled ones stay visible with their honest reason).
   useEffect(() => {
     const s = SECTOR_FOR_VIEW[view];
@@ -210,7 +208,7 @@ export default function App() {
 
         <EcosystemBar />
 
-        <div className={`shell-main${sector === "support" ? " no-right" : ""}`}>
+        <div className="shell-main">
           <LeftRail
             view={view}
             onView={setView}
@@ -248,10 +246,6 @@ export default function App() {
             {view === "creative" && <CreativeView />}
             {view === "drive" && <DriveView />}
           </main>
-
-          {sector !== "support" && (
-            <RightRail sector={sector} onHelp={(s) => { setGuideTarget(s); setGuideOpen(true); }} />
-          )}
         </div>
 
         <StatusBar view={view} />
@@ -265,9 +259,8 @@ export default function App() {
       <GuidePanel
         open={guideOpen}
         current={view}
-        target={guideTarget}
-        onClose={() => { setGuideOpen(false); setGuideTarget(null); }}
-        onOpenSector={(id) => { setView(id); setGuideOpen(false); setGuideTarget(null); }}
+        onClose={() => setGuideOpen(false)}
+        onOpenSector={(id) => { setView(id); setGuideOpen(false); }}
       />
       <ToastHost />
     </>

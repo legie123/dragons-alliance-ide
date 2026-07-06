@@ -77,7 +77,6 @@
 
   /* ---- shell metrics (rails) ---- */
   --rail-left-w: 196px;
-  --rail-right-w: 220px;
   --statusbar-h: 26px;
 }
 
@@ -95,7 +94,6 @@
 /* density: compact — tighter chrome without touching content panes */
 :root[data-density="compact"] {
   --rail-left-w: 168px;
-  --rail-right-w: 196px;
   --statusbar-h: 22px;
 }
 
