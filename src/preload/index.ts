@@ -176,6 +176,12 @@ const dai: DaiApi = {
     get: () => ipcRenderer.invoke(CH.PERMS_GET),
     set: (state) => ipcRenderer.invoke(CH.PERMS_SET, state),
   },
+  team: {
+    get: () => ipcRenderer.invoke(CH.TEAM_GET),
+    set: (config) => ipcRenderer.invoke(CH.TEAM_SET, config),
+    me: () => ipcRenderer.invoke(CH.TEAM_ME),
+    setIdentity: (memberId) => ipcRenderer.invoke(CH.IDENTITY_SET, memberId),
+  },
   vaultSync: {
     status: () => ipcRenderer.invoke(CH.VAULT_STATUS),
     sync: (message) => ipcRenderer.invoke(CH.VAULT_SYNC, message),

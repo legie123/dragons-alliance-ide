@@ -92,6 +92,11 @@ export const CH = {
   // permissions (local team/role model — ~/.config/dai/permissions.json)
   PERMS_GET: "perms:get",                      // invoke() → PermissionsState
   PERMS_SET: "perms:set",                      // invoke(state) → PermissionsState
+  // team access control (roster + per-member capability grants, synced via vault)
+  TEAM_GET: "team:get",                        // invoke() → TeamConfig
+  TEAM_SET: "team:set",                        // invoke(config) → TeamConfig (owner-authored)
+  TEAM_ME: "team:me",                          // invoke() → Me (current identity resolved)
+  IDENTITY_SET: "identity:set",                // invoke(memberId) → Me
   // vault sync (git engine over the Obsidian vault)
   VAULT_STATUS: "vaultsync:status",            // invoke() → VaultSyncStatus
   VAULT_SYNC: "vaultsync:sync",                // invoke(message?) → VaultSyncResult
@@ -290,6 +295,13 @@ export type PermissionsState = {
   matrix: Record<PermRole, PermCapability[]>;
 };
 
+// ---- Team access control ----
+import type { TeamCapId, TeamRole } from "./teamCaps";
+export type { TeamCapId, TeamRole };
+export interface TeamMember { id: string; name: string; role: TeamRole; grants: TeamCapId[] }
+export interface TeamConfig { version: number; updatedAt: number; updatedBy: string; members: TeamMember[] }
+export interface Me { member: TeamMember | null; grants: TeamCapId[]; isOwner: boolean; needsIdentity: boolean }
+
 // ---- Vault sync (git engine over the Obsidian vault) ----
 export type VaultSyncStatus = {
   isRepo: boolean; branch: string | null; remote: string | null;
@@ -424,6 +436,12 @@ export interface DaiApi {
   perms: {
     get(): Promise<PermissionsState>;
     set(state: PermissionsState): Promise<PermissionsState>;
+  };
+  team: {
+    get(): Promise<TeamConfig>;
+    set(config: TeamConfig): Promise<TeamConfig>;
+    me(): Promise<Me>;
+    setIdentity(memberId: string): Promise<Me>;
   };
   vaultSync: {
     status(): Promise<VaultSyncStatus>;
