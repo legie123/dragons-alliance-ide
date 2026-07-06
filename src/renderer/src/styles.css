@@ -928,7 +928,7 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 .term-pane {
   flex: 1; display: flex; flex-direction: column; min-height: 0; min-width: 0;
   background: #0a0c12; border: 1px solid var(--panel-border);
-  border-radius: 14px; overflow: hidden;
+  border-radius: 14px; overflow: hidden; position: relative;
   transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-med) var(--ease);
   /* permanent elemental identity — a quiet colored hairline across the top,
      even when the crystal isn't lit (Apă=ice-blue, Aer=silver, Foc=ember, Pământ=green) */
@@ -992,13 +992,14 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 .ti-modelrow { padding: 5px 9px; border-radius: 6px; font-size: 11px; cursor: pointer; color: var(--muted); }
 .ti-modelrow:hover { background: rgba(212,175,55,0.14); color: #fff; }
 
-/* auto idle-recap (discreet, inline, one per idle cycle) */
+/* auto idle-recap (discreet, overlay, one per idle cycle) */
 .term-recap {
-  flex: 0 0 auto; display: flex; flex-direction: column; gap: 2px;
+  position: absolute; top: 62px; left: 0; right: 0; z-index: 10;
+  display: flex; flex-direction: column; gap: 2px;
   padding: 5px 12px; font-size: 10.5px; color: var(--faint);
   background: rgba(0,0,0,0.22); border-bottom: 1px solid var(--panel-border);
+  pointer-events: none; max-height: 50%;
 }
-.term-infobar:has(+ .term-recap) { border-bottom: none; }
 .tr-tag { text-transform: uppercase; letter-spacing: 0.08em; font-size: 8.5px; color: var(--faint); opacity: 0.7; }
 .tr-line { color: var(--faint); }
 .tr-line b { color: var(--faint); font-weight: 650; }

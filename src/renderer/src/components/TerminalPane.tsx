@@ -87,7 +87,7 @@ export const TerminalPane = forwardRef<PaneHandle, {
     if (host.clientWidth < 40 || host.clientHeight < 40) return; // not laid out yet
     try {
       fit.fit();
-      window.dai.term.resize(term.id, xt.cols, xt.rows);
+      // xt.onResize fires after fit.fit() and handles PTY resize IPC
     } catch {}
   }
 
