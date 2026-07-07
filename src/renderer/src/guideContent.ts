@@ -107,7 +107,7 @@ export const GUIDE_SECTIONS: GuideSectionDef[] = [
       {
         id: "wf2",
         title: { en: "Knowledge", ro: "Cunoastere" },
-        body: { en: "Drive/Obsidian (capture) → Grapevine digest → Neuromap (see the connections) → Agents (act on them).", ro: "Drive/Obsidian (capturezi) → digest Grapevine → Neuromap (vezi conexiunile) → Agents (actionezi pe ele)." },
+        body: { en: "Drive/Obsidian (capture) → Graphify digest → Neuromap (see the connections) → Agents (act on them).", ro: "Drive/Obsidian (capturezi) → digest Graphify → Neuromap (vezi conexiunile) → Agents (actionezi pe ele)." },
         target: "neuromap",
       },
       {
@@ -157,8 +157,8 @@ export const GUIDE_SECTIONS: GuideSectionDef[] = [
       },
       {
         id: "ts2",
-        title: { en: "Grapevine digest missing / stale", ro: "Digest Grapevine lipsa / vechi" },
-        body: { en: "Neuromap and Grapevine feed on the Graphify digest. If it's stale, regenerate it — the launchd job syncs ~/code automatically.", ro: "Neuromap si Grapevine se hranesc din digestul Graphify. Daca e vechi, regenereaza-l — job-ul launchd sincronizeaza ~/code automat." },
+        title: { en: "Graphify digest missing / stale", ro: "Digest Graphify lipsa / vechi" },
+        body: { en: "Neuromap feeds on the Graphify digest. If it's stale, regenerate it — the launchd job syncs ~/code automatically.", ro: "Neuromap se hraneste din digestul Graphify. Daca e vechi, regenereaza-l — job-ul launchd sincronizeaza ~/code automat." },
         action: { id: "open-graphify", label: { en: "Open Graph Digest", ro: "Deschide digestul" } },
       },
       {

@@ -65,10 +65,17 @@ export function consumeLibraryTab(): "team" | "admin" | null {
   pendingLibraryTab = null;
   return t;
 }
+// The top-bar "Admin" button opens the Admin Library on its main Catalog (which
+// now leads with the Superpowers Control Room) — NOT the Shortcuts & Tips tab.
 export const openLibraryAdmin = () => {
-  pendingLibraryTab = "admin";
+  pendingLibraryTab = null;
   goto("library")();
 };
+// Open a superpower's full GODMODE-style operational panel (godmode has its own).
+export const openSuperpower = (id: string) =>
+  id === "godmode"
+    ? window.dispatchEvent(new CustomEvent("dai:godmode"))
+    : window.dispatchEvent(new CustomEvent("dai:superpower", { detail: id }));
 let SEQ = 1;
 export const deployTerm = (cmd: string, cwd: string) => () => {
   window.dai.term.create({ id: `ign${Date.now().toString(36)}${SEQ++}`, cmd, cwd });
@@ -143,10 +150,22 @@ export const graphifyRegen = () => () => {
   setTimeout(refreshTools, 8000);
 };
 export const admin = (tab: string) => () => window.dispatchEvent(new CustomEvent("dai:admin", { detail: tab }));
+
+/** Sync the Obsidian vault via the REAL git engine — honest toast on result. */
+export const syncVaultToast = () => {
+  const id = pushToast({ kind: "checking", title: "Syncing vault…", detail: "git add · commit · push" });
+  window.dai.vaultSync.sync().then(
+    (r) => {
+      updateToast(id, { kind: r.ok ? "success" : "error", title: r.ok ? "Vault synced" : "Vault sync failed", detail: r.ok ? r.detail : (r.error ?? "sync failed"), ttl: 6000 });
+      window.dai.audit.log("vault-sync", r.ok ? r.detail : `error: ${r.error ?? "?"}`);
+    },
+    (e) => updateToast(id, { kind: "error", title: "Vault sync failed", detail: String(e), ttl: 6000 }),
+  );
+};
 const vaultChatPrompt =
   "You are inside Dragons Alliance IDE. Build a local-only vault chat/RAG plan for ~/Documents/Obsidian/Antigravity-Brain. First inspect files, existing IPC, neuromap graph, security boundaries, and config. Do not invent credentials. Return a safe phased implementation with tests.";
 const superpowersRepairPrompt =
-  "Audit Dragons Alliance IDE SUPERPOWERS end to end: Obsidian, Grapevine, Ruflo, Cloud, Agents, GODMODE, Google APIs. Find dead clicks, missing handlers, auth gates, feature flags, and backend gaps. Patch only safe local code, keep every click actionable, log actions, and report verified vs blocked.";
+  "Audit Dragons Alliance IDE SUPERPOWERS end to end: Obsidian, Graphify, Ruflo, Cloud, Agents, GODMODE, Google APIs. Find dead clicks, missing handlers, auth gates, feature flags, and backend gaps. Patch only safe local code, keep every click actionable, log actions, and report verified vs blocked.";
 
 // ---- superpowers (B) — the seven real powers, with quick panels ----
 // status is resolved LIVE by the dock from real probes; `statusOf` maps probe
@@ -158,23 +177,84 @@ export type SuperpowerDef = {
   role: string; // one-line truth of what it is
   statusOf: (env: { tool: (id: string) => string | undefined; liveAgents: number; google: { configured: boolean; signedIn: boolean } }) => OpStatus;
   actions: QuickAction[];
+  // ---- operational panel metadata (GODMODE-style panel, one template for all) ----
+  tone: string;              // primary accent (css var)
+  tone2: string;             // secondary accent (css var)
+  what: string;              // what this superpower IS
+  feeds: string;             // what it powers inside the IDE
+  connected: string[];       // connected services / data (display chips)
+  sector?: string;           // related view id → "Open sector" action (must satisfy isView)
+  healthId?: "ruflo" | "graphify"; // real superpowers.health() probe, when one exists
+  diag?: "vault" | "google" | "agents"; // real deep-probe kind for the diagnostics button
+  logKinds: string[];        // audit-kind substrings that belong to this superpower (real logs)
+  source: string;            // footer: where its truth comes from
+  risk?: string;             // footer: honest risk note
 };
 
 export const SUPERPOWERS: SuperpowerDef[] = [
   {
-    id: "obsidian", label: "Obsidian", icon: (p) => <IcGem {...p} />, role: "knowledge vault · business brain",
-    statusOf: ({ tool }) => (tool("obsidian") === "live" ? "live" : tool("obsidian") === "ready" ? "local-only" : "setup-required"),
+    id: "godmode", label: "GODMODE", icon: (p) => <IcCrown {...p} />, role: "supreme command center",
+    statusOf: ({ tool }) => (tool("godmode") === "live" ? "live" : tool("godmode") === "ready" ? "idle" : "setup-required"),
+    tone: "var(--sp-godmode)", tone2: "var(--sp-godmode-2)",
+    what: "The master control center — system health, active mission, global command and emergency stop over the whole IDE.",
+    feeds: "Aggregates every other superpower's health and drives cross-cutting operations.",
+    connected: ["Agents", "Terminals", "Vault", "Google", "Audit"], sector: "agents",
+    logKinds: ["access-denied", "term-launch", "claude-prompt-arm"], source: "live probes · godmode-lab",
+    actions: [{ id: "gm-open", label: "Open GODMODE", run: godmode }],
+  },
+  {
+    id: "ruflo", label: "Ruflo", icon: (p) => <IcBot {...p} />, role: "agent workflow engine · orchestrator",
+    statusOf: ({ tool }) => (tool("ruflo") === "live" ? "live" : tool("ruflo") === "ready" ? "idle" : "setup-required"),
+    tone: "var(--sp-ruflo)", tone2: "var(--sp-ruflo-2)",
+    what: "The RuFlo workflow engine — orchestrates agent swarms, task queues and flows behind this IDE's agents.",
+    feeds: "Powers multi-agent coordination, memory routing and the swarm the Agents sector controls.",
+    connected: ["RuFlo CLI", "ruvector.db", "Agents", "MCP"], sector: "agents", healthId: "ruflo",
+    logKinds: ["ruflo"], source: "ruflo status (real CLI probe) · ruvector.db mtime", risk: "Ignite runs the real ruflo CLI in a terminal.",
     actions: [
-      { id: "obs-open", label: "Open Vault (Obsidian)", run: openObsidian },
-      { id: "obs-map", label: "Open Neuromap", run: goto("neuromap") },
-      { id: "obs-search", label: "Search Notes (Research)", run: goto("research") },
-      { id: "obs-sync", label: "Sync Vault", run: admin("team") },
-      { id: "obs-chat", label: "Plan Vault Chat", run: deployClaudeWithPrompt(vaultChatPrompt, "~/Documents/Obsidian/Antigravity-Brain") },
+      { id: "rf-ignite", label: "Ignite (health check)", run: rufloIgnite() },
+      { id: "rf-mission", label: "Broadcast Mission (Agents)", run: goto("agents") },
+      { id: "rf-queue", label: "View Task Queue", run: armTermToast("ruflo task list", "~", "Ruflo task queue") },
+      { id: "rf-flows", label: "Continue Flow", run: armTermToast("ruflo session list", "~", "Ruflo sessions") },
     ],
   },
   {
-    id: "graphify", label: "Grapevine", icon: (p) => <IcNodes {...p} />, role: "neural relationship engine",
+    id: "agents", label: "Agents", icon: (p) => <IcSigil {...p} />, role: "swarm activation & control",
+    statusOf: ({ liveAgents }) => (liveAgents > 0 ? "live" : "idle"),
+    tone: "var(--sp-agents)", tone2: "var(--sp-agents-2)",
+    what: "AI mission control — launch Claude agents, broadcast prompts to the swarm, inspect live transcripts.",
+    feeds: "Drives every running Claude session and the Agents mission-control sector.",
+    connected: ["Claude Code", "Terminals", "Transcripts"], sector: "agents",
+    diag: "agents", logKinds: ["term-launch", "claude-prompt-arm", "agent"], source: "live transcript parse (~/.claude/projects)",
+    actions: [
+      { id: "ag-view", label: "Open Mission Control", run: goto("agents") },
+      { id: "ag-launch", label: "Launch Claude Agent", run: deployTerm("claude", "~") },
+      { id: "ag-logs", label: "Inspect Live Transcripts", run: goto("agents") },
+      { id: "ag-assign", label: "Assign Sector", run: goto("agents") },
+    ],
+  },
+  {
+    id: "cloud", label: "Cloud", icon: (p) => <IcCloud {...p} />, role: "heavy AI execution · Claude sessions",
+    statusOf: ({ liveAgents }) => (liveAgents > 0 ? "live" : "idle"),
+    tone: "var(--sp-cloud)", tone2: "var(--sp-cloud-2)",
+    what: "Cloud reasoning — launch and manage heavy Claude sessions; watch model, context and token cost.",
+    feeds: "The Claude runtime the terminals and agents execute against; metrics track its cost.",
+    connected: ["Claude Code", "Terminals", "Metrics"], sector: "metrics",
+    diag: "agents", logKinds: ["term-launch", "claude-prompt-arm", "term-arm"], source: "live session count + terminal state",
+    actions: [
+      { id: "cl-launch", label: "Launch Claude Session", run: deployTerm("claude", "~") },
+      { id: "cl-mc", label: "Open Mission Control", run: goto("agents") },
+      { id: "cl-metrics", label: "View Tokens (Metrics)", run: goto("metrics") },
+      { id: "cl-stop", label: "Open Terminal Stop Controls", run: goto("ide") },
+    ],
+  },
+  {
+    id: "graphify", label: "Graphify", icon: (p) => <IcNodes {...p} />, role: "graph intelligence · Neuromap engine",
     statusOf: ({ tool }) => (tool("graphify") === "live" ? "live" : tool("graphify") === "ready" ? "idle" : "setup-required"),
+    tone: "var(--sp-graphify)", tone2: "var(--sp-graphify-2)",
+    what: "Graphify turns the codebase, docs and vault into a queryable knowledge graph — the engine behind Neuromap.",
+    feeds: "Powers the Neuromap sector and the digest that maps files, projects and agents.",
+    connected: ["Neuromap", "Graph digest", "Obsidian vault"], sector: "neuromap", healthId: "graphify",
+    logKinds: ["graphify"], source: "graphify digest mtime + launchd job", risk: "Regenerate arms the real `graphify update .` command.",
     actions: [
       { id: "gv-map", label: "Open Map (Neuromap)", run: goto("neuromap") },
       { id: "gv-digest", label: "Open Graph Digest", run: graphifyOpenDigest() },
@@ -184,43 +264,30 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     ],
   },
   {
-    id: "ruflo", label: "Ruflo", icon: (p) => <IcBot {...p} />, role: "workflow orchestrator",
-    statusOf: ({ tool }) => (tool("ruflo") === "live" ? "live" : tool("ruflo") === "ready" ? "idle" : "setup-required"),
+    id: "obsidian", label: "Obsidian", icon: (p) => <IcGem {...p} />, role: "knowledge vault · business brain",
+    statusOf: ({ tool }) => (tool("obsidian") === "live" ? "live" : tool("obsidian") === "ready" ? "local-only" : "setup-required"),
+    tone: "var(--sp-obsidian)", tone2: "var(--sp-obsidian-2)",
+    what: "The Antigravity-Brain vault — notes, knowledge and the business brain, synced with git and Drive.",
+    feeds: "Feeds Neuromap, the Research desk and long-term memory; syncable to Google Drive.",
+    connected: ["Vault (git)", "Neuromap", "Drive"], sector: "neuromap",
+    diag: "vault", logKinds: ["obsidian", "vault", "team-permissions"], source: "vault .lock + pgrep + git status", risk: "Sync commits & pushes the vault when a remote is set.",
     actions: [
-      { id: "rf-ignite", label: "Ignite (health check)", run: rufloIgnite() },
-      { id: "rf-mission", label: "Broadcast Mission (Agents)", run: goto("agents") },
-      { id: "rf-queue", label: "View Task Queue", run: armTermToast("ruflo task list", "~", "Ruflo task queue") },
-      { id: "rf-flows", label: "Continue Flow", run: armTermToast("ruflo session list", "~", "Ruflo sessions") },
+      { id: "obs-open", label: "Open Vault (Obsidian)", run: openObsidian },
+      { id: "obs-map", label: "Open Neuromap", run: goto("neuromap") },
+      { id: "obs-search", label: "Search Notes (Research)", run: goto("research") },
+      { id: "obs-sync", label: "Sync Vault", run: syncVaultToast },
+      { id: "obs-drive", label: "Open Drive", run: goto("drive") },
+      { id: "obs-chat", label: "Plan Vault Chat", run: deployClaudeWithPrompt(vaultChatPrompt, "~/Documents/Obsidian/Antigravity-Brain") },
     ],
-  },
-  {
-    id: "cloud", label: "Cloud", icon: (p) => <IcCloud {...p} />, role: "heavy AI execution · Claude sessions",
-    statusOf: ({ liveAgents }) => (liveAgents > 0 ? "live" : "idle"),
-    actions: [
-      { id: "cl-launch", label: "Launch Claude Session", run: deployTerm("claude", "~") },
-      { id: "cl-mc", label: "Open Mission Control", run: goto("agents") },
-      { id: "cl-metrics", label: "View Tokens (Metrics)", run: goto("metrics") },
-      { id: "cl-stop", label: "Open Terminal Stop Controls", run: goto("ide") },
-    ],
-  },
-  {
-    id: "agents", label: "Agents", icon: (p) => <IcSigil {...p} />, role: "swarm activation & control",
-    statusOf: ({ liveAgents }) => (liveAgents > 0 ? "live" : "idle"),
-    actions: [
-      { id: "ag-view", label: "Open Mission Control", run: goto("agents") },
-      { id: "ag-launch", label: "Launch Claude Agent", run: deployTerm("claude", "~") },
-      { id: "ag-logs", label: "Inspect Live Transcripts", run: goto("agents") },
-      { id: "ag-assign", label: "Assign Sector", run: goto("agents") },
-    ],
-  },
-  {
-    id: "godmode", label: "GODMODE", icon: (p) => <IcCrown {...p} />, role: "supreme command center",
-    statusOf: ({ tool }) => (tool("godmode") === "live" ? "live" : tool("godmode") === "ready" ? "idle" : "setup-required"),
-    actions: [{ id: "gm-open", label: "Open GODMODE", run: godmode }],
   },
   {
     id: "google", label: "Google APIs", icon: (p) => <IcPlug {...p} />, role: "Drive · Sheets · Forms · Gmail",
     statusOf: ({ google }) => (google.signedIn ? "live" : google.configured ? "partial" : "setup-required"),
+    tone: "var(--sp-google)", tone2: "var(--sp-google-2)",
+    what: "External Google integration — Drive, Sheets, Forms and Gmail via a local OAuth client.",
+    feeds: "Backs the Drive Ops sector; needs a Google Cloud OAuth client + consent to go live.",
+    connected: ["Drive", "Sheets", "Forms", "Gmail"], sector: "drive",
+    diag: "google", logKinds: ["google", "drive", "gdrive"], source: "~/.config/dai/google.json + real API health", risk: "Sign in runs a real OAuth loopback flow.",
     actions: [
       { id: "gg-drive", label: "Open Drive Ops", run: goto("drive") },
       { id: "gg-keys", label: "Credentials (Keys)", run: vault },

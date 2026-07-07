@@ -2097,3 +2097,75 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 .lib-denied h2 { margin: 0; font-size: 15px; font-weight: 750; color: var(--gold-soft); letter-spacing: 0.02em; }
 .lib-denied p { margin: 0; font-size: 12.5px; color: var(--muted); max-width: 380px; line-height: 1.55; }
 .lib-denied p code { color: #93c5fd; }
+
+/* ============ Superpower operational panels (GODMODE-style, one per power) ============
+   Every superpower opens a full panel mirroring GODMODE's .gm-* language, tinted by a
+   per-power tone set inline (--spx-tone/--spx-tone2). Colours per the brand spec:
+   godmode gold+crimson · ruflo ember+orange · agents blue+violet · cloud violet+blue ·
+   graphify teal+cyan · obsidian violet-smoke+gold · google green+blue. */
+:root {
+  --sp-godmode: var(--gold, #d4af37);   --sp-godmode-2: #c0142f;
+  --sp-ruflo: #f9803a;                  --sp-ruflo-2: #f97316;
+  --sp-agents: #5ea2ef;                 --sp-agents-2: #9d7bd8;
+  --sp-cloud: #9d7bd8;                  --sp-cloud-2: #5ea2ef;
+  --sp-graphify: #43e0c0;               --sp-graphify-2: #38bdf8;
+  --sp-obsidian: #a78bfa;               --sp-obsidian-2: var(--gold, #d4af37);
+  --sp-google: #4ade80;                 --sp-google-2: #5ea2ef;
+}
+.spx { width: min(720px, 94vw); max-height: 86vh; display: flex; flex-direction: column;
+  background: linear-gradient(180deg, rgba(20,12,22,0.97), rgba(10,5,10,0.98));
+  border: 1px solid color-mix(in srgb, var(--spx-tone) 45%, transparent); border-radius: 18px; overflow: hidden;
+  box-shadow: var(--shadow-3, 0 24px 60px rgba(0,0,0,0.6)), 0 0 60px color-mix(in srgb, var(--spx-tone) 14%, transparent); }
+.spx-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--spx-tone) 26%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--spx-tone) 12%, transparent), transparent 62%); }
+.spx-emblem { color: var(--spx-tone); display: inline-flex; filter: drop-shadow(0 0 8px color-mix(in srgb, var(--spx-tone) 55%, transparent)); }
+.spx-title-wrap { display: flex; flex-direction: column; }
+.spx-title { font-size: 16px; font-weight: 850; letter-spacing: 0.14em; color: var(--spx-tone); }
+.spx-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; }
+.spx-status { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.spx-checked { font-size: 9.5px; color: var(--faint); font-style: normal; }
+.spx-x { font-size: 10px; color: var(--faint); border: 1px solid var(--panel-border); border-radius: 5px; padding: 3px 8px; background: transparent; cursor: pointer; }
+.spx-x:hover { color: #fff; border-color: var(--spx-tone); }
+.spx-body { overflow: auto; padding: 12px 18px 8px; }
+.spx-sec { font-size: 9.5px; font-weight: 800; letter-spacing: 0.16em; color: var(--faint); margin: 12px 0 6px; text-transform: uppercase; }
+.spx-p { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 0; }
+.spx-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.spx-chip { font-size: 10px; color: var(--text); border: 1px solid color-mix(in srgb, var(--spx-tone) 30%, transparent);
+  background: color-mix(in srgb, var(--spx-tone) 8%, transparent); border-radius: 999px; padding: 3px 9px; }
+.spx-diag, .spx-logs { display: flex; flex-direction: column; gap: 7px; align-items: flex-start; }
+.spx-diag-out { font-size: 11px; color: var(--muted); border: 1px solid var(--panel-border); border-radius: 8px; padding: 7px 10px; width: 100%;
+  background: rgba(255,255,255,0.02); display: flex; flex-direction: column; gap: 2px; }
+.spx-diag-out.ok { border-color: color-mix(in srgb, var(--teal) 35%, transparent); }
+.spx-diag-out.warn { border-color: color-mix(in srgb, var(--accent-ember) 40%, transparent); }
+.spx-log-list { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+.spx-log-row { display: flex; gap: 10px; align-items: baseline; font-size: 10.5px; padding: 3px 6px; border-radius: 6px; }
+.spx-log-row:nth-child(odd) { background: rgba(255,255,255,0.03); }
+.spx-log-kind { color: var(--spx-tone); font-weight: 700; flex: 0 0 auto; min-width: 96px; }
+.spx-log-detail { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.spx-log-ts { color: var(--faint); font-size: 9.5px; }
+.spx-actions { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 18px; border-top: 1px solid var(--panel-border);
+  background: color-mix(in srgb, var(--spx-tone) 5%, transparent); }
+.spx-foot { display: flex; gap: 14px; flex-wrap: wrap; padding: 8px 18px 14px; font-size: 10px; color: var(--faint); }
+.spx-risk { color: var(--accent-ember); }
+.spx-denied { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 40px 24px; text-align: center; color: var(--muted); }
+.spx-denied code { color: #93c5fd; }
+
+/* ============ Superpowers Control Room (band inside Admin Library) ============ */
+.spcr { margin: 2px 0 6px; }
+.spcr-h { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--gold-soft); margin: 2px 0 8px; }
+.spcr-h .spcr-live { font-size: 9.5px; color: var(--teal); border: 1px solid rgba(67,224,192,0.3); border-radius: 999px; padding: 2px 8px; letter-spacing: 0.04em; }
+.spcr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.spcr-card { text-align: left; cursor: pointer; font-family: inherit;
+  border: 1px solid color-mix(in srgb, var(--cat) 30%, transparent); border-top: 2px solid var(--cat);
+  background: color-mix(in srgb, var(--cat) 6%, rgba(255,255,255,0.02)); border-radius: 10px; padding: 9px 11px;
+  display: flex; flex-direction: column; gap: 5px; transition: transform 0.15s var(--ease, ease), box-shadow 0.15s, border-color 0.15s; }
+.spcr-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px -12px color-mix(in srgb, var(--cat) 60%, transparent);
+  border-color: color-mix(in srgb, var(--cat) 55%, transparent); }
+.spcr-top { display: flex; align-items: center; gap: 8px; }
+.spcr-ic { color: var(--cat); display: inline-flex; }
+.spcr-name { font-weight: 750; font-size: 13px; }
+.spcr-role { font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spcr-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 1px; }
+.spcr-open { font-size: 10px; color: var(--cat); font-weight: 700; }

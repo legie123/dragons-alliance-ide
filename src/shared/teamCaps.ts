@@ -19,7 +19,7 @@ export const TEAM_CAPS: TeamCap[] = [
   { id: "sector:creative", group: "sector", label: "Creative", description: "Generation studio" },
   // --- superpowers ---
   { id: "sp:obsidian", group: "superpower", label: "Obsidian", description: "Knowledge vault" },
-  { id: "sp:graphify", group: "superpower", label: "Grapevine", description: "Relationship engine" },
+  { id: "sp:graphify", group: "superpower", label: "Graphify", description: "Graph intelligence engine" },
   { id: "sp:ruflo", group: "superpower", label: "Ruflo", description: "Workflow orchestrator" },
   { id: "sp:cloud", group: "superpower", label: "Cloud", description: "Claude sessions" },
   { id: "sp:agents", group: "superpower", label: "Agents", description: "Swarm control" },

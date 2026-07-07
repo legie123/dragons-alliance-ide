@@ -5,7 +5,8 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchTools, fetchSessions, fetchGDriveStatus, fetchTerms } from "../api";
-import { SUPERPOWERS, MORE_CATEGORIES, STATUS_META, operationalTruth, type OpStatus } from "../registry";
+import { SUPERPOWERS, MORE_CATEGORIES, STATUS_META, operationalTruth, openSuperpower, openLibraryAdmin, type OpStatus } from "../registry";
+import { useOps } from "../hooks/useOps";
 import { IcUsers } from "./icons";
 import { DragonEmblem } from "./DragonEmblem";
 
@@ -30,6 +31,7 @@ export function GodModePanel({ open, onClose, onCommand }: { open: boolean; onCl
   const { data: google } = useQuery({ queryKey: ["gdrive"], queryFn: fetchGDriveStatus, enabled: open });
   const { data: audit = [] } = useQuery({ queryKey: ["audit"], queryFn: () => window.dai.audit.list(200), refetchInterval: 8000, enabled: open });
   const { data: team } = useQuery({ queryKey: ["team"], queryFn: () => window.dai.team.get(), enabled: open });
+  const { env, statuses } = useOps();
   const [gmMsg, setGmMsg] = useState("");
 
   useEffect(() => {
@@ -67,6 +69,17 @@ export function GodModePanel({ open, onClose, onCommand }: { open: boolean; onCl
     const r = await window.dai.vaultSync.sync();
     setGmMsg(r.ok ? "✓ " + r.detail : "✗ " + (r.error ?? "sync failed"));
   };
+  const fullCheck = async () => {
+    setGmMsg("full system check — probing ruflo + graphify…");
+    try {
+      const [rf, gf] = await Promise.all([
+        window.dai.superpowers.health("ruflo"),
+        window.dai.superpowers.health("graphify"),
+      ]);
+      setGmMsg(`Ruflo: ${rf.status} · Graphify: ${gf.status}`);
+    } catch (e) { setGmMsg("✗ check failed: " + String(e)); }
+  };
+  const openPanel = (id: string) => () => { openSuperpower(id); onClose(); };
 
   return (
     <div className="cmdk-backdrop" onClick={onClose}>
@@ -102,6 +115,20 @@ export function GodModePanel({ open, onClose, onCommand }: { open: boolean; onCl
           ) : (
             <div className="gm-mission empty">no active mission — launch an agent below</div>
           )}
+
+          <div className="gm-sec">SUPERPOWERS</div>
+          <div className="gm-actions">
+            {SUPERPOWERS.filter((sp) => sp.id !== "godmode").map((sp) => {
+              const st = statuses[sp.id] ?? sp.statusOf(env);
+              return (
+                <button key={sp.id} className="da-btn ghost sm" onClick={openPanel(sp.id)} title={`Open ${sp.label} panel`}>
+                  <span style={{ color: STATUS_META[st].color, marginRight: 5 }}>●</span>{sp.label}
+                </button>
+              );
+            })}
+            <button className="da-btn gold sm" onClick={() => { openLibraryAdmin(); onClose(); }}>Control Room</button>
+            <button className="da-btn ghost sm" onClick={fullCheck}>Full System Check</button>
+          </div>
 
           <div className="gm-sec">QUICK ACTIONS</div>
           <div className="gm-actions">

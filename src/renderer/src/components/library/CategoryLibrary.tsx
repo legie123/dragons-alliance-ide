@@ -9,6 +9,7 @@ import {
 import { LIBRARY_CATALOG } from "../../data/libraryCatalog";
 import { LibraryCard } from "./LibraryCard";
 import { LibraryInspector, agentPrompt } from "./LibraryInspector";
+import { SuperpowersControlRoom } from "./SuperpowersControlRoom";
 import { deployClaudeWithPrompt } from "../../registry";
 
 type CatFilter = LibCategory | "all";
@@ -89,6 +90,7 @@ export function CategoryLibrary({ activeProject }: { activeProject?: string | nu
 
   return (
     <div className="lib-catalog">
+      <SuperpowersControlRoom />
       <div className="lib-summary">
         {sumTiles.map((t, i) => (
           <div key={i} className={`lib-sum${i === 0 ? " total" : ""}`} data-cat={t.cat}>

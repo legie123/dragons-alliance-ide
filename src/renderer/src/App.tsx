@@ -17,6 +17,7 @@ import { PhoneConnect } from "./components/PhoneConnect";
 import { CredentialsVault } from "./components/CredentialsVault";
 import { EcosystemBar } from "./components/EcosystemBar";
 import { GodModePanel } from "./components/GodModePanel";
+import { SuperpowerPanel } from "./components/SuperpowerPanel";
 import { AdminPanel } from "./components/AdminPanel";
 import { FirstRunIdentity } from "./components/FirstRunIdentity";
 import type { SettingsCat } from "./components/settings/SettingsSections";
@@ -30,7 +31,8 @@ import { StatusBar } from "./components/shell/StatusBar";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects, fetchGDriveStatus, broadcast } from "./api";
 import { IcCrown, IcGem, IcSearch, IcTerminal, IcBot, IcSigil } from "./components/icons";
-import { CORE_SECTORS, operationalTruth } from "./registry";
+import { CORE_SECTORS, operationalTruth, openSuperpower, openLibraryAdmin, SUPERPOWERS } from "./registry";
+import { pushToast, updateToast } from "./toast";
 import { SECTOR_ACTIONS } from "./sectorActions";
 import { queryClient } from "./queryClient";
 import { useMe } from "./hooks/useMe";
@@ -58,6 +60,7 @@ export default function App() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [godOpen, setGodOpen] = useState(false);
+  const [spOpen, setSpOpen] = useState<string | null>(null);
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminCat, setAdminCat] = useState<SettingsCat>("appearance");
 
@@ -91,6 +94,7 @@ export default function App() {
     const vault = () => setVaultOpen(true);
     const phone = () => setPhoneOpen(true);
     const god = () => setGodOpen(true);
+    const superpower = (e: Event) => { const id = (e as CustomEvent).detail as string; if (id) setSpOpen(id); };
     const more = () => setMoreOpen(true);
     const admin = (e: Event) => {
       const raw = (e as CustomEvent).detail as string | undefined;
@@ -104,6 +108,7 @@ export default function App() {
     window.addEventListener("dai:vault", vault);
     window.addEventListener("dai:phone", phone);
     window.addEventListener("dai:godmode", god);
+    window.addEventListener("dai:superpower", superpower);
     window.addEventListener("dai:more", more);
     window.addEventListener("dai:refresh-tools", refreshTools);
     return () => {
@@ -112,6 +117,7 @@ export default function App() {
       window.removeEventListener("dai:vault", vault);
       window.removeEventListener("dai:phone", phone);
       window.removeEventListener("dai:godmode", god);
+      window.removeEventListener("dai:superpower", superpower);
       window.removeEventListener("dai:more", more);
       window.removeEventListener("dai:refresh-tools", refreshTools);
     };
@@ -144,6 +150,21 @@ export default function App() {
     setView("code");
   };
 
+  // Real deep health probe across the superpowers that expose one (ruflo, graphify).
+  const runHealthCheck = async () => {
+    const id = pushToast({ kind: "checking", title: "Running superpowers health check…", detail: "ruflo · graphify" });
+    try {
+      const [rf, gf] = await Promise.all([
+        window.dai.superpowers.health("ruflo"),
+        window.dai.superpowers.health("graphify"),
+      ]);
+      updateToast(id, { kind: "info", title: "Health check", detail: `Ruflo ${rf.status} · Graphify ${gf.status}`, ttl: 6000 });
+      window.dai.audit.log("health-check", `ruflo ${rf.status} · graphify ${gf.status}`);
+    } catch (e) {
+      updateToast(id, { kind: "error", title: "Health check failed", detail: String(e), ttl: 6000 });
+    }
+  };
+
   // App-level palette: core sectors, superpowers, terminal commands, admin.
   // Every command runs for real; disabled ones state their reason in the subtitle.
   useEffect(() => {
@@ -153,11 +174,15 @@ export default function App() {
         id: "view:" + s.id, title: "Open " + s.label, category: "Sector", icon: s.icon(),
         shortcut: `⌘${i + 1}`, run: () => setView(s.id as View),
       })),
-      // superpowers
-      { id: "sp:godmode", title: "Open GODMODE", subtitle: "supreme command center", category: "Superpower", icon: <IcCrown />, run: () => setGodOpen(true) },
-      { id: "sp:obsidian", title: "Activate Obsidian (open vault)", category: "Superpower", icon: <IcGem />, run: () => window.dai.tools.action("open-obsidian") },
-      { id: "sp:grapevine", title: "Open Grapevine Map", subtitle: "Neuromap", category: "Superpower", run: () => setView("neuromap") },
-      { id: "sp:cloud", title: "Launch Cloud (Claude) Session", category: "Superpower", run: () => { window.dai.term.create({ id: `pk${Date.now().toString(36)}`, cmd: "claude", cwd: "~" }); setView("agents"); } },
+      // superpowers — every one opens its full GODMODE-style operational panel
+      ...SUPERPOWERS.map((sp): Cmd => ({
+        id: "sp:" + sp.id, title: `Open ${sp.label} Panel`, subtitle: sp.role, category: "Superpower",
+        icon: sp.id === "godmode" ? <IcCrown /> : undefined, run: () => openSuperpower(sp.id),
+      })),
+      ...(canRef.current("adm:library")
+        ? [{ id: "sp:control-room", title: "Open Superpowers Control Room", subtitle: "Admin Library", category: "Superpower" as const, icon: <IcGem />, run: () => openLibraryAdmin() }]
+        : []),
+      { id: "diag:health", title: "Run Superpowers Health Check", subtitle: "ruflo + graphify real probes", category: "Diagnostics", run: () => runHealthCheck() },
       // terminal commands — broadcast to the visible workers (real keystrokes)
       { id: "t:git-status", title: "Terminal: run git status on workers", category: "Terminal", icon: <IcTerminal />, run: () => { setView("ide"); broadcast("git status", true); } },
       { id: "t:npm-dev", title: "Terminal: run npm run dev on workers", category: "Terminal", icon: <IcTerminal />, run: () => { setView("ide"); broadcast("npm run dev", true); } },
@@ -305,6 +330,7 @@ export default function App() {
       <PhoneConnect open={phoneOpen} onClose={() => setPhoneOpen(false)} projects={projects} />
       <CredentialsVault open={vaultOpen} onClose={() => setVaultOpen(false)} />
       <GodModePanel open={godOpen} onClose={() => setGodOpen(false)} onCommand={() => setPaletteOpen(true)} />
+      <SuperpowerPanel id={spOpen} onClose={() => setSpOpen(null)} />
       <AdminPanel open={adminOpen} cat={adminCat} onClose={() => setAdminOpen(false)} onCat={setAdminCat} />
       <GuidePanel
         open={guideOpen}
