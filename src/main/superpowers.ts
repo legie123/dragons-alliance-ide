@@ -40,7 +40,7 @@ export async function rufloHealth(): Promise<SpHealth> {
     const { stdout } = await execFileP(rufloBin(), ["status"], {
       cwd: HOME, timeout: 6000, maxBuffer: 1 << 20,
     });
-    const out = stdout || "";
+    const out = (stdout || "").replace(/\x1b\[[0-9;]*m/g, ""); // strip ANSI so parsed fields stay clean
     const running = /RuFlo[^\n]*\[RUNNING\]/i.test(out);
     const stopped = /RuFlo[^\n]*\[STOPPED\]/i.test(out);
     const ver = (out.match(/RuFlo\s+(v\d[^\s\]]*)/i) || [])[1];
