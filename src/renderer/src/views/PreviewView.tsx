@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { IcMonitor, IcPlay, IcRefresh, IcExternal, IcZap, IcBot, IcTerminal } from "../components/icons";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProjects } from "../api";
+import { pushToast } from "../toast";
 import type { NeoStatus, NeoSnap } from "@shared/ipc";
 
 const BROWSERS = ["Neo", "Chrome", "Brave", "Safari"];
@@ -98,6 +99,21 @@ export function PreviewView() {
     } catch (e) {
       setChatLog((l) => [...l, { role: "err", text: String((e as Error)?.message || e) }]);
     }
+  }
+
+  // Micro Terminal: run the quick command for REAL — spawn a shell worker in the
+  // selected project's cwd via the terminal host, type the command, jump to the
+  // Terminal deck to watch it. (Was a dead click that only cleared the input.)
+  function runMicro() {
+    const c = cmd.trim();
+    if (!c || !activeProj) return;
+    const id = `pv${Date.now().toString(36)}`;
+    window.dai.term.create({ id, cmd: "shell", cwd: activeProj.path });
+    setTimeout(() => window.dai.term.write(id, c + "\n"), 1200); // let the shell settle
+    window.dai.audit.log("preview-run", `${c} @ ${activeProj.name}`);
+    pushToast({ kind: "info", title: `Ran in ${activeProj.name}`, detail: c, ttl: 3500 });
+    setCmd("");
+    window.dispatchEvent(new CustomEvent("dai:goto", { detail: "ide" }));
   }
 
   // right-rail actions: pv:refresh → reload, pv:external → open in system browser
@@ -210,9 +226,12 @@ export function PreviewView() {
             <div className="pv-micro-out">Project-scoped quick commands. Runs in the selected project's cwd.
               <br />Executes via the terminal host — pick a project to enable.</div>
             <div className="pv-micro-in">
-              <input value={cmd} onChange={(e) => setCmd(e.target.value)} placeholder="quick command (e.g. npm run build)" disabled={!activeProj} />
+              <input value={cmd} onChange={(e) => setCmd(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") runMicro(); }}
+                placeholder="quick command (e.g. npm run build)" disabled={!activeProj} />
               <button disabled={!activeProj || !cmd.trim()}
-                onClick={() => { setCmd(""); }}>Run</button>
+                title={!activeProj ? "select a project first" : "runs in the project's terminal"}
+                onClick={runMicro}>Run</button>
             </div>
           </div>
         </aside>
