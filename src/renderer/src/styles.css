@@ -2111,6 +2111,7 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
   --sp-graphify: #43e0c0;               --sp-graphify-2: #38bdf8;
   --sp-obsidian: #a78bfa;               --sp-obsidian-2: var(--gold, #d4af37);
   --sp-google: #4ade80;                 --sp-google-2: #5ea2ef;
+  --sp-llmhub: #d8dee9;                 --sp-llmhub-2: #9d7bd8; /* platinum + violet */
 }
 .spx { width: min(720px, 94vw); max-height: 86vh; display: flex; flex-direction: column;
   background: linear-gradient(180deg, rgba(20,12,22,0.97), rgba(10,5,10,0.98));

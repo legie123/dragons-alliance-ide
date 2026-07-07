@@ -25,6 +25,7 @@ export const TEAM_CAPS: TeamCap[] = [
   { id: "sp:agents", group: "superpower", label: "Agents", description: "Swarm control" },
   { id: "sp:godmode", group: "superpower", label: "GODMODE", description: "Supreme command" },
   { id: "sp:google", group: "superpower", label: "Google APIs", description: "Drive/Sheets/Forms" },
+  { id: "sp:llmhub", group: "superpower", label: "LLM Hub", description: "Model connections" },
   // --- sensitive actions ---
   { id: "act:terminals", group: "action", label: "Run terminals", description: "Spawn/drive terminals" },
   { id: "act:broadcast", group: "action", label: "Broadcast", description: "Send to all agents" },
@@ -49,7 +50,7 @@ export const ROLE_PRESET: Record<TeamRole, TeamCapId[]> = {
   owner: ["*"],
   editor: [
     "sector:ide", "sector:agents", "sector:code", "sector:neuromap", "sector:drive", "sector:metrics", "sector:preview", "sector:creative",
-    "sp:obsidian", "sp:graphify", "sp:ruflo", "sp:cloud", "sp:agents",
+    "sp:obsidian", "sp:graphify", "sp:ruflo", "sp:cloud", "sp:agents", "sp:llmhub",
     "act:terminals", "act:broadcast", "act:vault-sync",
     "adm:audit",
   ],

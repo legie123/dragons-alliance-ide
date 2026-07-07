@@ -49,6 +49,9 @@ export type QuickAction = {
   run?: () => void;
   /** honest reason shown when there is no real handler */
   disabledReason?: string;
+  /** provider id whose setup unlocks this action — renders as SETUP_REQUIRED
+   *  and clicking opens Settings ▸ API Power Center (a real route, not a dead click) */
+  setupRequired?: string;
   danger?: boolean;
 };
 
@@ -100,6 +103,33 @@ export const inspectGraph = () => {
 export const agentsBroadcast = () => {
   goto("agents")();
   setTimeout(() => window.dispatchEvent(new CustomEvent("dai:sector-action", { detail: "agents:focus-broadcast" })), 500);
+};
+
+/** LLM Hub: run the REAL provider detection and toast the honest summary. */
+export const llmDetect = () => async () => {
+  const id = pushToast({ kind: "checking", title: "Detecting model providers…", detail: "Ollama · CLI · saved keys" });
+  try {
+    const h = await window.dai.llm.status();
+    const act = h.providers.filter((p) => p.state === "active").map((p) => p.label).join(", ");
+    updateToast(id, {
+      kind: h.active > 0 ? "success" : "info",
+      title: `${h.active} active · ${h.configured} configured · ${h.providers.length - h.active - h.configured} need setup`,
+      detail: act || "no live provider — start Ollama or add a key in the Power Center",
+      ttl: 6500,
+    });
+  } catch (e) {
+    updateToast(id, { kind: "error", title: "Detection failed", detail: String(e), ttl: 6000 });
+  }
+};
+/** LLM Hub: REAL on-demand connection test for one provider, honest toast. */
+export const llmTestToast = (provider: string) => async () => {
+  const id = pushToast({ kind: "checking", title: `Testing ${provider}…` });
+  try {
+    const r = await window.dai.llm.test(provider);
+    updateToast(id, { kind: r.ok ? "success" : "error", title: `${provider}: ${r.message}`, ttl: 6000 });
+  } catch (e) {
+    updateToast(id, { kind: "error", title: `${provider} test failed`, detail: String(e), ttl: 6000 });
+  }
 };
 let SEQ = 1;
 export const deployTerm = (cmd: string, cwd: string) => () => {
@@ -222,7 +252,7 @@ export type SuperpowerDef = {
   label: string;
   icon: (p?: { size?: number }) => ReactNode;
   role: string; // one-line truth of what it is
-  statusOf: (env: { tool: (id: string) => string | undefined; liveAgents: number; google: { configured: boolean; signedIn: boolean } }) => OpStatus;
+  statusOf: (env: { tool: (id: string) => string | undefined; liveAgents: number; google: { configured: boolean; signedIn: boolean }; llm: { active: number; configured: number } }) => OpStatus;
   actions: QuickAction[];
   // ---- operational panel metadata (GODMODE-style panel, one template for all) ----
   tone: string;              // primary accent (css var)
@@ -232,7 +262,7 @@ export type SuperpowerDef = {
   connected: string[];       // connected services / data (display chips)
   sector?: string;           // related view id → "Open sector" action (must satisfy isView)
   healthId?: "ruflo" | "graphify"; // real superpowers.health() probe, when one exists
-  diag?: "vault" | "google" | "agents"; // real deep-probe kind for the diagnostics button
+  diag?: "vault" | "google" | "agents" | "llm"; // real deep-probe kind for the diagnostics button
   logKinds: string[];        // audit-kind substrings that belong to this superpower (real logs)
   source: string;            // footer: where its truth comes from
   risk?: string;             // footer: honest risk note
@@ -349,6 +379,22 @@ export const SUPERPOWERS: SuperpowerDef[] = [
       { id: "gg-health", label: "API Health", run: admin("health") },
       { id: "gg-integrations", label: "Open Integrations", run: admin("integrations") },
       { id: "gg-repair", label: "Arm Repair Agent", run: deployClaudeWithPrompt(superpowersRepairPrompt, "~/code/dragons-alliance-ide") },
+    ],
+  },
+  {
+    id: "llmhub", label: "LLM Hub", icon: (p) => <IcZap {...p} />, role: "model connections · local & API",
+    statusOf: ({ llm }) => (llm.active > 0 ? "live" : llm.configured > 0 ? "partial" : "setup-required"),
+    tone: "var(--sp-llmhub)", tone2: "var(--sp-llmhub-2)",
+    what: "Every model the platform can talk to — local Ollama/Hermes, the Claude CLI, and keyed APIs — detected for REAL, never assumed.",
+    feeds: "Powers the Sector Agent chat (local, no keys needed) and any model-backed feature; keys live in Settings ▸ API Power Center.",
+    connected: ["Ollama 11434", "Hermes (local)", "Claude CLI", "API Power Center"], sector: "ide",
+    diag: "llm", logKinds: ["llm"], source: "127.0.0.1:11434 real probe · CLI on disk · saved keys (masked, 0600)",
+    risk: "Chat runs on the LOCAL Ollama server; keyed APIs are only touched by an explicit Test Connection.",
+    actions: [
+      { id: "llm-detect", label: "Detect Providers", run: llmDetect() },
+      { id: "llm-test", label: "Test Ollama Connection", run: llmTestToast("ollama") },
+      { id: "llm-power", label: "Open API Power Center", run: admin("powercenter") },
+      { id: "llm-logs", label: "Open Logs", run: admin("audit") },
     ],
   },
 ];

@@ -189,6 +189,16 @@ const dai: DaiApi = {
     setRemote: (url) => ipcRenderer.invoke(CH.VAULT_SET_REMOTE, url),
   },
   shot: { capture: () => ipcRenderer.invoke(CH.SHOT_CAPTURE) },
+  llm: {
+    status: () => ipcRenderer.invoke(CH.LLM_STATUS),
+    set: (provider, patch) => ipcRenderer.invoke(CH.LLM_SET, provider, patch),
+    test: (provider) => ipcRenderer.invoke(CH.LLM_TEST, provider),
+    chat: (model, messages) => ipcRenderer.invoke(CH.LLM_CHAT, model, messages),
+  },
+  browsers: {
+    detect: () => ipcRenderer.invoke(CH.BROWSERS_DETECT),
+    open: (id, url) => ipcRenderer.invoke(CH.BROWSER_OPEN, id, url),
+  },
   superpowers: {
     health: (id) => ipcRenderer.invoke(CH.SP_HEALTH, id),
     openDigest: () => ipcRenderer.invoke(CH.SP_OPEN_DIGEST),

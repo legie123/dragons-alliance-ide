@@ -112,6 +112,14 @@ export const CH = {
   SP_HEALTH: "sp:health",                      // invoke(id) → SpHealth (ruflo | graphify)
   SP_OPEN_DIGEST: "sp:opendigest",             // invoke() → SpResult (opens real graph digest)
   SP_RUFLO_QUEUE: "sp:rufloqueue",             // invoke() → RufloQueue (real `ruflo task list` count)
+  // LLM Hub — real provider detection, 0600 config (keys never leave main), on-demand tests, LOCAL chat
+  LLM_STATUS: "llm:status",                    // invoke() → LlmHubStatus
+  LLM_SET: "llm:set",                          // invoke(provider, patch) → LlmHubStatus
+  LLM_TEST: "llm:test",                        // invoke(provider) → LlmTestResult (real HTTP/CLI probe)
+  LLM_CHAT: "llm:chat",                        // invoke(model, messages) → LlmChatResult (LOCAL Ollama)
+  // browsers — real /Applications detection + login-safe open (whitelist-only)
+  BROWSERS_DETECT: "browsers:detect",          // invoke() → BrowsersDetect
+  BROWSER_OPEN: "browsers:open",               // invoke(id, url) → SpResult
 } as const;
 
 // ---- types ----
@@ -329,6 +337,21 @@ export type SpHealth = {
 export type SpResult = { ok: boolean; message: string; path?: string };
 export type RufloQueue = { ok: boolean; count: number; message: string };
 
+// ---- LLM Hub (real detection; keys masked, never returned) ----
+export type LlmProviderState = "active" | "configured" | "setup_required";
+export type LlmProviderStatus = {
+  id: string; label: string; state: LlmProviderState;
+  models: string[]; hasKey: boolean; keyMasked?: string; endpoint?: string; detail: string;
+};
+export type LlmHubStatus = { providers: LlmProviderStatus[]; active: number; configured: number; checkedAt: number };
+export type LlmTestResult = { provider: string; ok: boolean; message: string };
+export type LlmChatMsg = { role: "system" | "user" | "assistant"; content: string };
+export type LlmChatResult = { ok: boolean; text: string; model: string; error?: string };
+
+// ---- Browsers (real /Applications scan; login-safe open) ----
+export type BrowserInfo = { id: string; label: string; app: string; path: string };
+export type BrowsersDetect = { browsers: BrowserInfo[]; checkedAt: number };
+
 // ---- Neo browser (Preview) ----
 export type NeoStatus = { connected: boolean; browser?: string; error?: string };
 export type NeoTab = { index: number; targetId: string; title: string; url: string };
@@ -448,6 +471,16 @@ export interface DaiApi {
     setRemote(url: string): Promise<VaultSyncStatus>;
   };
   shot: { capture(): Promise<ShotResult> };
+  llm: {
+    status(): Promise<LlmHubStatus>;
+    set(provider: string, patch: { key?: string; endpoint?: string; model?: string; clear?: boolean }): Promise<LlmHubStatus>;
+    test(provider: string): Promise<LlmTestResult>;
+    chat(model: string, messages: LlmChatMsg[]): Promise<LlmChatResult>;
+  };
+  browsers: {
+    detect(): Promise<BrowsersDetect>;
+    open(id: string, url: string): Promise<SpResult>;
+  };
   superpowers: {
     health(id: string): Promise<SpHealth>;
     openDigest(): Promise<SpResult>;

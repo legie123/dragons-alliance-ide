@@ -72,6 +72,14 @@ export function SuperpowerPanel({ id, onClose }: { id: string | null; onClose: (
           ? h.map((s: any) => `${s.service ?? s.name ?? "service"}: ${s.ok ? "ok" : (s.status ?? s.error ?? "unavailable")}`)
           : ["not signed in — add a Google OAuth client in Keys, then Sign In"];
         setDiag({ loading: false, ok: Array.isArray(h) && h.every((s: any) => s.ok), lines });
+      } else if (sp.diag === "llm") {
+        const h = await window.dai.llm.status();
+        setDiag({
+          loading: false, ok: h.active > 0,
+          lines: h.providers.map((p) =>
+            `${p.label}: ${p.state.replace("_", " ")}${p.models.length ? " · " + p.models.slice(0, 3).join(", ") : ""}${p.keyMasked ? " · key " + p.keyMasked : ""}`),
+          ts: h.checkedAt,
+        });
       } else if (sp.diag === "agents") {
         const s = await window.dai.sessions.list(240);
         setDiag({ loading: false, ok: s.live > 0, lines: [`${s.live} live · ${s.sessions.length} sessions tracked`, s.live > 0 ? "runtime active" : "runtime ready — 0 active"] });

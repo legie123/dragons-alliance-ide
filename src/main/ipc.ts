@@ -27,6 +27,8 @@ import { gHealth } from "./google";
 import * as fsN from "node:fs";
 import { neoStatus, neoEnsure, neoTabs, neoOpen, neoNavigate, neoReload, neoBack, neoForward, neoAsk, neoClick, neoScroll, neoSnap } from "./neo";
 import { superpowerHealth, openGraphDigest, rufloQueue } from "./superpowers";
+import { llmStatus, llmSet, llmTest, llmChat } from "./llmhub";
+import { browsersDetect, browserOpen } from "./browsers";
 import type { NeuroGraphOpts, NeuroLayer } from "../shared/ipc";
 
 const execFileP = promisify(execFile);
@@ -89,6 +91,13 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
   ipcMain.handle(CH.SP_HEALTH, (_e, id: string) => superpowerHealth(String(id)));
   ipcMain.handle(CH.SP_OPEN_DIGEST, () => openGraphDigest());
   ipcMain.handle(CH.SP_RUFLO_QUEUE, () => rufloQueue());
+  // ---- LLM Hub + browsers (real probes; keys stay in main, 0600) ----
+  ipcMain.handle(CH.LLM_STATUS, () => llmStatus());
+  ipcMain.handle(CH.LLM_SET, (_e, provider: string, patch) => llmSet(String(provider), patch ?? {}));
+  ipcMain.handle(CH.LLM_TEST, (_e, provider: string) => llmTest(String(provider)));
+  ipcMain.handle(CH.LLM_CHAT, (_e, model: string, messages) => llmChat(String(model ?? ""), Array.isArray(messages) ? messages : []));
+  ipcMain.handle(CH.BROWSERS_DETECT, () => browsersDetect());
+  ipcMain.handle(CH.BROWSER_OPEN, (_e, id: string, url: string) => browserOpen(String(id), String(url)));
   ipcMain.handle(CH.HOST_INFO, () => ({
     shell: process.env.SHELL || "/bin/zsh",
     home: os.homedir(),
