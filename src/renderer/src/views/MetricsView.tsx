@@ -6,9 +6,10 @@ import { SessionCard } from "../components/SessionCard";
 import { ReasoningStream } from "../components/ReasoningStream";
 import { SectionHeader, EmptyState } from "../components/da";
 import { IcChart, IcAlert } from "../components/icons";
-import { deployTerm } from "../registry";
+import { deployTerm, STATUS_META } from "../registry";
 import { queryClient } from "../queryClient";
 import { useT } from "../hooks/useAppearance";
+import { useOps } from "../hooks/useOps";
 
 const WINDOWS = [60, 240, 1440];
 
@@ -38,12 +39,37 @@ export function MetricsView() {
   const selFile = selSession?.file ?? null;
 
   const t = useT();
+  const ops = useOps();
 
   return (
     <div className="metrics-view">
       <SectionHeader icon={<IcChart />} title="METRICS"
         sub={t({ en: "Live session observability", ro: "Observabilitate sesiuni live" })}
         status={isError ? "error" : liveCount > 0 ? "live" : "idle"} />
+      <div className="mv-bar">
+        <div className="stats">
+          <div className="mv-stat">
+            <div className="v">{ops.checking ? "…" : `${ops.liveCount}/${ops.total}`}</div>
+            <div className="l">{t({ en: "superpowers live", ro: "superputeri live" })}</div>
+          </div>
+          {(["ruflo", "graphify"] as const).map((id) => {
+            const s = ops.statuses[id];
+            if (!s) return null; // no probe result for this id — omit rather than invent
+            return (
+              <div className="mv-stat" key={id}>
+                <div className="v" style={{ color: ops.checking ? "var(--muted)" : STATUS_META[s].color }}>
+                  {ops.checking ? t({ en: "checking", ro: "verificare" }) : STATUS_META[s].label}
+                </div>
+                <div className="l">{id}</div>
+              </div>
+            );
+          })}
+          <div className="mv-stat">
+            <div className="v">{ops.liveAgents}</div>
+            <div className="l">{t({ en: "live agents", ro: "agenti live" })}</div>
+          </div>
+        </div>
+      </div>
       <div className="mv-bar">
         <div className="stats">
           <div className="mv-stat"><div className="v">{sessions.length}</div><div className="l">agents</div></div>
