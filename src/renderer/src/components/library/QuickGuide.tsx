@@ -1,4 +1,4 @@
-// Admin Command Center ▸ Quick Guide — the Cloud & Superpowers operator guide.
+// Admin Command Center ▸ Quick Guide — the Claude & Superpowers operator guide.
 // This replaced the old decorative "Short Tips": every entry below is REAL,
 // current operating knowledge for THIS app (statuses, buttons, troubleshooting,
 // copy-paste prompts). Content is curated by hand — update it when behavior
@@ -31,14 +31,14 @@ export function QuickGuide() {
   return (
     <div className="qg">
       <div className="qg-head">
-        <h3>Cloud &amp; Superpowers — Quick Guide</h3>
+        <h3>Claude &amp; Superpowers — Quick Guide</h3>
         <p>The operator's working guide: how to run sessions, what every button and status really means, and what to do when something looks wrong. Everything here reflects the app's real behavior.</p>
       </div>
 
-      <div className="qg-sec"><IcCloud size={14} /> A · CLOUD TIPS</div>
+      <div className="qg-sec"><IcCloud size={14} /> A · CLAUDE TIPS</div>
       <ul className="qg-list">
         <li><b>Continue a session</b> — open <b>Terminal</b> (⌘1): live claude terminals persist across app restarts (scrollback replays). Type into the session, or use Agents ▸ card ▸ transcript to see where it left off first.</li>
-        <li><b>Is Cloud running?</b> — the Cloud chip is <b>LIVE</b> only when ≥1 Claude session was active in the last 3 minutes (real transcript parse, never faked). Also: bottom bar "agents N".</li>
+        <li><b>Is Claude running?</b> — the Claude chip is <b>LIVE</b> only when ≥1 Claude session was active in the last 3 minutes (real transcript parse, never faked). Also: bottom bar "agents N".</li>
         <li><b>Context / cost</b> — Metrics (⌘6): per-session context + output tokens, plus the system-health strip (superpowers N/7, ruflo/graphify state).</li>
         <li><b>Recap</b> — when an agent goes idle, the terminal shows a recap overlay built from its REAL transcript (last thinking/action). Click the terminal or new output dismisses it.</li>
         <li><b>Work without interrupting a task</b> — open a NEW worker (+ Worker ▸ zsh) instead of typing into a running claude terminal; broadcast only when you MEAN to steer every live agent (it asks for confirm).</li>
@@ -48,9 +48,9 @@ export function QuickGuide() {
       <div className="qg-sec"><IcCrown size={14} /> B · SUPERPOWERS TIPS</div>
       <ul className="qg-list">
         <li><b>GODMODE</b> — the system truth center. Use it to see everything at once, run <i>Full System Check</i>, capture a screenshot, sync the vault, or <i>Emergency Stop</i> all workers (master survives).</li>
-        <li><b>Agent Rooflow</b> — the RuFlo engine. <i>Ignite</i> runs the real <code>ruflo status</code>; the health check also shows the real task queue. <i>Reflow</i> is disabled until the CLI grows that op — the button tells you.</li>
+        <li><b>RuFlo</b> — the workflow engine. <i>Ignite</i> runs the real <code>ruflo status</code>; the health check also shows the real task queue. <i>Reflow</i> is disabled until the CLI grows that op — the button tells you.</li>
         <li><b>Agents</b> — launch agents into projects, broadcast a mission (confirmed, real keystrokes), stop an agent from its card (exact-terminal match only), watch health + transcripts live.</li>
-        <li><b>Cloud</b> — session runtime: launch, watch tokens in Metrics, stop from Agents. LIVE follows real sessions.</li>
+        <li><b>Claude</b> — session runtime: launch, watch tokens in Metrics, stop from Agents. LIVE follows real sessions.</li>
         <li><b>Graphify</b> — the graph engine behind NeuroMap. <i>Open Map</i> → the living graph; <i>Inspect Graph</i> → NeuroMap with real counts open; <i>Generate Digest</i> arms the real pipeline in a terminal.</li>
         <li><b>Obsidian</b> — the vault. <i>Open Vault</i> launches Obsidian; <i>Sync Vault</i> runs the real git add·commit·push; <i>Search Notes</i> is the Research desk.</li>
         <li><b>Google APIs</b> — stays <b>partial</b> until you press <i>Sign in with Google</i> and finish the real consent. Then Drive/Sheets/Forms go live — nothing is simulated before that.</li>
@@ -69,7 +69,7 @@ export function QuickGuide() {
       <ul className="qg-list qg-shortcuts">
         <li><button className="da-btn ghost sm" onClick={() => window.dispatchEvent(new CustomEvent("dai:palette"))}>Open Command Palette</button> ⌘K — every action, searchable</li>
         <li><button className="da-btn ghost sm" onClick={godmode}>Open GODMODE</button> full diagnostics + emergency controls</li>
-        <li><button className="da-btn ghost sm" onClick={() => openSuperpower("ruflo")}>Open Agent Rooflow panel</button> engine + queue truth</li>
+        <li><button className="da-btn ghost sm" onClick={() => openSuperpower("ruflo")}>Open RuFlo panel</button> engine + queue truth</li>
         <li><button className="da-btn ghost sm" onClick={runHealthSweep}>Run Health Check</button> real ruflo + graphify probes</li>
         <li><button className="da-btn ghost sm" onClick={goto("ide")}>Open Terminal Workers</button> ⌘1</li>
         <li><button className="da-btn ghost sm" onClick={openLibraryTools}>Open Tools</button> all utilities in one grid</li>

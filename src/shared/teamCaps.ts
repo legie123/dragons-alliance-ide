@@ -20,8 +20,8 @@ export const TEAM_CAPS: TeamCap[] = [
   // --- superpowers ---
   { id: "sp:obsidian", group: "superpower", label: "Obsidian", description: "Knowledge vault" },
   { id: "sp:graphify", group: "superpower", label: "Graphify", description: "Graph intelligence engine" },
-  { id: "sp:ruflo", group: "superpower", label: "Agent Rooflow", description: "RuFlo workflow engine" },
-  { id: "sp:cloud", group: "superpower", label: "Cloud", description: "Claude sessions" },
+  { id: "sp:ruflo", group: "superpower", label: "RuFlo", description: "RuFlo workflow engine" },
+  { id: "sp:cloud", group: "superpower", label: "Claude", description: "Claude sessions" },
   { id: "sp:agents", group: "superpower", label: "Agents", description: "Swarm control" },
   { id: "sp:godmode", group: "superpower", label: "GODMODE", description: "Supreme command" },
   { id: "sp:google", group: "superpower", label: "Google APIs", description: "Drive/Sheets/Forms" },

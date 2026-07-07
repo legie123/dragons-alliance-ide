@@ -190,7 +190,7 @@ export default function App() {
         ? [
             { id: "sp:control-room", title: "Open Superpowers Control Room", subtitle: "Admin Command Center", category: "Superpower" as const, icon: <IcGem />, run: () => openLibraryAdmin() },
             { id: "adm:tools", title: "Open Tools (Admin)", subtitle: "health · palette · workers · logs · settings", category: "Admin" as const, icon: <IcGem />, run: () => openLibraryTools() },
-            { id: "adm:guide", title: "Open Quick Guide (Cloud & Superpowers)", subtitle: "operator guide · tips · troubleshooting", category: "Guide" as const, icon: <IcGem />, run: () => openLibraryGuide() },
+            { id: "adm:guide", title: "Open Quick Guide (Claude & Superpowers)", subtitle: "operator guide · tips · troubleshooting", category: "Guide" as const, icon: <IcGem />, run: () => openLibraryGuide() },
           ]
         : []),
       { id: "diag:health", title: "Run Superpowers Health Check", subtitle: "ruflo + graphify real probes", category: "Diagnostics", run: () => runHealthCheck() },

@@ -76,7 +76,7 @@ export const openLibraryTools = () => {
   pendingLibraryTab = "tools";
   goto("library")();
 };
-/** Admin Command Center ▸ Quick Guide — Cloud & Superpowers operator guide. */
+/** Admin Command Center ▸ Quick Guide — Claude & Superpowers operator guide. */
 export const openLibraryGuide = () => {
   pendingLibraryTab = "guide";
   goto("library")();
@@ -212,7 +212,7 @@ export const syncVaultToast = () => {
 const vaultChatPrompt =
   "You are inside Dragons Alliance IDE. Build a local-only vault chat/RAG plan for ~/Documents/Obsidian/Antigravity-Brain. First inspect files, existing IPC, neuromap graph, security boundaries, and config. Do not invent credentials. Return a safe phased implementation with tests.";
 const superpowersRepairPrompt =
-  "Audit Dragons Alliance IDE SUPERPOWERS end to end: Obsidian, Graphify, Ruflo, Cloud, Agents, GODMODE, Google APIs. Find dead clicks, missing handlers, auth gates, feature flags, and backend gaps. Patch only safe local code, keep every click actionable, log actions, and report verified vs blocked.";
+  "Audit Dragons Alliance IDE SUPERPOWERS end to end: Obsidian, Graphify, RuFlo, Claude, Agents, GODMODE, Google APIs. Find dead clicks, missing handlers, auth gates, feature flags, and backend gaps. Patch only safe local code, keep every click actionable, log actions, and report verified vs blocked.";
 
 // ---- superpowers (B) — the seven real powers, with quick panels ----
 // status is resolved LIVE by the dock from real probes; `statusOf` maps probe
@@ -250,7 +250,7 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     actions: [{ id: "gm-open", label: "Open GODMODE", run: godmode }],
   },
   {
-    id: "ruflo", label: "Agent Rooflow", icon: (p) => <IcBot {...p} />, role: "RuFlo workflow engine · orchestrator",
+    id: "ruflo", label: "RuFlo", icon: (p) => <IcBot {...p} />, role: "RuFlo workflow engine · orchestrator",
     statusOf: ({ tool }) => (tool("ruflo") === "live" ? "live" : tool("ruflo") === "ready" ? "idle" : "setup-required"),
     tone: "var(--sp-ruflo)", tone2: "var(--sp-ruflo-2)",
     what: "The RuFlo workflow engine — orchestrates agent swarms, task queues and flows behind this IDE's agents.",
@@ -284,20 +284,20 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     ],
   },
   {
-    id: "cloud", label: "Cloud", icon: (p) => <IcCloud {...p} />, role: "heavy AI execution · Claude sessions",
+    id: "cloud", label: "Claude", icon: (p) => <IcCloud {...p} />, role: "heavy AI execution · sessions & cost",
     statusOf: ({ liveAgents }) => (liveAgents > 0 ? "live" : "idle"),
     tone: "var(--sp-cloud)", tone2: "var(--sp-cloud-2)",
-    what: "Cloud reasoning — launch and manage heavy Claude sessions; watch model, context and token cost.",
+    what: "Claude reasoning — launch and manage heavy Claude sessions; watch model, context and token cost.",
     feeds: "The Claude runtime the terminals and agents execute against; metrics track its cost.",
     connected: ["Claude Code", "Terminals", "Metrics"], sector: "metrics",
     diag: "agents", logKinds: ["term-launch", "claude-prompt-arm", "term-arm"], source: "live session count + terminal state",
     actions: [
-      { id: "cl-launch", label: "Launch Cloud Session", run: deployTerm("claude", "~") },
+      { id: "cl-launch", label: "Launch Claude Session", run: deployTerm("claude", "~") },
       { id: "cl-term", label: "Open Terminal", run: goto("ide") },
       { id: "cl-continue", label: "Continue Session", disabledReason: "pending backend — session resume not wired yet" },
       { id: "cl-stop", label: "Stop Session (Agents)", run: goto("agents") },
       { id: "cl-metrics", label: "View Tokens (Metrics)", run: goto("metrics") },
-      { id: "cl-tips", label: "Cloud Tips", run: openLibraryGuide },
+      { id: "cl-tips", label: "Claude Tips", run: openLibraryGuide },
       { id: "cl-logs", label: "Open Logs", run: admin("audit") },
     ],
   },
@@ -348,7 +348,7 @@ export const SUPERPOWERS: SuperpowerDef[] = [
       { id: "gg-keys", label: "Open Setup (Keys)", run: vault },
       { id: "gg-health", label: "API Health", run: admin("health") },
       { id: "gg-integrations", label: "Open Integrations", run: admin("integrations") },
-      { id: "gg-repair", label: "Cloud Repair Prompt", run: deployClaudeWithPrompt(superpowersRepairPrompt, "~/code/dragons-alliance-ide") },
+      { id: "gg-repair", label: "Arm Repair Agent", run: deployClaudeWithPrompt(superpowersRepairPrompt, "~/code/dragons-alliance-ide") },
     ],
   },
 ];
@@ -371,7 +371,7 @@ export const MORE_CATEGORIES: { title: string; items: MoreItem[] }[] = [
       { id: "diagnostics", label: "Diagnostics (GODMODE)", sub: "system health · full check", icon: () => <IcCrown />, status: "live", run: godmode },
       { id: "healthcheck", label: "Health Check", sub: "ruflo + graphify real probes", icon: () => <IcZap />, status: "live", run: runHealthSweep },
       { id: "logs", label: "Logs (Audit)", sub: "action trail · JSONL 0600", icon: () => <IcChart />, status: "local-only", run: admin("audit") },
-      { id: "quickguide", label: "Quick Guide", sub: "Cloud & Superpowers operator guide", icon: () => <IcFlask />, status: "live", run: openLibraryGuide, cap: "adm:library" },
+      { id: "quickguide", label: "Quick Guide", sub: "Claude & Superpowers operator guide", icon: () => <IcFlask />, status: "live", run: openLibraryGuide, cap: "adm:library" },
       { id: "opsettings", label: "Settings", sub: "IDE configuration", icon: () => <IcSend />, status: "local-only", run: admin("settings") },
     ],
   },

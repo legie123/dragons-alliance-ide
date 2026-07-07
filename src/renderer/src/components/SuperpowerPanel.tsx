@@ -170,7 +170,7 @@ export function SuperpowerPanel({ id, onClose }: { id: string | null; onClose: (
                 ),
               )}
               {sp.sector && <button className="da-btn ghost sm" onClick={nav(sp.sector)}>Open sector</button>}
-              <button className="da-btn ghost sm" title="Cloud & Superpowers Quick Guide — how to operate this power"
+              <button className="da-btn ghost sm" title="Claude & Superpowers Quick Guide — how to operate this power"
                 onClick={() => { openLibraryGuide(); onClose(); }}>Guide</button>
             </div>
 
