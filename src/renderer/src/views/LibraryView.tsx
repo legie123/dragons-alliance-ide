@@ -42,12 +42,13 @@ export function LibraryView() {
       <div className="lib-topbar">
         <div className="lib-title-wrap">
           <span className="lib-title"><IcGem /> Admin Library</span>
+          <span className="lib-subtitle">Agents, Superpowers, Tools, Integrations and Operational Modules</span>
           <span className="lib-adminbadge">ADMIN ONLY</span>
           <span className="lib-ownerbadge"><IcCrown size={11} /> {roleLabel}</span>
         </div>
         <div className="drv-tabs">
-          <button className={`drv-tab${mode === "catalog" ? " on" : ""}`} onClick={() => setMode("catalog")}>Catalog</button>
-          <button className={`drv-tab${mode === "reference" ? " on" : ""}`} onClick={() => setMode("reference")}>Shortcuts &amp; Tips</button>
+          <button className={`drv-tab${mode === "catalog" ? " on" : ""}`} onClick={() => setMode("catalog")}>Control Room &amp; Modules</button>
+          <button className={`drv-tab${mode === "reference" ? " on" : ""}`} onClick={() => setMode("reference")}>Reference</button>
         </div>
       </div>
 

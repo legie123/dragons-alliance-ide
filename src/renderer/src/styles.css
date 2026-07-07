@@ -2107,7 +2107,7 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
   --sp-godmode: var(--gold, #d4af37);   --sp-godmode-2: #c0142f;
   --sp-ruflo: #f9803a;                  --sp-ruflo-2: #f97316;
   --sp-agents: #5ea2ef;                 --sp-agents-2: #9d7bd8;
-  --sp-cloud: #9d7bd8;                  --sp-cloud-2: #5ea2ef;
+  --sp-cloud: #9d7bd8;                  --sp-cloud-2: #b9c4d6; /* violet + silver */
   --sp-graphify: #43e0c0;               --sp-graphify-2: #38bdf8;
   --sp-obsidian: #a78bfa;               --sp-obsidian-2: var(--gold, #d4af37);
   --sp-google: #4ade80;                 --sp-google-2: #5ea2ef;
@@ -2169,3 +2169,13 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
 .spcr-role { font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .spcr-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 1px; }
 .spcr-open { font-size: 10px; color: var(--cat); font-weight: 700; }
+
+/* ---- superpower chips: per-power tone (emblem + hover ring), premium not neon ---- */
+.sp-chip { --chip-tone: var(--muted); }
+.sp-chip .sp-ic { color: var(--chip-tone); opacity: 0.92; }
+.sp-chip:hover:not(.restricted) { border-color: color-mix(in srgb, var(--chip-tone) 45%, var(--line)); }
+.sp-chip:hover:not(.restricted) .sp-name { color: color-mix(in srgb, var(--chip-tone) 55%, var(--ink)); }
+.sp-chip.restricted .sp-ic { color: var(--faint); }
+
+/* Admin Library header subtitle */
+.lib-subtitle { font-size: 11px; color: var(--muted); letter-spacing: 0.02em; margin-left: 10px; }

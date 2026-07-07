@@ -48,6 +48,7 @@ export function EcosystemBar() {
             <div key={sp.id} className="sp-wrap">
               <button
                 className={`sp-chip sp-card st-${st}${checking ? " checking" : ""}${sp.id === "godmode" ? " god" : ""}${allowed ? "" : " restricted"}`}
+                style={{ ["--chip-tone" as never]: sp.tone }}
                 aria-disabled={!allowed}
                 aria-label={allowed ? `${sp.label} — ${sp.role} · ${checking ? "checking" : meta.label} · click to open panel` : `${sp.label} — not granted to you by an owner`}
                 onClick={() => { if (allowed) openSuperpower(sp.id); }}
@@ -76,14 +77,14 @@ export function EcosystemBar() {
         })}
       </div>
       {canLibraryAdmin && (
-        <button className="sp-tools" title="Library — admin: agent catalog & smart tips"
-          aria-label="Open Library admin"
+        <button className="sp-tools" title="Admin Library — Superpowers Control Room · agents · tools · integrations"
+          aria-label="Open Admin Library"
           onClick={openLibraryAdmin}>
-          <IcGem size={13} /> Admin
+          <IcGem size={13} /> Admin Library
         </button>
       )}
-      <button className="sp-tools" title="support tools · admin · experimental"
-        aria-label="Open support tools"
+      <button className="sp-tools" title="Tools — operations: Control Room · palette · diagnostics · health · logs · settings"
+        aria-label="Open Tools operations menu"
         onClick={() => window.dispatchEvent(new CustomEvent("dai:more"))}>
         <IcNodes size={13} /> Tools
       </button>
