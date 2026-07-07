@@ -22,7 +22,7 @@ import { AdminPanel } from "./components/AdminPanel";
 import { FirstRunIdentity } from "./components/FirstRunIdentity";
 import type { SettingsCat } from "./components/settings/SettingsSections";
 import { GuidePanel } from "./components/GuidePanel";
-import { SectorAgent, type AgentSector } from "./components/SectorAgent";
+import { SectorAgentDock } from "./components/SectorAgentDock";
 import { ToastHost } from "./components/ToastHost";
 import { DragonEmblem } from "./components/DragonEmblem";
 import dragonMark from "./assets/dragon-mark.png";
@@ -61,9 +61,6 @@ export default function App() {
   const [vaultOpen, setVaultOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  // Sector Agent — contextual LOCAL chat (Hermes/Ollama); sector follows the live view
-  const [agentOpen, setAgentOpen] = useState(false);
-  const [agentSector, setAgentSector] = useState<AgentSector>("guide");
   const [godOpen, setGodOpen] = useState(false);
   const [spOpen, setSpOpen] = useState<string | null>(null);
   const [adminOpen, setAdminOpen] = useState(false);
@@ -114,16 +111,7 @@ export default function App() {
     // Tools menu items: open the ⌘K palette / run the real health sweep
     const palette = () => setPaletteOpen(true);
     const health = () => { runHealthCheck(); };
-    // Sector Agent: explicit sector in detail, else the sector of the CURRENT view
-    const sectorAgent = (e: Event) => {
-      const d = (e as CustomEvent).detail as string | undefined;
-      const v = viewRef.current;
-      const derived = d && ["ide","agents","code","neuromap","drive","metrics","preview","creative","guide"].includes(d)
-        ? (d as AgentSector)
-        : (["ide","agents","code","neuromap","drive","metrics","preview","creative"].includes(v) ? (v as AgentSector) : "guide");
-      setAgentSector(derived);
-      setAgentOpen(true);
-    };
+    // dai:sector-agent is handled by the NATIVE per-sector dock (SectorAgentDock)
     window.addEventListener("dai:admin", admin);
     window.addEventListener("dai:goto", goto);
     window.addEventListener("dai:vault", vault);
@@ -134,7 +122,6 @@ export default function App() {
     window.addEventListener("dai:refresh-tools", refreshTools);
     window.addEventListener("dai:palette", palette);
     window.addEventListener("dai:healthcheck", health);
-    window.addEventListener("dai:sector-agent", sectorAgent);
     return () => {
       window.removeEventListener("dai:admin", admin);
       window.removeEventListener("dai:goto", goto);
@@ -146,7 +133,6 @@ export default function App() {
       window.removeEventListener("dai:refresh-tools", refreshTools);
       window.removeEventListener("dai:palette", palette);
       window.removeEventListener("dai:healthcheck", health);
-      window.removeEventListener("dai:sector-agent", sectorAgent);
     };
   }, []);
 
@@ -216,8 +202,8 @@ export default function App() {
       { id: "diag:health", title: "Run Superpowers Health Check", subtitle: "ruflo + graphify real probes", category: "Diagnostics", run: () => runHealthCheck() },
       { id: "action:digest", title: "Open Graph Digest", subtitle: "the real Graphify artifact", category: "Action", run: () => { graphifyOpenDigest()(); } },
       { id: "action:vault-open", title: "Open Vault (Obsidian)", subtitle: "Antigravity-Brain", category: "Action", run: () => openObsidian() },
-      { id: "action:sector-agent", title: "Ask Sector Agent", subtitle: "contextual LOCAL chat — Hermes via Ollama", category: "Action", icon: <IcBot />, run: () => window.dispatchEvent(new CustomEvent("dai:sector-agent")) },
-      { id: "action:guide-agent", title: "Chat with the Guide Agent", subtitle: "tur + întrebări despre platformă (local)", category: "Guide", icon: <IcBot />, run: () => window.dispatchEvent(new CustomEvent("dai:sector-agent", { detail: "guide" })) },
+      { id: "action:sector-agent", title: "Ask Sector Agent", subtitle: "native per-sector window — LOCAL Hermes chat", category: "Action", icon: <IcBot />, run: () => window.dispatchEvent(new CustomEvent("dai:sector-agent")) },
+      { id: "action:guide-agent", title: "Chat with the Guide Agent", subtitle: "embedded in the Dragon Guide (local)", category: "Guide", icon: <IcBot />, run: () => setGuideOpen(true) },
       // terminal commands — broadcast to the visible workers (real keystrokes)
       { id: "t:git-status", title: "Terminal: run git status on workers", category: "Terminal", icon: <IcTerminal />, run: () => { setView("ide"); broadcast("git status", true); } },
       { id: "t:npm-dev", title: "Terminal: run npm run dev on workers", category: "Terminal", icon: <IcTerminal />, run: () => { setView("ide"); broadcast("npm run dev", true); } },
@@ -365,7 +351,7 @@ export default function App() {
       <PhoneConnect open={phoneOpen} onClose={() => setPhoneOpen(false)} projects={projects} />
       <CredentialsVault open={vaultOpen} onClose={() => setVaultOpen(false)} />
       <GodModePanel open={godOpen} onClose={() => setGodOpen(false)} onCommand={() => setPaletteOpen(true)} />
-      <SectorAgent open={agentOpen} sector={agentSector} onClose={() => setAgentOpen(false)} />
+      <SectorAgentDock view={view} />
       <SuperpowerPanel id={spOpen} onClose={() => setSpOpen(null)} />
       <AdminPanel open={adminOpen} cat={adminCat} onClose={() => setAdminOpen(false)} onCat={setAdminCat} />
       <GuidePanel

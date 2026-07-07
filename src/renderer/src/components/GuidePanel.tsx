@@ -3,7 +3,8 @@
 // Status Explained (from STATUS_META — can't drift), Shortcuts (keymap.ts),
 // Team Mode (honest pending), Troubleshooting (real fixes).
 import { useEffect, useMemo, useState } from "react";
-import { CORE_SECTORS, SUPERPOWERS, STATUS_META, deployTerm, openGraphify, openObsidian, vault, admin, type SectorId, type OpStatus } from "../registry";
+import { CORE_SECTORS, SUPERPOWERS, STATUS_META, deployTerm, openGraphify, openObsidian, vault, admin, openSuperpower, type SectorId, type OpStatus } from "../registry";
+import { useSectorChat, startGuideTour } from "./SectorAgent";
 import { GUIDE_SECTIONS, SECTOR_GUIDE, type GuideStep } from "../guideContent";
 import { KEYMAP } from "../keymap";
 import { STATUS_EXPLAIN } from "./EcosystemBar";
@@ -36,6 +37,9 @@ export function GuidePanel({ open, current, target, onClose, onOpenSector }: {
   const [step, setStep] = useState(0);
   const [copied, setCopied] = useState(false);
   useEscape(open, onClose);
+  // embedded agentic chat — the Guide agent lives INSIDE the drawer (local Hermes)
+  const [q, setQ] = useState("");
+  const chat = useSectorChat("guide", open);
 
   // deep-link: "?" in the right rail lands on that sector's step
   useEffect(() => {
@@ -110,13 +114,13 @@ export function GuidePanel({ open, current, target, onClose, onOpenSector }: {
           <span className="guide-glyph"><IcBook size={18} /></span>
           <div>
             <div className="guide-title">DRAGON GUIDE</div>
-            <button className="da-btn gold sm" style={{ marginTop: 4 }}
-              title="conversational guide — tour + platform questions, answered by the LOCAL model"
-              onClick={() => { onClose(); window.dispatchEvent(new CustomEvent("dai:sector-agent", { detail: "guide" })); }}>
-              Chat with the Guide Agent →
-            </button>
             <div className="guide-sub">{t({ en: "How to command the platform", ro: "Cum comanzi platforma" })}</div>
           </div>
+          <button className="da-btn gold sm" style={{ marginLeft: "auto", marginRight: 8 }}
+            title={t({ en: "real 8-deck tour — navigates the actual sectors", ro: "tur real prin cele 8 sectoare" })}
+            onClick={() => { onClose(); startGuideTour(); }}>
+            {t({ en: "Start Tour", ro: "Porneste turul" })}
+          </button>
           <button className="guide-x" onClick={onClose} aria-label="Close guide"><IcX size={13} /></button>
         </div>
 
@@ -169,6 +173,33 @@ export function GuidePanel({ open, current, target, onClose, onOpenSector }: {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* GUIDE AGENT — embedded agentic chat, answered by the LOCAL model */}
+        <div className="guide-chat">
+          <div className="guide-chat-head">
+            GUIDE AGENT <i>{chat.ready ? `· ${chat.model} · local` : t({ en: "· local model offline", ro: "· model local oprit" })}</i>
+          </div>
+          {chat.ready ? (
+            <>
+              <div className="guide-chat-log">
+                {chat.log.slice(-8).map((m, i) => <div key={i} className={`sga-line sga-${m.role}`}>{m.text}</div>)}
+                {chat.busy && <div className="sga-line sga-assistant sga-busy">thinking…</div>}
+              </div>
+              <div className="sga-in guide-chat-in">
+                <input value={q} onChange={(e) => setQ(e.target.value)} disabled={chat.busy}
+                  onKeyDown={(e) => { if (e.key === "Enter") { void chat.send(q); setQ(""); } }}
+                  placeholder={t({ en: "ask anything about the platform…", ro: "intreaba orice despre platforma…" })} />
+                <button className="da-btn gold sm" disabled={chat.busy || !q.trim()}
+                  onClick={() => { void chat.send(q); setQ(""); }}>Send</button>
+              </div>
+            </>
+          ) : (
+            <div className="guide-chat-setup">
+              {t({ en: "Start the local Ollama server (`ollama serve`) to talk to the guide — no keys needed.", ro: "Porneste serverul Ollama local (`ollama serve`) ca sa vorbesti cu ghidul — fara chei." })}
+              <button className="da-btn ghost sm" onClick={() => { onClose(); openSuperpower("llmhub"); }}>Open LLM Hub</button>
+            </div>
+          )}
         </div>
       </aside>
     </div>
