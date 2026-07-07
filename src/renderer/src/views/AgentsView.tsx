@@ -3,8 +3,9 @@
 // Autopilot that auto-watches for stuck agents and nudges them to self-repair.
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchSessions, fetchAgentHealth, gradeColor, human, idleLabel } from "../api";
+import { fetchSessions, fetchAgentHealth, fetchTerms, gradeColor, human, idleLabel } from "../api";
 import type { Session, AgentHealth } from "../api";
+import { pushToast } from "../toast";
 import { AgentTranscript } from "../components/AgentTranscript";
 import { SectionHeader, EmptyState } from "../components/da";
 import { IcBot, IcZap, IcAlert } from "../components/icons";
@@ -44,6 +45,15 @@ export function AgentsView({ onOpenFile }: { onOpenFile?: (p: string) => void })
     refetchInterval: 2000,
   });
   const sessions = data?.sessions ?? [];
+
+  // live PTY roster — lets each card resolve its own claude terminal by EXACT cwd
+  // (same guard as Autopilot below: never startsWith, never a >1 ambiguous match).
+  const { data: termsData } = useQuery({
+    queryKey: ["mc-terms"],
+    queryFn: fetchTerms,
+    refetchInterval: 4000,
+  });
+  const terms = termsData ?? [];
 
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [autopilot, setAutopilot] = useState(false);
@@ -140,7 +150,14 @@ export function AgentsView({ onOpenFile }: { onOpenFile?: (p: string) => void })
     <SectionHeader icon={<IcBot />} title="AGENTS"
       sub={t({ en: "AI mission control", ro: "Centru de comanda AI" })}
       status={liveNow > 0 ? "live" : "idle"}
-      right={<span className="mc-list-count">{liveNow} live · {sessions.length} total</span>} />
+      right={
+        <span className="mc-list-count"
+          title={t({ en: "session count: filled = live, hollow = idle (capped at 8 dots)", ro: "numar sesiuni: plin = live, gol = idle (max 8 puncte)" })}>
+          {liveNow} live · {sessions.length} total{" "}
+          <span style={{ color: "var(--green)" }}>{"●".repeat(Math.min(liveNow, 8))}</span>
+          {"○".repeat(Math.max(0, Math.min(sessions.length, 8) - Math.min(liveNow, 8)))}
+        </span>
+      } />
     <div className="mc-view" style={{ display: "grid", gridTemplateColumns: "320px 1fr" }}>
       <div className="mc-list">
         <div className="mc-list-head">
@@ -167,6 +184,19 @@ export function AgentsView({ onOpenFile }: { onOpenFile?: (p: string) => void })
         {sessions.map((s: Session) => {
           const live = s.idle_min < 3;
           const sel = s.file === selectedFile;
+          // resolve this agent's terminal by EXACT cwd — same guard as Autopilot:
+          // never startsWith, and 0 or >1 matches = ambiguous → Stop stays disabled.
+          const cwd = s.cwd_full || "";
+          const matches = cwd ? terms.filter((x) => x.cmd === "claude" && x.cwd === cwd) : [];
+          const stoppable = matches.length === 1;
+          const stop = (e: { stopPropagation: () => void }) => {
+            e.stopPropagation();
+            if (!stoppable) return; // honest state: title explains why
+            if (!window.confirm(`Stop agent "${s.title}"? Kills its terminal.`)) return;
+            window.dai.term.kill(matches[0].id);
+            window.dai.audit.log("agent-stop", s.title);
+            pushToast({ kind: "info", title: t({ en: "Agent stopped", ro: "Agent oprit" }), detail: s.title });
+          };
           return (
             <button key={s.id} className={`mc-agent${sel ? " sel" : ""}`}
               onClick={() => s.file && setSelectedFile(s.file)} disabled={!s.file}>
@@ -174,6 +204,18 @@ export function AgentsView({ onOpenFile }: { onOpenFile?: (p: string) => void })
                 <span className="mc-agent-dot" style={{ background: live ? "var(--green)" : "var(--faint)" }} />
                 <span className="mc-agent-name">{s.title}</span>
                 <HealthBadge file={s.file} />
+                <span role="button" tabIndex={0} className="mc-agent-stop"
+                  aria-disabled={!stoppable}
+                  title={stoppable
+                    ? t({ en: `Stop agent — kills its terminal`, ro: `Opreste agentul — inchide terminalul` })
+                    : t({ en: "no unique terminal for this agent", ro: "niciun terminal unic pentru acest agent" })}
+                  onClick={stop}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); stop(e); } }}
+                  style={{ marginLeft: "auto", fontSize: 10, letterSpacing: "0.04em",
+                    color: stoppable ? "var(--state-error)" : "var(--faint)",
+                    cursor: stoppable ? "pointer" : "not-allowed" }}>
+                  STOP
+                </span>
               </div>
               <div className="mc-agent-row2">
                 <span className="mc-agent-model">{s.model}</span>
