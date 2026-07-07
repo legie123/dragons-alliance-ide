@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchHost, fetchProjects, fsRead, fsWrite, langFromPath, FsEntry } from "../api";
 import { FileTree } from "../components/FileTree";
 import { IcCode, IcBranch, IcX } from "../components/icons";
+import { pushToast } from "../toast";
 
 type OpenFile = { path: string; name: string; content: string; dirty: boolean; lang: string };
 type OpenSignal = { path: string; n: number } | null;
@@ -29,6 +30,43 @@ export function CodeView({ openFile }: { openFile?: OpenSignal }) {
     }
     return best;
   })();
+
+  // honest gating for the action bar: read the repo's real package.json scripts.
+  // null = no package.json (or unparseable); undefined = still reading.
+  const { data: pkgScripts } = useQuery({
+    queryKey: ["pkg-scripts", repo?.path],
+    enabled: !!repo,
+    queryFn: async (): Promise<Record<string, string> | null> => {
+      try {
+        return (JSON.parse(await fsRead(repo!.path + "/package.json")).scripts ?? {}) as Record<string, string>;
+      } catch {
+        return null;
+      }
+    },
+  });
+  const gateTitle = (ok: boolean, cmd: string, missing: string) =>
+    ok ? cmd : pkgScripts === null ? "no package.json in repo" : pkgScripts === undefined ? "reading package.json…" : missing;
+
+  // arm a real command in a fresh shell terminal at the repo root, then jump to Terminals
+  function armIn(typed: string) {
+    if (!repo) return;
+    const id = "code" + Date.now().toString(36);
+    window.dai.term.create({ id, cmd: "shell", cwd: repo.path });
+    setTimeout(() => window.dai.term.write(id, typed + "\n"), 1200);
+    window.dai.audit.log("code-action", typed + " @ " + repo.name);
+    pushToast({ kind: "info", title: typed, detail: "in " + repo.name, ttl: 3500 });
+    window.dispatchEvent(new CustomEvent("dai:goto", { detail: "ide" }));
+  }
+
+  function askAgent() {
+    if (!repo || !active) return;
+    const id = "code" + Date.now().toString(36);
+    window.dai.term.create({ id, cmd: "claude", cwd: repo.path });
+    setTimeout(() => window.dai.term.write(id, "Review " + active.path + " for correctness and propose a minimal fix."), 1800);
+    window.dai.audit.log("code-action", "ask-agent " + active.path + " @ " + repo.name);
+    pushToast({ kind: "info", title: "Ask agent", detail: "reviewing " + active.name, ttl: 3500 });
+    window.dispatchEvent(new CustomEvent("dai:goto", { detail: "ide" }));
+  }
 
   async function openPath(path: string) {
     if (files.some((f) => f.path === path)) { setActivePath(path); return; }
@@ -110,6 +148,15 @@ export function CodeView({ openFile }: { openFile?: OpenSignal }) {
               <IcBranch size={13} /> {repo.branch}
               {repo.dirty > 0 ? <b className="code-diff">±{repo.dirty}</b> : <i className="code-clean">clean</i>}
             </span>
+          )}
+          {repo && (
+            <>
+              <button className="da-btn ghost sm" disabled={!pkgScripts?.build} title={gateTitle(!!pkgScripts?.build, "npm run build", "no build script in package.json")} onClick={() => armIn("npm run build")}>Build</button>
+              <button className="da-btn ghost sm" title="npx tsc --noEmit" onClick={() => armIn("npx tsc --noEmit")}>Typecheck</button>
+              <button className="da-btn ghost sm" disabled={!pkgScripts?.test} title={gateTitle(!!pkgScripts?.test, "npm test", "no test script in package.json")} onClick={() => armIn("npm test")}>Tests</button>
+              <button className="da-btn ghost sm" title="git diff" onClick={() => armIn("git diff")}>Git Diff</button>
+              <button className="da-btn ghost sm" disabled={!active} title={active ? "Claude reviews " + active.name : "open a file to review"} onClick={askAgent}>Ask agent</button>
+            </>
           )}
           {active && (
             <button className={`savebtn${active.dirty ? " dirty" : ""}`} disabled={saving || !active.dirty} onClick={save}>
