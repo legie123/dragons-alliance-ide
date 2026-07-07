@@ -117,3 +117,55 @@ Open <each of 7> Panel · Control Room · Admin Library · sectors ⌘1-8 · Run
 - **ERROR: 0 · DEAD: 0 · FAKE: 0**
 
 Remaining risk: Rooflow "Reflow" and Agents "Assign Sector" need real backends to enable; Google flips to LIVE only after the user completes the real consent flow.
+
+---
+
+# UPDATE 2 — Admin Command Center / Tools merge / Quick Guide (same day)
+
+Verified over CDP (`scripts/final2-shots.mjs`). Architectural decisions implemented and tested.
+
+## TOP BAR DECISIONS
+| Button | Decision | Reason / Target |
+|---|---|---|
+| **Admin** (gem) | **KEEP — promoted** | The gem = Admin Core. Single right-side dock button → Admin Command Center (Control Room · Tools · Quick Guide · Reference). Tooltip states exactly that. Owner/admin only. |
+| **Tools** (dock) | **DELETED — moved into Admin** | Duplicated Admin confusingly; its OPERATIONS content now lives as the Admin ▸ Tools tab (14 real utilities). LeftRail ▸ More keeps the support launcher for non-admins. |
+| **Diamond (gem icon)** | **REPURPOSED with function** | It IS the Admin Core mark: label "Admin" + explicit tooltip; click opens the Command Center directly. Not decorative. |
+| **SYSTEMS N/7 chip** | **UPGRADED to real button** | Was display-only; now opens GODMODE diagnostics on click (title says so). |
+| **⌘K button** | KEEP | Opens palette; distinct, real, instant. |
+| **Settings gear** | KEEP | Opens Settings; distinct from Admin (config vs command center). |
+| **workspaces / op / LOCAL MODE chips** | KEEP (info) | Real probe data, title-explained; not buttons, not decorative claims. |
+| **Short Tips** | **REBUILT + MOVED** | Now the Cloud & Superpowers Quick Guide tab in Admin; reachable from Admin, Command Palette, GODMODE, every panel's Guide button, Cloud panel "Cloud Tips", More ▸ OPERATIONS. |
+
+## Admin Command Center (LibraryView — 4 tabs)
+| Control | Status |
+|---|---|
+| Control Room & Modules (default landing) | REAL |
+| **Tools** tab — 14 utilities: Health Check · Command Palette · Terminal Workers · Diagnostics (GODMODE) · Mission Control · RuFlo Queue · NeuroMap · Graph Digest · Vault · Button Truth Table · Logs · Integrations · API Health · Settings | REAL (each = existing real factory) |
+| **Quick Guide** tab — A Cloud tips · B Superpowers tips · C button meaning · D operator shortcuts (live buttons) · E troubleshooting · F copy-paste prompts (clipboard Copy w/ toast) | REAL (curated content + live actions) |
+| Reference tab — shortcuts cheatsheet + tips CRUD (server-checked) | REAL |
+
+## New utility actions (this pass)
+| Where | Button | Handler | Status |
+|---|---|---|---|
+| GODMODE | Admin Command Center | openLibraryAdmin | REAL |
+| GODMODE | Run Health Check | dai:healthcheck → real ruflo+graphify sweep | REAL |
+| GODMODE | Quick Guide | openLibraryGuide | REAL |
+| Every superpower panel | Guide (footer) | openLibraryGuide | REAL ×7 |
+| Cloud panel | Cloud Tips | openLibraryGuide | REAL |
+| Palette | Open Tools (Admin) / Open Quick Guide | deep-links (grant-gated) | REAL |
+| Palette | Open Graph Digest / Open Vault (Obsidian) | real artifact / obsidian:// | REAL |
+| TopBar | SYSTEMS N/7 | opens GODMODE | REAL |
+
+## Rest-of-IDE button audit (delta — sectors were audited in the sections above / plan Appendix AY)
+| Zone | Verdict |
+|---|---|
+| More menu (LeftRail) | KEEP — support launcher (OPERATIONS + Quick Guide added); all items real; non-admin path preserved |
+| Settings (10 categories) | REAL (audited previously; unchanged) |
+| Sector buttons (Terminal/Agents/Code/Neuromap/Drive/Metrics/Preview/Creative) | REAL per prior sections — incl. this session's Code action bar, Agents Stop, Metrics strip, Preview Run fix |
+| Bottom StatusBar | info + real telemetry; no dead controls |
+| Floating action buttons | none exist |
+
+## Updated totals
+- **REAL: 79** (58 prior + 14 Tools cards + 7 panel Guide + GODMODE×3 −3 moved/merged)
+- **DISABLED (honest): 3** (Reflow · Assign Sector · Continue Session)
+- **SETUP_REQUIRED: 1** (Google until sign-in) · **MOVED: 1** (Tools→Admin) · **DELETED: 1** (dock Tools button) · **DEAD/FAKE: 0**
