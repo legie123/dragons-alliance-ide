@@ -229,7 +229,7 @@ export const SUPERPOWERS: SuperpowerDef[] = [
       { id: "ag-view", label: "Open Mission Control", run: goto("agents") },
       { id: "ag-launch", label: "Launch Claude Agent", run: deployTerm("claude", "~") },
       { id: "ag-logs", label: "Inspect Live Transcripts", run: goto("agents") },
-      { id: "ag-assign", label: "Assign Sector", run: goto("agents") },
+      { id: "ag-assign", label: "Open Agents Cockpit", run: goto("agents") },
     ],
   },
   {
@@ -333,7 +333,7 @@ export const MORE_CATEGORIES: { title: string; items: MoreItem[] }[] = [
       { id: "googlex", label: "Google APIs", sub: "OAuth + services", icon: () => <IcPlug />, run: goto("drive") },
       { id: "audit", label: "Audit", sub: "action trail · JSONL 0600", icon: () => <IcChart />, status: "local-only", run: admin("audit") },
       { id: "settings", label: "Settings", sub: "IDE configuration", icon: () => <IcSend />, status: "local-only", run: admin("settings") },
-      { id: "perms", label: "Permissions", sub: "team & roles · local", icon: () => <IcUsers />, status: "local-only", run: admin("perms") },
+      { id: "perms", label: "Permissions", sub: "team & roles · synced via vault", icon: () => <IcUsers />, status: "local-only", run: admin("perms") },
     ],
   },
   {
