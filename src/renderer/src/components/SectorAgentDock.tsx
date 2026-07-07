@@ -73,8 +73,15 @@ export function SectorAgentDock({ view }: { view: View }) {
         <>
           <div className="sgd-body" ref={bodyRef}>
             {log.map((m, i) => <div key={i} className={`sga-line sga-${m.role}`}>{m.text}</div>)}
-            {busy && <div className="sga-line sga-assistant sga-busy">thinking…</div>}
+            {busy && <div className="sga-line sga-assistant sga-busy">working…</div>}
           </div>
+          {log.length <= 1 && (
+            <div className="sgd-starters">
+              {meta.starters.map((s) => (
+                <button key={s} className="sga-starter" disabled={busy} onClick={() => void send(s)} title="ask the agent — it uses real tools">{s}</button>
+              ))}
+            </div>
+          )}
           <div className="sgd-quick">
             {meta.quick.map((a) => (
               <button key={a.label} className="da-btn ghost sm" onClick={a.run}>{a.label}</button>

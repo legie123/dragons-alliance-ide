@@ -193,7 +193,7 @@ const dai: DaiApi = {
     status: () => ipcRenderer.invoke(CH.LLM_STATUS),
     set: (provider, patch) => ipcRenderer.invoke(CH.LLM_SET, provider, patch),
     test: (provider) => ipcRenderer.invoke(CH.LLM_TEST, provider),
-    chat: (model, messages) => ipcRenderer.invoke(CH.LLM_CHAT, model, messages),
+    chat: (model, messages, tools) => ipcRenderer.invoke(CH.LLM_CHAT, model, messages, tools),
   },
   browsers: {
     detect: () => ipcRenderer.invoke(CH.BROWSERS_DETECT),

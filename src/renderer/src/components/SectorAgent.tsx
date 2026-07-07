@@ -9,83 +9,73 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { goto, godmode, admin, openSuperpower, openLibraryGuide, openLibraryTools, runHealthSweep, openPalette } from "../registry";
 import { pushToast } from "../toast";
+import { toolsForSector, execTool, groundingContext, toolLogLine } from "../agentTools";
 import type { LlmChatMsg } from "@shared/ipc";
 
 export type AgentSector =
   | "ide" | "agents" | "code" | "neuromap" | "drive" | "metrics" | "preview" | "creative" | "guide";
 
-export type ChatLine = { role: "user" | "assistant" | "err"; text: string };
+export type ChatLine = { role: "user" | "assistant" | "err" | "tool"; text: string };
 
-export const SECTOR_META: Record<AgentSector, { title: string; sys: string; quick: { label: string; run: () => void }[] }> = {
+const GROUND_RULE =
+  " You are a CAPABLE agent, not a chatbot: you have TOOLS that read and act on the real IDE, and you are PERMANENTLY grounded in the user's Obsidian vault (Antigravity-Brain) and Graphify knowledge graph. ALWAYS prefer calling a tool to get real data over guessing. When the user asks about their knowledge/projects/notes, call search_vault or graph_links. Use the sector tools to actually DO the task. After tools return, answer concisely in the user's language with the REAL result — never invent numbers or say you cannot act when a tool exists.";
+
+// quick = a couple of real navigation shortcuts; starters = example prompts that
+// make the agent DO something real (tool-calling) so the user sees capability.
+export const SECTOR_META: Record<AgentSector, { title: string; sys: string; quick: { label: string; run: () => void }[]; starters: string[] }> = {
   ide: {
     title: "Terminal",
-    sys: "You are the Terminal sector agent of Dragons Alliance IDE. Help with terminal workers (master mirrors to workers), broadcast (real keystrokes, confirmed), CLI sessions (claude/ollama/hermes/codex), and status words: running=active now, idle=ready not error, done, error=real failure. Be concrete and short.",
-    quick: [
-      { label: "Health Check", run: runHealthSweep },
-      { label: "Logs", run: admin("audit") },
-    ],
+    sys: "You are the Terminal sector agent of Dragons Alliance IDE. You can list terminals and run commands in real visible workers. Status words: running=active now, idle=ready not error, done, error=real failure. Be concrete and short.",
+    quick: [{ label: "Health Check", run: runHealthSweep }, { label: "Logs", run: admin("audit") }],
+    starters: ["What terminals are open right now?", "Run `git status` in this repo"],
   },
   agents: {
     title: "Agents",
-    sys: "You are the Agents sector agent of Dragons Alliance IDE. Help with mission control: launch Claude agents into projects, broadcast a prompt to all live agents (confirmed), per-agent Stop (exact terminal match), health badges, transcripts. 0 live agents = nothing running, not an error. Short, concrete answers.",
-    quick: [
-      { label: "RuFlo Panel", run: () => openSuperpower("ruflo") },
-      { label: "Swarm Map", run: goto("neuromap") },
-    ],
+    sys: "You are the Agents sector agent of Dragons Alliance IDE. You can list live Claude agents and launch new ones. 0 live agents = nothing running, not an error. Short, concrete answers.",
+    quick: [{ label: "RuFlo Panel", run: () => openSuperpower("ruflo") }, { label: "Swarm Map", run: goto("neuromap") }],
+    starters: ["How many agents are live and what are they doing?", "Launch a Claude agent in my home dir"],
   },
   code: {
     title: "Code",
-    sys: "You are the Code sector agent of Dragons Alliance IDE. Help with the Monaco editor, file tree, ⌘S save, the action bar (Build/Typecheck/Tests arm real terminals in the file's repo; Tests disabled when package.json has no test script), git branch badge, and 'Ask agent' which arms a Claude review terminal. Short, concrete.",
-    quick: [
-      { label: "Terminal", run: goto("ide") },
-      { label: "Palette ⌘K", run: openPalette },
-    ],
+    sys: "You are the Code sector agent of Dragons Alliance IDE. You can list files and read files (HOME-confined). Help with the editor, save, and the Build/Typecheck action bar. Short, concrete.",
+    quick: [{ label: "Terminal", run: goto("ide") }, { label: "Palette ⌘K", run: openPalette }],
+    starters: ["List the files in my code folder", "Read package.json and tell me the scripts"],
   },
   neuromap: {
     title: "Neuromap",
-    sys: "You are the Neuromap sector agent of Dragons Alliance IDE. Help navigate the living knowledge graph of the Obsidian vault: layers, view modes, time filters, smart labels, search, the Diag panel (real node/edge counts), and the node inspector (frontmatter + backlinks). Graphify generates the digest behind it. Short, concrete.",
-    quick: [
-      { label: "Graphify Panel", run: () => openSuperpower("graphify") },
-      { label: "Open Vault", run: () => openSuperpower("obsidian") },
-    ],
+    sys: "You are the Neuromap sector agent of Dragons Alliance IDE. You have real access to the Obsidian vault and Graphify knowledge graph — search notes and follow links. Short, concrete.",
+    quick: [{ label: "Graphify Panel", run: () => openSuperpower("graphify") }, { label: "Open Vault", run: () => openSuperpower("obsidian") }],
+    starters: ["How big is my knowledge graph?", "What does my vault say about Dragons Alliance?"],
   },
   drive: {
     title: "Drive",
-    sys: "You are the Drive sector agent of Dragons Alliance IDE. Help with Google Drive/Sheets/Forms/Mail ops (honest gate until the user signs in with their own OAuth — nothing simulated), the Proton bridge probe, candidates, and the Obsidian vault connection. Short, concrete.",
-    quick: [
-      { label: "Google Setup", run: () => openSuperpower("google") },
-      { label: "Sync Vault", run: () => openSuperpower("obsidian") },
-    ],
+    sys: "You are the Drive sector agent of Dragons Alliance IDE. You can check the real Google connection status. Honest gate until the user signs in — nothing simulated. Short, concrete.",
+    quick: [{ label: "Google Setup", run: () => openSuperpower("google") }, { label: "Sync Vault", run: () => openSuperpower("obsidian") }],
+    starters: ["Is my Google account connected?", "What do I need to do to use Drive?"],
   },
   metrics: {
     title: "Metrics",
-    sys: "You are the Metrics sector agent of Dragons Alliance IDE. Explain the real session metrics (score, context, output tokens, capacity with honest overflow flag), the system-health strip (superpowers live count, ruflo/graphify probe state), and that every figure is probe-derived — a low number is truth, not decoration. Short, concrete.",
-    quick: [
-      { label: "GODMODE Check", run: godmode },
-      { label: "Health Check", run: runHealthSweep },
-    ],
+    sys: "You are the Metrics sector agent of Dragons Alliance IDE. You can read the real session metrics and system status. Every figure is probe-derived — a low number is truth. Short, concrete.",
+    quick: [{ label: "GODMODE Check", run: godmode }, { label: "Health Check", run: runHealthSweep }],
+    starters: ["Give me my metrics right now", "What's the system status?"],
   },
   preview: {
     title: "Preview",
-    sys: "You are the Preview sector agent of Dragons Alliance IDE. Help with live preview: Neo browser over CDP (click/scroll in the real frame), iframe mode, detected browsers (real /Applications scan) with login-safe open — the user signs in manually, the IDE never touches credentials. Short, concrete.",
-    quick: [
-      { label: "Terminal", run: goto("ide") },
-    ],
+    sys: "You are the Preview sector agent of Dragons Alliance IDE. You can detect installed browsers and open URLs (login-safe — the user signs in manually). Short, concrete.",
+    quick: [{ label: "Terminal", run: goto("ide") }],
+    starters: ["Which browsers are installed on this machine?", "Open localhost:3000 in Chrome"],
   },
   creative: {
     title: "Creative",
-    sys: "You are the Creative sector agent of Dragons Alliance IDE. Help with the creative framework: image/video platform slots are SETUP_REQUIRED until a real API key is saved in Settings ▸ API Power Center — no key, no fake output, ever. Recommend workflows honestly. Short, concrete.",
-    quick: [
-      { label: "API Power Center", run: admin("powercenter") },
-    ],
+    sys: "You are the Creative sector agent of Dragons Alliance IDE. Image/video slots are SETUP_REQUIRED until a real API key is saved in Settings ▸ API Power Center — no key, no fake output. Recommend honestly. Short, concrete.",
+    quick: [{ label: "API Power Center", run: admin("powercenter") }],
+    starters: ["What do I need to generate images here?", "Explain the creative workflow"],
   },
   guide: {
     title: "Guide",
-    sys: "You are the Guide agent of Dragons Alliance IDE — a premium local-first AI operations IDE. Facts: 8 superpowers in the dock (GODMODE command center, RuFlo workflow engine, Agents swarm, Claude sessions, Graphify graph engine, Obsidian vault, Google APIs, LLM Hub local+API models); 8 sectors (Terminal ⌘1, Agents ⌘2, Code ⌘3, Neuromap ⌘4, Drive ⌘5, Metrics ⌘6, Preview ⌘7, Creative ⌘8); Admin Command Center (Control Room, Tools, Quick Guide, Reference); ⌘K palette. Doctrine: every button is real or honestly disabled with a reason; statuses come from real probes. Answer usage questions concretely and briefly; suggest the exact button/panel to press.",
-    quick: [
-      { label: "Explain Superpowers", run: openLibraryGuide },
-      { label: "Open Tools", run: openLibraryTools },
-    ],
+    sys: "You are the Guide agent of Dragons Alliance IDE — a premium local-first AI operations IDE with 8 superpowers (GODMODE, RuFlo, Agents, Claude, Graphify, Obsidian, Google APIs, LLM Hub) and 8 sectors (Terminal ⌘1 … Creative ⌘8), an Admin Command Center and a ⌘K palette. You have real access to the user's Obsidian vault + Graphify graph and can check live system status and navigate. Doctrine: every button is real or honestly disabled. Answer concretely; name the exact button/panel; use tools for real data.",
+    quick: [{ label: "Explain Superpowers", run: openLibraryGuide }, { label: "Open Tools", run: openLibraryTools }],
+    starters: ["What can this platform do?", "What's in my vault about the current project?"],
   },
 };
 
@@ -149,21 +139,50 @@ export function useSectorChat(sector: AgentSector, active: boolean) {
 
   const push = (l: ChatLine) => setLog((x) => { const nx = [...x, l]; mem.log = nx; return nx; });
 
+  // AGENTIC LOOP: permanent Obsidian/Graphify grounding + real tool-calling.
+  // Injects live vault+graph context each turn, exposes the sector's real tools,
+  // executes tool calls against window.dai.*, shows the activity, loops until the
+  // model gives a final answer (or a safe cap). Falls back to a plain answer if
+  // the local model doesn't tool-call.
   async function send(text: string): Promise<boolean> {
     const t = text.trim();
     if (!t || busy || !ready) return false;
     push({ role: "user", text: t });
     setBusy(true);
     try {
-      const msgs: LlmChatMsg[] = [{ role: "system", content: meta.sys }, ...histRef.current, { role: "user", content: t }];
-      const r = await window.dai.llm.chat(model, msgs);
-      if (r.ok) {
-        histRef.current = ([...histRef.current, { role: "user", content: t }, { role: "assistant", content: r.text }] as LlmChatMsg[]).slice(-12);
-        mem.hist = histRef.current;
-        push({ role: "assistant", text: r.text });
-      } else {
-        push({ role: "err", text: `model error: ${r.error ?? "unknown"}` });
+      const ground = await groundingContext(t);
+      const tools = toolsForSector(sector);
+      const convo: LlmChatMsg[] = [
+        { role: "system", content: meta.sys + GROUND_RULE },
+        { role: "system", content: "LIVE KNOWLEDGE (Obsidian vault + Graphify graph):\n" + ground },
+        ...histRef.current,
+        { role: "user", content: t },
+      ];
+      let finalText = "";
+      for (let hop = 0; hop < 4; hop++) {
+        const r = await window.dai.llm.chat(model, convo, tools);
+        if (!r.ok) { push({ role: "err", text: `model error: ${r.error ?? "unknown"}` }); setBusy(false); return true; }
+        if (r.toolCalls && r.toolCalls.length) {
+          convo.push((r.raw as LlmChatMsg) ?? { role: "assistant", content: r.text, tool_calls: r.toolCalls });
+          for (const call of r.toolCalls) {
+            const result = await execTool(sector, call.name, call.arguments);
+            push({ role: "tool", text: toolLogLine(call.name, call.arguments, result) });
+            convo.push({ role: "tool", content: JSON.stringify(result).slice(0, 3000) });
+          }
+          if (r.text) push({ role: "assistant", text: r.text }); // model's interim reasoning, if any
+          continue; // let the model use the tool results
+        }
+        finalText = r.text || "(no answer)";
+        push({ role: "assistant", text: finalText });
+        break;
       }
+      if (!finalText) { // hit the hop cap mid-tools — summarize honestly
+        const r = await window.dai.llm.chat(model, [...convo, { role: "user", content: "Now answer my question using the tool results above, concisely." }]);
+        finalText = r.ok ? (r.text || "(no answer)") : `tools ran; summary failed: ${r.error}`;
+        push({ role: "assistant", text: finalText });
+      }
+      histRef.current = ([...histRef.current, { role: "user", content: t }, { role: "assistant", content: finalText }] as LlmChatMsg[]).slice(-10);
+      mem.hist = histRef.current;
     } catch (e) {
       push({ role: "err", text: String(e).slice(0, 160) });
     }

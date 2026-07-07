@@ -184,8 +184,15 @@ export function GuidePanel({ open, current, target, onClose, onOpenSector }: {
             <>
               <div className="guide-chat-log">
                 {chat.log.slice(-8).map((m, i) => <div key={i} className={`sga-line sga-${m.role}`}>{m.text}</div>)}
-                {chat.busy && <div className="sga-line sga-assistant sga-busy">thinking…</div>}
+                {chat.busy && <div className="sga-line sga-assistant sga-busy">working…</div>}
               </div>
+              {chat.log.length <= 1 && (
+                <div className="sgd-starters">
+                  {chat.meta.starters.map((s) => (
+                    <button key={s} className="sga-starter" disabled={chat.busy} onClick={() => void chat.send(s)}>{s}</button>
+                  ))}
+                </div>
+              )}
               <div className="sga-in guide-chat-in">
                 <input value={q} onChange={(e) => setQ(e.target.value)} disabled={chat.busy}
                   onKeyDown={(e) => { if (e.key === "Enter") { void chat.send(q); setQ(""); } }}

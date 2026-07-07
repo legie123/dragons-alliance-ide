@@ -345,8 +345,9 @@ export type LlmProviderStatus = {
 };
 export type LlmHubStatus = { providers: LlmProviderStatus[]; active: number; configured: number; checkedAt: number };
 export type LlmTestResult = { provider: string; ok: boolean; message: string };
-export type LlmChatMsg = { role: "system" | "user" | "assistant"; content: string };
-export type LlmChatResult = { ok: boolean; text: string; model: string; error?: string };
+export type LlmToolCall = { name: string; arguments: Record<string, unknown> };
+export type LlmChatMsg = { role: "system" | "user" | "assistant" | "tool"; content: string; tool_calls?: unknown[] };
+export type LlmChatResult = { ok: boolean; text: string; model: string; error?: string; toolCalls?: LlmToolCall[]; raw?: unknown };
 
 // ---- Browsers (real /Applications scan; login-safe open) ----
 export type BrowserInfo = { id: string; label: string; app: string; path: string };
@@ -475,7 +476,7 @@ export interface DaiApi {
     status(): Promise<LlmHubStatus>;
     set(provider: string, patch: { key?: string; endpoint?: string; model?: string; clear?: boolean }): Promise<LlmHubStatus>;
     test(provider: string): Promise<LlmTestResult>;
-    chat(model: string, messages: LlmChatMsg[]): Promise<LlmChatResult>;
+    chat(model: string, messages: LlmChatMsg[], tools?: unknown[]): Promise<LlmChatResult>;
   };
   browsers: {
     detect(): Promise<BrowsersDetect>;

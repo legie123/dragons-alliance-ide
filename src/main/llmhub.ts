@@ -149,7 +149,7 @@ export async function llmTest(provider: string): Promise<LlmTestResult> {
  * Runs against the local Ollama server (no cloud, no keys). Non-streaming v1;
  * 90s hard timeout; every failure returns the true reason.
  */
-export async function llmChat(model: string, messages: LlmChatMsg[]): Promise<LlmChatResult> {
+export async function llmChat(model: string, messages: LlmChatMsg[], tools?: unknown[]): Promise<LlmChatResult> {
   const tags = await ollamaTags();
   if (!tags.up) return { ok: false, text: "", model, error: "Ollama server not running on 127.0.0.1:11434" };
   const m = model && tags.models.includes(model) ? model
@@ -158,13 +158,31 @@ export async function llmChat(model: string, messages: LlmChatMsg[]): Promise<Ll
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 90_000);
+    const body: Record<string, unknown> = { model: m, messages, stream: false };
+    if (Array.isArray(tools) && tools.length) body.tools = tools; // tool-calling (hermes2-tools)
     const r = await fetch(`${OLLAMA}/api/chat`, {
       method: "POST", headers: { "content-type": "application/json" }, signal: ctrl.signal,
-      body: JSON.stringify({ model: m, messages, stream: false }),
+      body: JSON.stringify(body),
     });
     clearTimeout(t);
     if (!r.ok) return { ok: false, text: "", model: m, error: `Ollama HTTP ${r.status}` };
-    const j = (await r.json()) as { message?: { content?: string } };
+    const j = (await r.json()) as { message?: { content?: string; tool_calls?: { function?: { name?: string; arguments?: unknown } }[] } };
+    // normalize tool calls — Ollama returns arguments already parsed (object)
+    const rawCalls = j.message?.tool_calls ?? [];
+    if (rawCalls.length) {
+      const toolCalls = rawCalls
+        .map((c) => {
+          const name = c.function?.name ?? "";
+          let args = c.function?.arguments ?? {};
+          if (typeof args === "string") { try { args = JSON.parse(args); } catch { args = {}; } }
+          return { name, arguments: (args && typeof args === "object" ? args : {}) as Record<string, unknown> };
+        })
+        .filter((c) => c.name);
+      if (toolCalls.length) {
+        auditLog("llm-chat", `${m}: tool_calls → ${toolCalls.map((c) => c.name).join(", ")}`);
+        return { ok: true, text: (j.message?.content ?? "").trim(), model: m, toolCalls, raw: j.message };
+      }
+    }
     const text = j.message?.content?.trim() ?? "";
     auditLog("llm-chat", `${m}: ${messages[messages.length - 1]?.content.slice(0, 60)} → ${text.slice(0, 60)}`);
     return text ? { ok: true, text, model: m } : { ok: false, text: "", model: m, error: "empty response from model" };
