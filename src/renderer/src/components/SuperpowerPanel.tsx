@@ -170,7 +170,19 @@ export function SuperpowerPanel({ id, onClose }: { id: string | null; onClose: (
 
             <div className="spx-actions">
               {sp.actions.map((a, i) =>
-                a.run ? (
+                a.setupRequired ? (
+                  // SETUP_REQUIRED — not dead: routes to Settings ▸ API Power Center for real
+                  <button key={a.id} className="da-btn ghost sm"
+                    style={{ color: "var(--accent-ember)", borderColor: "var(--accent-ember)" }}
+                    title={`needs ${a.setupRequired} — opens Settings ▸ API Power Center`}
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent("dai:admin", { detail: "powercenter" }));
+                      onClose();
+                    }}>
+                    {a.label}
+                    <em style={{ fontStyle: "normal", fontSize: "0.72em", opacity: 0.85, marginLeft: 5, letterSpacing: "0.06em", textTransform: "uppercase" }}>setup</em>
+                  </button>
+                ) : a.run ? (
                   <button key={a.id} className={`da-btn ${i === 0 ? "gold" : "ghost"} sm${a.danger ? " danger" : ""}`}
                     onClick={runAction(a.run)}>{a.label}</button>
                 ) : (

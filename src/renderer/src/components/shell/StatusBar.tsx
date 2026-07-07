@@ -36,6 +36,12 @@ export const StatusBar = memo(function StatusBar({ view }: { view: View }) {
         </span>
       )}
       <span className="sbar-flex" />
+      {/* contextual LOCAL chat for the current sector — Hermes via Ollama, no keys */}
+      <button className="sbar-item sbar-btn" title="Ask the Sector Agent — contextual local chat (Hermes via Ollama)"
+        aria-label="Open Sector Agent"
+        onClick={() => window.dispatchEvent(new CustomEvent("dai:sector-agent"))}>
+        ◈ Sector Agent
+      </button>
       {last && (
         <span className="sbar-item" title="last action executed from rail or palette">
           last · {last.label}

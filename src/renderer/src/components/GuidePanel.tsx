@@ -110,6 +110,11 @@ export function GuidePanel({ open, current, target, onClose, onOpenSector }: {
           <span className="guide-glyph"><IcBook size={18} /></span>
           <div>
             <div className="guide-title">DRAGON GUIDE</div>
+            <button className="da-btn gold sm" style={{ marginTop: 4 }}
+              title="conversational guide — tour + platform questions, answered by the LOCAL model"
+              onClick={() => { onClose(); window.dispatchEvent(new CustomEvent("dai:sector-agent", { detail: "guide" })); }}>
+              Chat with the Guide Agent →
+            </button>
             <div className="guide-sub">{t({ en: "How to command the platform", ro: "Cum comanzi platforma" })}</div>
           </div>
           <button className="guide-x" onClick={onClose} aria-label="Close guide"><IcX size={13} /></button>

@@ -48,15 +48,27 @@ export function MetricsView() {
         status={isError ? "error" : liveCount > 0 ? "live" : "idle"} />
       <div className="mv-bar">
         <div className="stats">
-          <div className="mv-stat">
+          <div className="mv-stat" title={t({
+            en: "Engines whose real status probe reports LIVE, out of all registered superpowers",
+            ro: "Motoare al caror probe real de status raporteaza LIVE, din totalul superputerilor inregistrate",
+          })}>
             <div className="v">{ops.checking ? "…" : `${ops.liveCount}/${ops.total}`}</div>
             <div className="l">{t({ en: "superpowers live", ro: "superputeri live" })}</div>
           </div>
           {(["ruflo", "graphify"] as const).map((id) => {
             const s = ops.statuses[id];
             if (!s) return null; // no probe result for this id — omit rather than invent
+            const probeTitle = id === "ruflo"
+              ? t({
+                  en: "RuFlo probe (ruflo CLI status + ruvector.db activity): live = active now, idle = installed & ready, setup required = not detected",
+                  ro: "Probe RuFlo (status CLI ruflo + activitate ruvector.db): live = activ acum, idle = instalat si pregatit, setup required = nedetectat",
+                })
+              : t({
+                  en: "Graphify probe (digest freshness + launchd job): live = active now, idle = installed & ready, setup required = not detected",
+                  ro: "Probe Graphify (prospetimea digestului + job launchd): live = activ acum, idle = instalat si pregatit, setup required = nedetectat",
+                });
             return (
-              <div className="mv-stat" key={id}>
+              <div className="mv-stat" key={id} title={probeTitle}>
                 <div className="v" style={{ color: ops.checking ? "var(--muted)" : STATUS_META[s].color }}>
                   {ops.checking ? t({ en: "checking", ro: "verificare" }) : STATUS_META[s].label}
                 </div>
@@ -64,7 +76,10 @@ export function MetricsView() {
               </div>
             );
           })}
-          <div className="mv-stat">
+          <div className="mv-stat" title={t({
+            en: "Claude sessions idle under 3 minutes (probe window: last 4h)",
+            ro: "Sesiuni Claude inactive sub 3 minute (fereastra probe: ultimele 4h)",
+          })}>
             <div className="v">{ops.liveAgents}</div>
             <div className="l">{t({ en: "live agents", ro: "agenti live" })}</div>
           </div>
@@ -72,11 +87,11 @@ export function MetricsView() {
       </div>
       <div className="mv-bar">
         <div className="stats">
-          <div className="mv-stat"><div className="v">{sessions.length}</div><div className="l">agents</div></div>
-          <div className="mv-stat"><div className="v"><span className="livedot" />{liveCount}</div><div className="l">live</div></div>
-          <div className="mv-stat"><div className="v">{avgScore.toFixed(0)}</div><div className="l">avg score</div></div>
-          <div className="mv-stat"><div className="v">{human(totalCtx)}</div><div className="l">context</div></div>
-          <div className="mv-stat"><div className="v">{human(totalOut)}</div><div className="l">output</div></div>
+          <div className="mv-stat" title={`Claude sessions with transcript activity in the selected window (${active < 1440 ? `${active}m` : "24h"})`}><div className="v">{sessions.length}</div><div className="l">agents</div></div>
+          <div className="mv-stat" title="sessions idle under 3 minutes — transcript still moving"><div className="v"><span className="livedot" />{liveCount}</div><div className="l">live</div></div>
+          <div className="mv-stat" title="mean purpose score (0-100): 30% understanding + 30% meaningful + 20% freshness + 20% capacity health"><div className="v">{avgScore.toFixed(0)}</div><div className="l">avg score</div></div>
+          <div className="mv-stat" title="input-side tokens: each session's last-turn context (input + cache read + cache creation), summed"><div className="v">{human(totalCtx)}</div><div className="l">context</div></div>
+          <div className="mv-stat" title="output tokens generated across all sessions in the window"><div className="v">{human(totalOut)}</div><div className="l">output</div></div>
         </div>
         <div className="controls">
           {WINDOWS.map((w) => (

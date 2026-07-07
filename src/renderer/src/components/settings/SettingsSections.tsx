@@ -14,6 +14,7 @@ import { queryClient } from "../../queryClient";
 import { OpStatusBadge } from "../da";
 
 export { TeamSection } from "./TeamSection";
+export { PowerCenterSection } from "./PowerCenter";
 
 // Categories for the single Settings surface. `cap` (an adm:* capability id)
 // gates an admin category — the nav hides it when the current member lacks the
@@ -21,7 +22,7 @@ export { TeamSection } from "./TeamSection";
 // always visible: a non-owner sees their own resolved access there, read-only.
 export type SettingsCat =
   | "appearance" | "ide" | "team" | "teamsync" | "superpowers"
-  | "integrations" | "shortcuts" | "audit" | "apihealth" | "developer";
+  | "integrations" | "powercenter" | "shortcuts" | "audit" | "apihealth" | "developer";
 export const SETTINGS_CATS: { id: SettingsCat; label: string; cap?: string }[] = [
   { id: "appearance", label: "Appearance" },
   { id: "ide", label: "IDE Config" },
@@ -29,6 +30,9 @@ export const SETTINGS_CATS: { id: SettingsCat; label: string; cap?: string }[] =
   { id: "teamsync", label: "Team Sync", cap: "adm:teamsync" },
   { id: "superpowers", label: "Superpowers" },
   { id: "integrations", label: "Integrations" },
+  // adm:powercenter is not registered in TEAM_CAPS yet — grantsHave("*") makes it
+  // owner-only until src/shared/teamCaps.ts adds it (then grantable per member).
+  { id: "powercenter", label: "API Power Center", cap: "adm:powercenter" },
   { id: "shortcuts", label: "Shortcuts" },
   { id: "audit", label: "Audit", cap: "adm:audit" },
   { id: "apihealth", label: "API Health", cap: "adm:apihealth" },

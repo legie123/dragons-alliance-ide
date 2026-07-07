@@ -3,11 +3,27 @@ import { motion } from "motion/react";
 import { Session, human, gradeColor, idleLabel } from "../api";
 import { ScoreGauge } from "./ScoreGauge";
 
-function Bar({ label, value, inverse = false }: { label: string; value: number; inverse?: boolean }) {
+function Bar({ label, value, inverse = false, flag }: {
+  label: string;
+  value: number;
+  inverse?: boolean;
+  /** honest overflow flag — shown next to the label; title carries the true number */
+  flag?: { text: string; title: string };
+}) {
   const color = gradeColor(inverse ? 100 - value : value);
   return (
     <div className="metric">
-      <div className="ml">{label}</div>
+      <div className="ml">
+        {label}
+        {flag && (
+          <span
+            title={flag.title}
+            style={{ color: "var(--state-error)", marginLeft: 4, fontSize: "0.85em", cursor: "help" }}
+          >
+            {flag.text}
+          </span>
+        )}
+      </div>
       <div className="track">
         <motion.div
           className="fill"
@@ -55,7 +71,19 @@ export const SessionCard = memo(function SessionCard({ s }: { s: Session }) {
       </div>
 
       <div className="metrics">
-        <Bar label="capacity" value={s.capacity} inverse />
+        {/* capacity = ctx/window*100 — the only bar that can exceed 100 (context past
+            the model window). Displayed value is clamped; the flag carries the truth.
+            meaningful is clamped at the source (Math.min 100) and understanding is a
+            subset ratio (cache_read/total_input ≤ 100) — neither can overflow. */}
+        <Bar
+          label="capacity"
+          value={Math.min(100, s.capacity)}
+          inverse
+          flag={s.capacity > 100 ? {
+            text: "context overflow",
+            title: `context exceeds the window — real value ${s.capacity.toFixed(0)}%`,
+          } : undefined}
+        />
         <Bar label="meaning" value={s.meaningful} />
         <Bar label="undrstd" value={s.understanding} />
       </div>

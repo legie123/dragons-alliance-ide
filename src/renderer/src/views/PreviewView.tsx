@@ -7,7 +7,7 @@ import { IcMonitor, IcPlay, IcRefresh, IcExternal, IcZap, IcBot, IcTerminal } fr
 import { useQuery } from "@tanstack/react-query";
 import { fetchProjects } from "../api";
 import { pushToast } from "../toast";
-import type { NeoStatus, NeoSnap } from "@shared/ipc";
+import type { NeoStatus, NeoSnap, BrowserInfo } from "@shared/ipc";
 
 const BROWSERS = ["Neo", "Chrome", "Brave", "Safari"];
 
@@ -24,6 +24,18 @@ export function PreviewView() {
   const [chat, setChat] = useState("");
   const activeProj = projects.find((p) => p.path === proj);
   const isNeo = browser === "Neo";
+  const urlOk = /^https?:\/\//.test(url);
+
+  // Real installed-browser scan (main does the /Applications check — cheap, cached long).
+  const { data: detected, refetch: redetect, isFetching: detecting } = useQuery({
+    queryKey: ["browsers"],
+    queryFn: () => window.dai.browsers.detect(),
+    staleTime: 10 * 60 * 1000,
+  });
+  // detect() always appends "System default"; keep that button real even pre-scan/on failure.
+  const browserBtns: BrowserInfo[] = detected?.browsers?.length
+    ? detected.browsers
+    : [{ id: "default", label: "System default", app: "", path: "" }];
 
   // ---- Neo state ----
   const [neoConn, setNeoConn] = useState<NeoStatus | null>(null);
@@ -116,6 +128,39 @@ export function PreviewView() {
     window.dispatchEvent(new CustomEvent("dai:goto", { detail: "ide" }));
   }
 
+  // Browsers row: re-scan on demand, toast the honest count.
+  async function detectBrowsers() {
+    const res = await redetect();
+    if (!res.data) {
+      pushToast({ kind: "error", title: "Browser detection failed", detail: String((res.error as Error)?.message || res.error || "unknown error"), ttl: 4000 });
+      return;
+    }
+    const real = res.data.browsers.filter((b) => b.id !== "default");
+    pushToast({
+      kind: "info",
+      title: `Detected ${real.length} browser${real.length === 1 ? "" : "s"}`,
+      detail: real.length ? real.map((b) => b.label).join(", ") : "none found — System default still works",
+      ttl: 3500,
+    });
+  }
+
+  // Login-safe open: launches the user's OWN browser/profile via main's whitelist-only
+  // `open -a`. They sign in themselves — the IDE never touches credentials or sessions.
+  async function openIn(b: BrowserInfo) {
+    if (!urlOk) return;
+    try {
+      const res = await window.dai.browsers.open(b.id, url);
+      window.dai.audit.log("preview-browser-open", `${b.label}: ${url.slice(0, 120)} — ${res.ok ? "ok" : res.message}`);
+      pushToast({
+        kind: res.ok ? "success" : "error",
+        title: res.ok ? `Opened in ${b.label}` : `Could not open ${b.label}`,
+        detail: res.message, ttl: 4000,
+      });
+    } catch (e) {
+      pushToast({ kind: "error", title: `Could not open ${b.label}`, detail: String((e as Error)?.message || e), ttl: 4000 });
+    }
+  }
+
   // right-rail actions: pv:refresh → reload, pv:external → open in system browser
   useEffect(() => {
     const h = (e: Event) => {
@@ -150,7 +195,22 @@ export function PreviewView() {
             <button className="pv-btn" onClick={() => window.dai.neo.forward().then(() => setTimeout(refreshSnap, 500))} disabled={!live || !neoConn?.connected} title="Neo forward" aria-label="Neo forward">→</button>
           </>
         )}
-        <button className="pv-btn" onClick={() => window.dai.shell?.open?.(url)} disabled={!/^https?:\/\//.test(url)}><IcExternal size={11} /> Open external</button>
+        <button className="pv-btn" onClick={() => window.dai.shell?.open?.(url)} disabled={!urlOk}><IcExternal size={11} /> Open external</button>
+      </div>
+
+      <div className="pv-bar">
+        <span className="pv-title" style={{ fontSize: 11 }}><IcExternal size={11} /> BROWSERS</span>
+        <button className="pv-btn" onClick={detectBrowsers} disabled={detecting}
+          title="Rescan /Applications for installed browsers">{detecting ? "detecting…" : "Detect Browsers"}</button>
+        {browserBtns.map((b) => (
+          <button key={b.id} className="pv-btn" onClick={() => openIn(b)} disabled={!urlOk}
+            title={!urlOk ? "enter a valid http(s) URL first" : `Open ${url} in ${b.label} (your own profile)`}>
+            Open in {b.label}
+          </button>
+        ))}
+        <span className="pv-empty-hint" style={{ marginLeft: "auto" }}>
+          Opens YOUR browser/profile — sign in manually; the IDE never touches credentials or sessions.
+        </span>
       </div>
 
       <div className="pv-body">

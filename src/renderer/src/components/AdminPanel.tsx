@@ -12,6 +12,7 @@ import {
   AppearanceSection, IdeConfigSection, SuperpowersSection,
   IntegrationsSection, ShortcutsSection, DeveloperSection,
   TeamSection, TeamSyncSection, AuditSection, ApiHealthSection,
+  PowerCenterSection,
 } from "./settings/SettingsSections";
 
 export function AdminPanel({ open, cat, onClose, onCat }: {
@@ -48,6 +49,7 @@ export function AdminPanel({ open, cat, onClose, onCat }: {
               {active === "teamsync" && <TeamSyncSection />}
               {active === "superpowers" && <SuperpowersSection />}
               {active === "integrations" && <IntegrationsSection />}
+              {active === "powercenter" && <PowerCenterSection />}
               {active === "shortcuts" && <ShortcutsSection />}
               {active === "audit" && <AuditSection />}
               {active === "apihealth" && <ApiHealthSection />}
