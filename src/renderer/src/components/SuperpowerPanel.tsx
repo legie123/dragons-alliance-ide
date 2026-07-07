@@ -6,7 +6,7 @@
 // actions from the registry (each either runs a real handler or is disabled with
 // a reason). No fake LIVE, no dead click.
 import { useEffect, useState } from "react";
-import { SUPERPOWERS, goto, type SuperpowerDef } from "../registry";
+import { SUPERPOWERS, goto, openLibraryGuide, type SuperpowerDef } from "../registry";
 import { useOps } from "../hooks/useOps";
 import { useMe } from "../hooks/useMe";
 import { OpStatusBadge } from "./da";
@@ -170,6 +170,8 @@ export function SuperpowerPanel({ id, onClose }: { id: string | null; onClose: (
                 ),
               )}
               {sp.sector && <button className="da-btn ghost sm" onClick={nav(sp.sector)}>Open sector</button>}
+              <button className="da-btn ghost sm" title="Cloud & Superpowers Quick Guide — how to operate this power"
+                onClick={() => { openLibraryGuide(); onClose(); }}>Guide</button>
             </div>
 
             <div className="spx-foot">

@@ -31,7 +31,7 @@ import { StatusBar } from "./components/shell/StatusBar";
 import { registerProvider, Cmd } from "./palette";
 import { fetchHost, fetchProjects, fetchGDriveStatus, broadcast } from "./api";
 import { IcCrown, IcGem, IcSearch, IcTerminal, IcBot, IcSigil } from "./components/icons";
-import { CORE_SECTORS, operationalTruth, openSuperpower, openLibraryAdmin, SUPERPOWERS } from "./registry";
+import { CORE_SECTORS, operationalTruth, openSuperpower, openLibraryAdmin, openLibraryTools, openLibraryGuide, openObsidian, graphifyOpenDigest, SUPERPOWERS } from "./registry";
 import { pushToast, updateToast } from "./toast";
 import { SECTOR_ACTIONS } from "./sectorActions";
 import { queryClient } from "./queryClient";
@@ -187,9 +187,15 @@ export default function App() {
         icon: sp.id === "godmode" ? <IcCrown /> : undefined, run: () => openSuperpower(sp.id),
       })),
       ...(canRef.current("adm:library")
-        ? [{ id: "sp:control-room", title: "Open Superpowers Control Room", subtitle: "Admin Library", category: "Superpower" as const, icon: <IcGem />, run: () => openLibraryAdmin() }]
+        ? [
+            { id: "sp:control-room", title: "Open Superpowers Control Room", subtitle: "Admin Command Center", category: "Superpower" as const, icon: <IcGem />, run: () => openLibraryAdmin() },
+            { id: "adm:tools", title: "Open Tools (Admin)", subtitle: "health · palette · workers · logs · settings", category: "Admin" as const, icon: <IcGem />, run: () => openLibraryTools() },
+            { id: "adm:guide", title: "Open Quick Guide (Cloud & Superpowers)", subtitle: "operator guide · tips · troubleshooting", category: "Guide" as const, icon: <IcGem />, run: () => openLibraryGuide() },
+          ]
         : []),
       { id: "diag:health", title: "Run Superpowers Health Check", subtitle: "ruflo + graphify real probes", category: "Diagnostics", run: () => runHealthCheck() },
+      { id: "action:digest", title: "Open Graph Digest", subtitle: "the real Graphify artifact", category: "Action", run: () => { graphifyOpenDigest()(); } },
+      { id: "action:vault-open", title: "Open Vault (Obsidian)", subtitle: "Antigravity-Brain", category: "Action", run: () => openObsidian() },
       // terminal commands — broadcast to the visible workers (real keystrokes)
       { id: "t:git-status", title: "Terminal: run git status on workers", category: "Terminal", icon: <IcTerminal />, run: () => { setView("ide"); broadcast("git status", true); } },
       { id: "t:npm-dev", title: "Terminal: run npm run dev on workers", category: "Terminal", icon: <IcTerminal />, run: () => { setView("ide"); broadcast("npm run dev", true); } },

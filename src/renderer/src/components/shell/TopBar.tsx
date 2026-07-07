@@ -37,12 +37,15 @@ export const TopBar = memo(function TopBar({ onPalette, onSettings }: Props) {
         <span className="tbx-chip tbx-mode" title="all data stays on this machine — team backend pending">
           LOCAL MODE
         </span>
-        <span
-          className={`tbx-chip tbx-health${attention > 0 ? " warn" : ""}`}
-          title={checking ? "probing superpowers…" : `${liveCount}/${total} superpowers live · ${attention} need attention`}
+        {/* health is a REAL button — opens GODMODE (the diagnostics center) */}
+        <button
+          className={`tbx-chip tbx-health tbx-health-btn${attention > 0 ? " warn" : ""}`}
+          title={checking ? "probing superpowers…" : `${liveCount}/${total} superpowers live · ${attention} need attention — click for GODMODE diagnostics`}
+          aria-label="Open GODMODE diagnostics"
+          onClick={() => window.dispatchEvent(new CustomEvent("dai:godmode"))}
         >
           {checking ? "CHECKING…" : `SYSTEMS ${liveCount}/${total}`}
-        </span>
+        </button>
       </div>
 
       <div className="tbx-actions">

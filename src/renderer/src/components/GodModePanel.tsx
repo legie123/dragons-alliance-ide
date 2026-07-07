@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchTools, fetchSessions, fetchGDriveStatus, fetchTerms } from "../api";
-import { SUPERPOWERS, MORE_CATEGORIES, STATUS_META, operationalTruth, openSuperpower, openLibraryAdmin, type OpStatus } from "../registry";
+import { SUPERPOWERS, MORE_CATEGORIES, STATUS_META, operationalTruth, openSuperpower, openLibraryAdmin, openLibraryGuide, type OpStatus } from "../registry";
 import { useOps } from "../hooks/useOps";
 import { IcUsers } from "./icons";
 import { DragonEmblem } from "./DragonEmblem";
@@ -139,6 +139,9 @@ export function GodModePanel({ open, onClose, onCommand }: { open: boolean; onCl
             <button className="da-btn ghost sm" onClick={act("metrics")}>Open Metrics</button>
             <button className="da-btn ghost sm" onClick={capture}>Capture Screenshot</button>
             <button className="da-btn ghost sm" onClick={syncVault}>Sync Vault</button>
+            <button className="da-btn ghost sm" onClick={() => { openLibraryAdmin(); onClose(); }}>Admin Command Center</button>
+            <button className="da-btn ghost sm" onClick={() => window.dispatchEvent(new CustomEvent("dai:healthcheck"))}>Run Health Check</button>
+            <button className="da-btn ghost sm" onClick={() => { openLibraryGuide(); onClose(); }}>Quick Guide</button>
             <button className="da-btn danger sm" onClick={stopAll}>Emergency Stop</button>
           </div>
           {gmMsg && <div className="gm-mission">{gmMsg}</div>}
