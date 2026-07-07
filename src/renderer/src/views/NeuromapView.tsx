@@ -196,12 +196,14 @@ export function NeuromapView() {
 
   const resetView = () => { setTx(0); setTy(0); setScale(1); setFocusMode(false); };
 
-  // right-rail actions: nm:focus (dim to selected hood), nm:reset (recenter)
+  // sector actions: nm:focus (dim to selected hood), nm:reset (recenter),
+  // nm:diag (open the real graph-counts diagnostics — Graphify "Inspect Graph")
   useEffect(() => {
     const h = (e: Event) => {
       const a = (e as CustomEvent).detail;
       if (a === "nm:focus") setFocusMode((f) => !f);
       else if (a === "nm:reset") resetView();
+      else if (a === "nm:diag") setShowDiag(true);
     };
     window.addEventListener("dai:sector-action", h);
     return () => window.removeEventListener("dai:sector-action", h);

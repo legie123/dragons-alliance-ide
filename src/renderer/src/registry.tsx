@@ -76,6 +76,21 @@ export const openSuperpower = (id: string) =>
   id === "godmode"
     ? window.dispatchEvent(new CustomEvent("dai:godmode"))
     : window.dispatchEvent(new CustomEvent("dai:superpower", { detail: id }));
+/** Open the ⌘K palette from a menu item (App listens for dai:palette). */
+export const openPalette = () => window.dispatchEvent(new CustomEvent("dai:palette"));
+/** Run the real superpowers health sweep (App listens; probes ruflo + graphify). */
+export const runHealthSweep = () => window.dispatchEvent(new CustomEvent("dai:healthcheck"));
+/** Inspect Graph — open Neuromap WITH its real diagnostics panel (true graph counts). */
+export const inspectGraph = () => {
+  goto("neuromap")();
+  setTimeout(() => window.dispatchEvent(new CustomEvent("dai:sector-action", { detail: "nm:diag" })), 650);
+  window.dai.audit.log("graphify-inspect", "opened Neuromap diagnostics");
+};
+/** Broadcast — open the Agents cockpit and focus the mission-broadcast input. */
+export const agentsBroadcast = () => {
+  goto("agents")();
+  setTimeout(() => window.dispatchEvent(new CustomEvent("dai:sector-action", { detail: "agents:focus-broadcast" })), 500);
+};
 let SEQ = 1;
 export const deployTerm = (cmd: string, cwd: string) => () => {
   window.dai.term.create({ id: `ign${Date.now().toString(36)}${SEQ++}`, cmd, cwd });
@@ -151,6 +166,28 @@ export const graphifyRegen = () => () => {
 };
 export const admin = (tab: string) => () => window.dispatchEvent(new CustomEvent("dai:admin", { detail: tab }));
 
+/**
+ * Sign in with Google — runs the REAL OAuth loopback flow (main process, user's
+ * own client). Honest toasts: checking → signed-in-as / true failure. Never a
+ * fake LIVE; status flips only when a refresh token actually lands.
+ */
+export const googleSignIn = () => async () => {
+  const id = pushToast({ kind: "checking", title: "Signing in with Google…", detail: "browser consent → loopback" });
+  try {
+    const s = await window.dai.gdrive.auth();
+    updateToast(id, {
+      kind: s.signedIn ? "success" : "error",
+      title: s.signedIn ? `Signed in${s.email ? " as " + s.email : ""}` : "Sign-in did not complete",
+      detail: s.signedIn ? "Drive · Sheets · Forms are live" : "finish the consent in the browser, then retry",
+      ttl: 6500,
+    });
+    window.dai.audit.log("google-signin", s.signedIn ? `ok ${s.email ?? ""}` : "incomplete");
+  } catch (e) {
+    updateToast(id, { kind: "error", title: "Google sign-in failed", detail: String(e), ttl: 6500 });
+  }
+  refreshTools();
+};
+
 /** Sync the Obsidian vault via the REAL git engine — honest toast on result. */
 export const syncVaultToast = () => {
   const id = pushToast({ kind: "checking", title: "Syncing vault…", detail: "git add · commit · push" });
@@ -203,7 +240,7 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     actions: [{ id: "gm-open", label: "Open GODMODE", run: godmode }],
   },
   {
-    id: "ruflo", label: "Ruflo", icon: (p) => <IcBot {...p} />, role: "agent workflow engine · orchestrator",
+    id: "ruflo", label: "Agent Rooflow", icon: (p) => <IcBot {...p} />, role: "RuFlo workflow engine · orchestrator",
     statusOf: ({ tool }) => (tool("ruflo") === "live" ? "live" : tool("ruflo") === "ready" ? "idle" : "setup-required"),
     tone: "var(--sp-ruflo)", tone2: "var(--sp-ruflo-2)",
     what: "The RuFlo workflow engine — orchestrates agent swarms, task queues and flows behind this IDE's agents.",
@@ -212,9 +249,11 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     logKinds: ["ruflo"], source: "ruflo status (real CLI probe) · ruvector.db mtime", risk: "Ignite runs the real ruflo CLI in a terminal.",
     actions: [
       { id: "rf-ignite", label: "Ignite (health check)", run: rufloIgnite() },
-      { id: "rf-mission", label: "Broadcast Mission (Agents)", run: goto("agents") },
-      { id: "rf-queue", label: "View Task Queue", run: armTermToast("ruflo task list", "~", "Ruflo task queue") },
+      { id: "rf-reflow", label: "Reflow", disabledReason: "pending backend — no reflow op in the RuFlo CLI yet" },
       { id: "rf-flows", label: "Continue Flow", run: armTermToast("ruflo session list", "~", "Ruflo sessions") },
+      { id: "rf-queue", label: "View Task Queue", run: armTermToast("ruflo task list", "~", "Ruflo task queue") },
+      { id: "rf-logs", label: "Open Logs", run: admin("audit") },
+      { id: "rf-mission", label: "Broadcast Mission (Agents)", run: goto("agents") },
     ],
   },
   {
@@ -228,8 +267,10 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     actions: [
       { id: "ag-view", label: "Open Mission Control", run: goto("agents") },
       { id: "ag-launch", label: "Launch Claude Agent", run: deployTerm("claude", "~") },
+      { id: "ag-broadcast", label: "Broadcast", run: agentsBroadcast },
       { id: "ag-logs", label: "Inspect Live Transcripts", run: goto("agents") },
-      { id: "ag-assign", label: "Open Agents Cockpit", run: goto("agents") },
+      { id: "ag-swarm", label: "Open Swarm Map (Neuromap)", run: goto("neuromap") },
+      { id: "ag-assign", label: "Assign Sector", disabledReason: "pending backend — sector tagging not built yet" },
     ],
   },
   {
@@ -241,10 +282,12 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     connected: ["Claude Code", "Terminals", "Metrics"], sector: "metrics",
     diag: "agents", logKinds: ["term-launch", "claude-prompt-arm", "term-arm"], source: "live session count + terminal state",
     actions: [
-      { id: "cl-launch", label: "Launch Claude Session", run: deployTerm("claude", "~") },
-      { id: "cl-mc", label: "Open Mission Control", run: goto("agents") },
+      { id: "cl-launch", label: "Launch Cloud Session", run: deployTerm("claude", "~") },
+      { id: "cl-term", label: "Open Terminal", run: goto("ide") },
+      { id: "cl-continue", label: "Continue Session", disabledReason: "pending backend — session resume not wired yet" },
+      { id: "cl-stop", label: "Stop Session (Agents)", run: goto("agents") },
       { id: "cl-metrics", label: "View Tokens (Metrics)", run: goto("metrics") },
-      { id: "cl-stop", label: "Open Terminal Stop Controls", run: goto("ide") },
+      { id: "cl-logs", label: "Open Logs", run: admin("audit") },
     ],
   },
   {
@@ -258,9 +301,9 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     actions: [
       { id: "gv-map", label: "Open Map (Neuromap)", run: goto("neuromap") },
       { id: "gv-digest", label: "Open Graph Digest", run: graphifyOpenDigest() },
-      { id: "gv-regen", label: "Regenerate Digest", run: graphifyRegen() },
-      { id: "gv-research", label: "Show Research Lens", run: goto("research") },
-      { id: "gv-agents", label: "Show Agents Layer", run: goto("neuromap") },
+      { id: "gv-regen", label: "Generate Digest", run: graphifyRegen() },
+      { id: "gv-inspect", label: "Inspect Graph", run: inspectGraph },
+      { id: "gv-library", label: "Open Admin Library", run: openLibraryAdmin },
     ],
   },
   {
@@ -289,9 +332,11 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     connected: ["Drive", "Sheets", "Forms", "Gmail"], sector: "drive",
     diag: "google", logKinds: ["google", "drive", "gdrive"], source: "~/.config/dai/google.json + real API health", risk: "Sign in runs a real OAuth loopback flow.",
     actions: [
+      { id: "gg-signin", label: "Sign in with Google", run: googleSignIn() },
       { id: "gg-drive", label: "Open Drive Ops", run: goto("drive") },
-      { id: "gg-keys", label: "Credentials (Keys)", run: vault },
+      { id: "gg-keys", label: "Open Setup (Keys)", run: vault },
       { id: "gg-health", label: "API Health", run: admin("health") },
+      { id: "gg-integrations", label: "Open Integrations", run: admin("integrations") },
       { id: "gg-repair", label: "Cloud Repair Prompt", run: deployClaudeWithPrompt(superpowersRepairPrompt, "~/code/dragons-alliance-ide") },
     ],
   },
@@ -305,9 +350,17 @@ export type MoreItem = {
 };
 export const MORE_CATEGORIES: { title: string; items: MoreItem[] }[] = [
   {
-    title: "LIBRARY",
+    // Tools = the OPERATIONS menu — every item is a real route/panel, no junk drawer.
+    title: "OPERATIONS",
     items: [
-      { id: "library", label: "Admin Library", sub: "agents · tools · superpowers · admin only", icon: () => <IcGem />, status: "live", run: goto("library"), cap: "adm:library" },
+      { id: "controlroom", label: "Superpowers Control Room", sub: "live status + panels · admin", icon: () => <IcCrown />, status: "live", run: openLibraryAdmin, cap: "adm:library" },
+      { id: "library", label: "Admin Library", sub: "agents · superpowers · tools · integrations", icon: () => <IcGem />, status: "live", run: goto("library"), cap: "adm:library" },
+      { id: "palette", label: "Command Palette", sub: "⌘K · every action, one search", icon: () => <IcSearch />, status: "live", run: openPalette },
+      { id: "termworkers", label: "Terminal Workers", sub: "master + workers · broadcast", icon: () => <IcTerminal />, status: "live", run: goto("ide") },
+      { id: "diagnostics", label: "Diagnostics (GODMODE)", sub: "system health · full check", icon: () => <IcCrown />, status: "live", run: godmode },
+      { id: "healthcheck", label: "Health Check", sub: "ruflo + graphify real probes", icon: () => <IcZap />, status: "live", run: runHealthSweep },
+      { id: "logs", label: "Logs (Audit)", sub: "action trail · JSONL 0600", icon: () => <IcChart />, status: "local-only", run: admin("audit") },
+      { id: "opsettings", label: "Settings", sub: "IDE configuration", icon: () => <IcSend />, status: "local-only", run: admin("settings") },
     ],
   },
   {

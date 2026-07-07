@@ -103,6 +103,9 @@ export default function App() {
     };
     // superpower actions ask the dock to re-probe after they change state
     const refreshTools = () => { queryClient.invalidateQueries({ queryKey: ["tools"] }); };
+    // Tools menu items: open the ⌘K palette / run the real health sweep
+    const palette = () => setPaletteOpen(true);
+    const health = () => { runHealthCheck(); };
     window.addEventListener("dai:admin", admin);
     window.addEventListener("dai:goto", goto);
     window.addEventListener("dai:vault", vault);
@@ -111,6 +114,8 @@ export default function App() {
     window.addEventListener("dai:superpower", superpower);
     window.addEventListener("dai:more", more);
     window.addEventListener("dai:refresh-tools", refreshTools);
+    window.addEventListener("dai:palette", palette);
+    window.addEventListener("dai:healthcheck", health);
     return () => {
       window.removeEventListener("dai:admin", admin);
       window.removeEventListener("dai:goto", goto);
@@ -120,6 +125,8 @@ export default function App() {
       window.removeEventListener("dai:superpower", superpower);
       window.removeEventListener("dai:more", more);
       window.removeEventListener("dai:refresh-tools", refreshTools);
+      window.removeEventListener("dai:palette", palette);
+      window.removeEventListener("dai:healthcheck", health);
     };
   }, []);
 
