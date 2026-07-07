@@ -5,7 +5,7 @@
 import { SUPERPOWERS, STATUS_META, openLibraryAdmin, openSuperpower, type OpStatus } from "../registry";
 import { useOps } from "../hooks/useOps";
 import { useMe } from "../hooks/useMe";
-import { IcNodes, IcGem } from "./icons";
+import { IcGem } from "./icons";
 import { DragonEmblem } from "./DragonEmblem";
 
 /** plain-language meaning of each state — shown in hover cards + quick panels */
@@ -76,18 +76,15 @@ export function EcosystemBar() {
           );
         })}
       </div>
+      {/* ONE admin entry — the Admin Command Center (Tools moved INSIDE it; the
+          separate dock Tools button was retired as a confusing duplicate). */}
       {canLibraryAdmin && (
-        <button className="sp-tools" title="Admin Library — Superpowers Control Room · agents · tools · integrations"
-          aria-label="Open Admin Library"
+        <button className="sp-tools" title="Admin Command Center — Control Room · Tools · Quick Guide · Reference"
+          aria-label="Open Admin Command Center"
           onClick={openLibraryAdmin}>
-          <IcGem size={13} /> Admin Library
+          <IcGem size={13} /> Admin
         </button>
       )}
-      <button className="sp-tools" title="Tools — operations: Control Room · palette · diagnostics · health · logs · settings"
-        aria-label="Open Tools operations menu"
-        onClick={() => window.dispatchEvent(new CustomEvent("dai:more"))}>
-        <IcNodes size={13} /> Tools
-      </button>
     </div>
   );
 }

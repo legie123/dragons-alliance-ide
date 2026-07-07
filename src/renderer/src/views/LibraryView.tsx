@@ -12,15 +12,21 @@ import { consumeLibraryTab } from "../registry";
 import { CategoryLibrary } from "../components/library/CategoryLibrary";
 import { TeamSection } from "../components/library/TeamSection";
 import { AdminSection } from "../components/library/AdminSection";
+import { ToolsSection } from "../components/library/ToolsSection";
+import { QuickGuide } from "../components/library/QuickGuide";
 
-type Mode = "catalog" | "reference";
+type Mode = "catalog" | "tools" | "guide" | "reference";
 
 export function LibraryView() {
   const { can, me } = useMe();
   const isAdmin = can("adm:library");
   const canTerminals = can("act:terminals");
-  // the persistent dock "Admin" shortcut sets pending "admin" → open on the tips editor
-  const [mode, setMode] = useState<Mode>(() => (consumeLibraryTab() === "admin" ? "reference" : "catalog"));
+  // deep-links from the dock/palette/panels: tools → Tools tab, guide → Quick Guide,
+  // legacy "admin" → Reference (tips editor); default = Control Room & Modules.
+  const [mode, setMode] = useState<Mode>(() => {
+    const t = consumeLibraryTab();
+    return t === "tools" ? "tools" : t === "guide" ? "guide" : t === "admin" ? "reference" : "catalog";
+  });
 
   if (!isAdmin) {
     return (
@@ -48,16 +54,21 @@ export function LibraryView() {
         </div>
         <div className="drv-tabs">
           <button className={`drv-tab${mode === "catalog" ? " on" : ""}`} onClick={() => setMode("catalog")}>Control Room &amp; Modules</button>
+          <button className={`drv-tab${mode === "tools" ? " on" : ""}`} onClick={() => setMode("tools")}>Tools</button>
+          <button className={`drv-tab${mode === "guide" ? " on" : ""}`} onClick={() => setMode("guide")}>Quick Guide</button>
           <button className={`drv-tab${mode === "reference" ? " on" : ""}`} onClick={() => setMode("reference")}>Reference</button>
         </div>
       </div>
 
-      {mode === "catalog"
-        ? <CategoryLibrary activeProject={null} />
-        : <>
-            <TeamSection activeProject={null} canTerminals={canTerminals} />
-            <AdminSection activeProject={null} />
-          </>}
+      {mode === "catalog" && <CategoryLibrary activeProject={null} />}
+      {mode === "tools" && <ToolsSection />}
+      {mode === "guide" && <QuickGuide />}
+      {mode === "reference" && (
+        <>
+          <TeamSection activeProject={null} canTerminals={canTerminals} />
+          <AdminSection activeProject={null} />
+        </>
+      )}
     </div>
   );
 }

@@ -59,16 +59,26 @@ export const godmode = () => window.dispatchEvent(new CustomEvent("dai:godmode")
 
 // LibraryView reads this once on mount (lazy useState initializer) — avoids a
 // dai:goto / dai:library-tab race where the target view hasn't mounted yet.
-let pendingLibraryTab: "team" | "admin" | null = null;
-export function consumeLibraryTab(): "team" | "admin" | null {
+let pendingLibraryTab: "team" | "admin" | "tools" | "guide" | null = null;
+export function consumeLibraryTab(): "team" | "admin" | "tools" | "guide" | null {
   const t = pendingLibraryTab;
   pendingLibraryTab = null;
   return t;
 }
-// The top-bar "Admin" button opens the Admin Library on its main Catalog (which
-// now leads with the Superpowers Control Room) — NOT the Shortcuts & Tips tab.
+// The dock "Admin" button opens the Admin Command Center on its main Catalog
+// (leads with the Superpowers Control Room) — NOT the Reference tab.
 export const openLibraryAdmin = () => {
   pendingLibraryTab = null;
+  goto("library")();
+};
+/** Admin Command Center ▸ Tools — the operational utilities tab. */
+export const openLibraryTools = () => {
+  pendingLibraryTab = "tools";
+  goto("library")();
+};
+/** Admin Command Center ▸ Quick Guide — Cloud & Superpowers operator guide. */
+export const openLibraryGuide = () => {
+  pendingLibraryTab = "guide";
   goto("library")();
 };
 // Open a superpower's full GODMODE-style operational panel (godmode has its own).
@@ -287,6 +297,7 @@ export const SUPERPOWERS: SuperpowerDef[] = [
       { id: "cl-continue", label: "Continue Session", disabledReason: "pending backend — session resume not wired yet" },
       { id: "cl-stop", label: "Stop Session (Agents)", run: goto("agents") },
       { id: "cl-metrics", label: "View Tokens (Metrics)", run: goto("metrics") },
+      { id: "cl-tips", label: "Cloud Tips", run: openLibraryGuide },
       { id: "cl-logs", label: "Open Logs", run: admin("audit") },
     ],
   },
@@ -360,6 +371,7 @@ export const MORE_CATEGORIES: { title: string; items: MoreItem[] }[] = [
       { id: "diagnostics", label: "Diagnostics (GODMODE)", sub: "system health · full check", icon: () => <IcCrown />, status: "live", run: godmode },
       { id: "healthcheck", label: "Health Check", sub: "ruflo + graphify real probes", icon: () => <IcZap />, status: "live", run: runHealthSweep },
       { id: "logs", label: "Logs (Audit)", sub: "action trail · JSONL 0600", icon: () => <IcChart />, status: "local-only", run: admin("audit") },
+      { id: "quickguide", label: "Quick Guide", sub: "Cloud & Superpowers operator guide", icon: () => <IcFlask />, status: "live", run: openLibraryGuide, cap: "adm:library" },
       { id: "opsettings", label: "Settings", sub: "IDE configuration", icon: () => <IcSend />, status: "local-only", run: admin("settings") },
     ],
   },
