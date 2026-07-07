@@ -49,7 +49,13 @@ export function SuperpowerPanel({ id, onClose }: { id: string | null; onClose: (
     try {
       if (sp.healthId) {
         const h = await window.dai.superpowers.health(sp.healthId);
-        setDiag({ loading: false, ok: h.ok, lines: [h.message, ...h.details], ts: h.lastCheckedAt });
+        const lines = [h.message, ...h.details];
+        if (sp.healthId === "ruflo") {
+          // Queue depth from the REAL `ruflo task list` — honest message either way
+          const q = await window.dai.superpowers.rufloQueue();
+          lines.push(`task queue: ${q.message}`);
+        }
+        setDiag({ loading: false, ok: h.ok, lines, ts: h.lastCheckedAt });
       } else if (sp.diag === "vault") {
         const v = await window.dai.vaultSync.status();
         const lines = v.isRepo

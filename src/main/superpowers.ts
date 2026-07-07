@@ -11,7 +11,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { auditLog } from "./audit.js";
-import type { SpHealth, SpResult } from "../shared/ipc.js";
+import type { SpHealth, SpResult, RufloQueue } from "../shared/ipc.js";
 
 const execFileP = promisify(execFile);
 const HOME = os.homedir();
@@ -74,6 +74,41 @@ export async function rufloHealth(): Promise<SpHealth> {
         : "Ruflo engine unreachable",
       details: [msg.split("\n")[0].slice(0, 160)],
       lastCheckedAt: now(),
+    };
+  }
+}
+
+/**
+ * Ruflo task-queue probe. `ruflo task list` runs globally from HOME (same rule
+ * as `ruflo status` — the repo dir errors "not initialized"). Empty queue prints
+ * "No tasks found matching criteria" (verified against the real CLI). Returns an
+ * HONEST count parsed from the real output — never a fabricated number; every
+ * error path → ok:false with the true reason. 6s hard timeout, never throws.
+ */
+export async function rufloQueue(): Promise<RufloQueue> {
+  try {
+    const { stdout } = await execFileP(rufloBin(), ["task", "list"], {
+      cwd: HOME, timeout: 6000, maxBuffer: 1 << 20,
+    });
+    const out = (stdout || "").replace(/\x1b\[[0-9;]*m/g, ""); // strip ANSI for reliable matching
+    if (/no tasks found/i.test(out)) return { ok: true, count: 0, message: "queue empty" };
+    // count task rows: bullets, table rows, or task-id lines — never header/rule lines
+    const rows = out.split("\n").filter((l) =>
+      (/^\s*[-*•]\s+\S/.test(l) || /^\s*[│|]\s*\S/.test(l) || /\btask-[\w-]+/i.test(l)) &&
+      !/^[\s│|+:-]+$/.test(l) && !/\bID\b.*\bStatus\b/i.test(l));
+    if (rows.length > 0) return { ok: true, count: rows.length, message: `${rows.length} task(s) queued` };
+    // exited 0 with unexpected non-empty output — honest, just terse (mirror rufloHealth)
+    const head = out.trim().split("\n").filter(Boolean).pop() || "no output";
+    return { ok: true, count: 0, message: head.slice(0, 120) };
+  } catch (e) {
+    const err = e as { stderr?: string; message?: string; code?: string };
+    const msg = String(err?.stderr || err?.message || e);
+    auditLog("ruflo-queue-fail", msg.slice(0, 160));
+    return {
+      ok: false, count: 0,
+      message: err?.code === "ENOENT" ? "ruflo CLI not found on PATH"
+        : /not initialized/i.test(msg) ? "ruflo not initialized"
+        : "queue unavailable",
     };
   }
 }

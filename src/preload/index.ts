@@ -192,6 +192,7 @@ const dai: DaiApi = {
   superpowers: {
     health: (id) => ipcRenderer.invoke(CH.SP_HEALTH, id),
     openDigest: () => ipcRenderer.invoke(CH.SP_OPEN_DIGEST),
+    rufloQueue: () => ipcRenderer.invoke(CH.SP_RUFLO_QUEUE),
   },
 };
 

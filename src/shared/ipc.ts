@@ -111,6 +111,7 @@ export const CH = {
   // superpowers — real engine health probes + digest open (honest, timeout-guarded)
   SP_HEALTH: "sp:health",                      // invoke(id) → SpHealth (ruflo | graphify)
   SP_OPEN_DIGEST: "sp:opendigest",             // invoke() → SpResult (opens real graph digest)
+  SP_RUFLO_QUEUE: "sp:rufloqueue",             // invoke() → RufloQueue (real `ruflo task list` count)
 } as const;
 
 // ---- types ----
@@ -326,6 +327,7 @@ export type SpHealth = {
   lastCheckedAt: number;
 };
 export type SpResult = { ok: boolean; message: string; path?: string };
+export type RufloQueue = { ok: boolean; count: number; message: string };
 
 // ---- Neo browser (Preview) ----
 export type NeoStatus = { connected: boolean; browser?: string; error?: string };
@@ -449,6 +451,7 @@ export interface DaiApi {
   superpowers: {
     health(id: string): Promise<SpHealth>;
     openDigest(): Promise<SpResult>;
+    rufloQueue(): Promise<RufloQueue>;
   };
 }
 
