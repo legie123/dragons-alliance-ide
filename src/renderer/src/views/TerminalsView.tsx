@@ -4,6 +4,7 @@ import { TerminalPane, PaneHandle } from "../components/TerminalPane";
 import { ProjectRail } from "../components/ProjectRail";
 import { broadcast, fetchHost, fetchTerms, fetchProjects, Term } from "../api";
 import { registerProvider, Cmd } from "../palette";
+import { pushToast } from "../toast";
 import { elementFor } from "../elements";
 import { Crystal } from "../components/Crystal";
 import { EmptyState, StatusPill } from "../components/da";
@@ -323,12 +324,8 @@ export function TerminalsView() {
                   {/* New items */}
                   {/* Ollama session */}
                   <div className="menu-row" onClick={() => {
-                    if (!ollamaStatus.available) {
-                      // Show error? We'll just not open a terminal and maybe show a toast? For now, do nothing.
-                      return;
-                    }
-                    if (ollamaStatus.models.length === 0) {
-                      // No models available
+                    if (!ollamaStatus.available || ollamaStatus.models.length === 0) {
+                      pushToast({ kind: "info", title: "ollama not running", detail: "start it, then retry", ttl: 3800 });
                       return;
                     }
                     setOllamaModelPickerOpen(true);
@@ -349,6 +346,7 @@ export function TerminalsView() {
                   {/* Hermes session */}
                   <div className="menu-row" onClick={() => {
                     if (!hermesStatus.available) {
+                      pushToast({ kind: "info", title: "hermes not running", detail: "start it, then retry", ttl: 3800 });
                       return;
                     }
                     const command = `ollama run ${hermesStatus.model}`;
@@ -370,6 +368,7 @@ export function TerminalsView() {
                   {/* Codex session */}
                   <div className="menu-row" onClick={() => {
                     if (!codexStatus.available) {
+                      pushToast({ kind: "info", title: "codex not running", detail: "start it, then retry", ttl: 3800 });
                       return;
                     }
                     add('codex');
