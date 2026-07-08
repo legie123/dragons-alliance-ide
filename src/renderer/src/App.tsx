@@ -18,6 +18,8 @@ import { CredentialsVault } from "./components/CredentialsVault";
 import { EcosystemBar } from "./components/EcosystemBar";
 import { GodModePanel } from "./components/GodModePanel";
 import { SuperpowerPanel } from "./components/SuperpowerPanel";
+import { KitWizard } from "./components/KitWizard";
+import { KitBanner } from "./components/KitBanner";
 import { AdminPanel } from "./components/AdminPanel";
 import { FirstRunIdentity } from "./components/FirstRunIdentity";
 import type { SettingsCat } from "./components/settings/SettingsSections";
@@ -37,6 +39,7 @@ import { pushToast, updateToast } from "./toast";
 import { SECTOR_ACTIONS } from "./sectorActions";
 import { queryClient } from "./queryClient";
 import { useMe } from "./hooks/useMe";
+import { useKit } from "./hooks/useKit";
 import { isView, SECTOR_FOR_VIEW, type View } from "./views";
 
 // Monaco is ~5MB — keep it out of the initial bundle, load only when Code opens.
@@ -63,6 +66,7 @@ export default function App() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [godOpen, setGodOpen] = useState(false);
   const [spOpen, setSpOpen] = useState<string | null>(null);
+  const [kitOpen, setKitOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminCat, setAdminCat] = useState<SettingsCat>("appearance");
 
@@ -71,6 +75,18 @@ export default function App() {
   const { can, me } = useMe();
   const canRef = useRef(can);
   canRef.current = can;
+
+  // Kit onboarding — auto-open the setup wizard ONCE on a fresh install when the
+  // kit is incomplete, but only AFTER identity is resolved (so it never stacks on
+  // the FirstRunIdentity modal). The persistent banner keeps nudging until done.
+  const kit = useKit();
+  useEffect(() => {
+    if (kit.checking || kit.complete) return;
+    if (me?.needsIdentity) return;
+    if (localStorage.getItem("dai:kit-autoshown")) return;
+    localStorage.setItem("dai:kit-autoshown", "1");
+    setKitOpen(true);
+  }, [kit.checking, kit.complete, me?.needsIdentity]);
   // fresh view for mount-time closures (Sector Agent derives its sector from it)
   const viewRef = useRef(view);
   viewRef.current = view;
@@ -100,6 +116,7 @@ export default function App() {
     const phone = () => setPhoneOpen(true);
     const god = () => setGodOpen(true);
     const superpower = (e: Event) => { const id = (e as CustomEvent).detail as string; if (id) setSpOpen(id); };
+    const openKit = () => setKitOpen(true);
     const more = () => setMoreOpen(true);
     const admin = (e: Event) => {
       const raw = (e as CustomEvent).detail as string | undefined;
@@ -118,6 +135,7 @@ export default function App() {
     window.addEventListener("dai:phone", phone);
     window.addEventListener("dai:godmode", god);
     window.addEventListener("dai:superpower", superpower);
+    window.addEventListener("dai:kit", openKit);
     window.addEventListener("dai:more", more);
     window.addEventListener("dai:refresh-tools", refreshTools);
     window.addEventListener("dai:palette", palette);
@@ -129,6 +147,7 @@ export default function App() {
       window.removeEventListener("dai:phone", phone);
       window.removeEventListener("dai:godmode", god);
       window.removeEventListener("dai:superpower", superpower);
+      window.removeEventListener("dai:kit", openKit);
       window.removeEventListener("dai:more", more);
       window.removeEventListener("dai:refresh-tools", refreshTools);
       window.removeEventListener("dai:palette", palette);
@@ -210,6 +229,8 @@ export default function App() {
       // support + admin
       { id: "view:research", title: "Open Research (intelligence desk)", category: "View", run: () => setView("research") },
       { id: "view:radar", title: "Open GitHub Radar + rescan", category: "View", run: () => { setView("radar"); window.dai.radar.refresh(); } },
+      // Kit Setup — onboarding for EVERY member (not admin-gated)
+      { id: "view:kit", title: "Open Kit Setup", subtitle: "install your superpowers to full power", category: "View", icon: <IcGem />, run: () => window.dispatchEvent(new CustomEvent("dai:kit")) },
       // Library is ADMIN ONLY — only surface the command when the member holds the grant
       ...(canRef.current("adm:library")
         ? [{ id: "view:library", title: "Open Admin Library", subtitle: "agents · tools · superpowers", category: "View" as const, icon: <IcGem />, run: () => setView("library") }]
@@ -291,6 +312,7 @@ export default function App() {
         />
 
         <EcosystemBar />
+        <KitBanner />
 
         <div className="shell-main">
           <LeftRail
@@ -353,6 +375,7 @@ export default function App() {
       <GodModePanel open={godOpen} onClose={() => setGodOpen(false)} onCommand={() => setPaletteOpen(true)} />
       <SectorAgentDock view={view} />
       <SuperpowerPanel id={spOpen} onClose={() => setSpOpen(null)} />
+      <KitWizard open={kitOpen} onClose={() => setKitOpen(false)} />
       <AdminPanel open={adminOpen} cat={adminCat} onClose={() => setAdminOpen(false)} onCat={setAdminCat} />
       <GuidePanel
         open={guideOpen}

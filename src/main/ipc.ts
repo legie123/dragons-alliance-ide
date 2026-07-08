@@ -203,13 +203,18 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
   // ---- google per-service health ----
   ipcMain.handle(CH.GOOGLE_HEALTH, () => gHealth());
 
-  // ---- command existence check (for renderer status probes) ----
+  // ---- command existence check (for renderer status probes / Kit detection) ----
+  // MUST use a login shell so the check sees the user's REAL PATH (homebrew,
+  // ~/.local/bin, npm-global, pyenv…), not the minimal PATH a GUI Electron app
+  // inherits from Finder/Dock — otherwise installed tools falsely read "missing".
   ipcMain.handle(CH.SYSTEM_CHECK_COMMAND, async (_e, command: string) => {
+    const cmd = String(command || "");
+    if (!/^[a-zA-Z0-9_.-]+$/.test(cmd)) return false; // only simple tool names — no shell injection
     try {
-      const { stdout } = await execFileP("which", [command]);
+      const { stdout } = await execFileP("/bin/zsh", ["-lc", `command -v ${cmd}`], { timeout: 6000 });
       return stdout.trim() !== "";
     } catch {
-      return false;
+      return false; // `command -v` exits non-zero when the tool isn't found
     }
   });
 

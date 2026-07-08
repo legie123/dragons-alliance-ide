@@ -2284,3 +2284,70 @@ button.primary:hover { filter: brightness(1.07); box-shadow: 0 4px 22px rgba(212
   border: 1px solid color-mix(in srgb, var(--gold-soft, #d4af37) 30%, var(--line)); border-radius: 999px; padding: 4px 10px; cursor: pointer; text-align: left; }
 .sga-starter:hover:not(:disabled) { color: var(--ink); border-color: var(--gold-soft, #d4af37); }
 .sga-starter:disabled { opacity: .5; cursor: default; }
+
+/* ==================== KIT SETUP — onboarding wizard, checklist, persistent banner ====================
+   First-run wizard (KitWizard→.kit) + shared checklist body (KitSetup→.kit-setup, reused in the
+   Library "Kit" tab) + a persistent under-dock nudge (KitBanner→.kit-banner) while the kit is
+   incomplete. Mirrors .gm/.spx modal chrome; each .kit-row tints off its own inline --kit-tone.
+   Status pill + row dimming key off data-status (never colour-only — label text always present). */
+
+.kit { width: min(560px, 94vw); max-height: 86vh; display: flex; flex-direction: column;
+  background: linear-gradient(180deg, rgba(34,19,39,0.96), rgba(12,5,10,0.98));
+  border: 1px solid color-mix(in srgb, var(--gold, #d4af37) 45%, transparent); border-radius: 18px; overflow: hidden;
+  box-shadow: var(--shadow-3), 0 0 60px color-mix(in srgb, var(--gold, #d4af37) 12%, transparent); }
+.kit-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--gold, #d4af37) 25%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--gold, #d4af37) 10%, transparent), transparent 60%); }
+.kit-title { font-size: 16px; font-weight: 850; letter-spacing: 0.14em; color: var(--gold-soft); }
+.kit-sub { font-size: 10.5px; color: var(--muted); letter-spacing: 0.06em; }
+.kit-x { font-size: 10px; color: var(--faint); border: 1px solid var(--panel-border); border-radius: 5px;
+  padding: 3px 8px; background: transparent; cursor: pointer; margin-left: auto; }
+.kit-x:hover { color: #fff; border-color: color-mix(in srgb, var(--gold, #d4af37) 60%, transparent); }
+.kit-body { overflow: auto; padding: 12px 18px 16px; }
+.kit-foot { padding: 10px 18px 14px; border-top: 1px solid var(--panel-border); font-size: 10.5px; color: var(--faint); text-align: center; }
+
+.kit-setup { display: flex; flex-direction: column; }
+.kit-progress { display: flex; align-items: center; gap: 10px; }
+.kit-count { font-size: 13px; font-weight: 800; color: var(--text); white-space: nowrap; }
+.kit-bar { flex: 1; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+.kit-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--teal), var(--gold, #d4af37));
+  transition: width 0.3s var(--ease); }
+.kit-done { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 11px 14px; border-radius: 12px;
+  font-size: 12.5px; color: var(--text); line-height: 1.4;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--teal) 12%, transparent), color-mix(in srgb, var(--gold, #d4af37) 12%, transparent));
+  border: 1px solid color-mix(in srgb, var(--teal) 30%, transparent); }
+
+.kit-list { display: flex; flex-direction: column; }
+.kit-divider { display: flex; align-items: center; gap: 8px; margin: 14px 0 4px;
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); }
+.kit-divider::before, .kit-divider::after { content: ""; flex: 1; height: 1px; background: var(--panel-border); }
+
+.kit-row { display: flex; gap: 12px; align-items: center; padding: 11px 13px; border-radius: 12px; margin-top: 8px;
+  border: 1px solid color-mix(in srgb, var(--kit-tone) 26%, transparent); border-left: 3px solid var(--kit-tone);
+  background: color-mix(in srgb, var(--kit-tone) 6%, rgba(255,255,255,0.02));
+  transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+.kit-row:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--kit-tone) 45%, transparent);
+  box-shadow: 0 8px 20px -14px color-mix(in srgb, var(--kit-tone) 60%, transparent); }
+.kit-row[data-status="ready"] { opacity: 0.82; }
+.kit-row-ic { display: inline-flex; align-items: center; color: var(--kit-tone); flex: 0 0 auto; }
+.kit-row-main { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kit-row-label { font-size: 13px; font-weight: 750; color: var(--text); }
+.kit-row-powers { font-size: 10px; color: var(--kit-tone); }
+.kit-row-note { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.kit-row-status { flex: 0 0 auto; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  border: 1px solid var(--panel-border); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.kit-row[data-status="ready"] .kit-row-status { color: var(--teal); border-color: color-mix(in srgb, var(--teal) 40%, transparent); }
+.kit-row[data-status="partial"] .kit-row-status { color: var(--gold-soft, #d4af37); border-color: color-mix(in srgb, var(--gold-soft, #d4af37) 40%, transparent); }
+.kit-row[data-status="missing"] .kit-row-status { color: var(--accent-ember); border-color: color-mix(in srgb, var(--accent-ember) 40%, transparent); }
+.kit-row-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-left: auto; }
+.kit-row-ok { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%;
+  background: color-mix(in srgb, var(--teal) 16%, transparent); border: 1px solid color-mix(in srgb, var(--teal) 40%, transparent);
+  color: var(--teal); font-size: 12px; font-weight: 800; }
+
+.kit-banner { display: flex; align-items: center; gap: 12px; padding: 7px 16px;
+  background: color-mix(in srgb, var(--gold, #d4af37) 10%, var(--panel, rgba(20,12,22,.6)));
+  border-bottom: 1px solid color-mix(in srgb, var(--gold, #d4af37) 28%, transparent); font-size: 12.5px; }
+.kit-banner-ic { flex: 0 0 auto; }
+.kit-banner-text { flex: 1; color: var(--text); }
+.kit-banner-text b { color: var(--gold-soft); }
+.kit-banner-cta { margin-left: auto; }

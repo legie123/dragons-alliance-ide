@@ -62,8 +62,8 @@ export const godmode = () => window.dispatchEvent(new CustomEvent("dai:godmode")
 
 // LibraryView reads this once on mount (lazy useState initializer) — avoids a
 // dai:goto / dai:library-tab race where the target view hasn't mounted yet.
-let pendingLibraryTab: "team" | "admin" | "tools" | "guide" | null = null;
-export function consumeLibraryTab(): "team" | "admin" | "tools" | "guide" | null {
+let pendingLibraryTab: "team" | "admin" | "tools" | "guide" | "kit" | null = null;
+export function consumeLibraryTab(): "team" | "admin" | "tools" | "guide" | "kit" | null {
   const t = pendingLibraryTab;
   pendingLibraryTab = null;
   return t;
@@ -82,6 +82,11 @@ export const openLibraryTools = () => {
 /** Admin Command Center ▸ Quick Guide — Claude & Superpowers operator guide. */
 export const openLibraryGuide = () => {
   pendingLibraryTab = "guide";
+  goto("library")();
+};
+/** Admin Command Center ▸ Kit — the team-member onboarding setup checklist. */
+export const openLibraryKit = () => {
+  pendingLibraryTab = "kit";
   goto("library")();
 };
 // Open a superpower's full GODMODE-style operational panel (godmode has its own).

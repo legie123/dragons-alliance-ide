@@ -14,8 +14,9 @@ import { TeamSection } from "../components/library/TeamSection";
 import { AdminSection } from "../components/library/AdminSection";
 import { ToolsSection } from "../components/library/ToolsSection";
 import { QuickGuide } from "../components/library/QuickGuide";
+import { KitSetup } from "../components/KitSetup";
 
-type Mode = "catalog" | "tools" | "guide" | "reference";
+type Mode = "catalog" | "tools" | "guide" | "reference" | "kit";
 
 export function LibraryView() {
   const { can, me } = useMe();
@@ -25,7 +26,7 @@ export function LibraryView() {
   // legacy "admin" → Reference (tips editor); default = Control Room & Modules.
   const [mode, setMode] = useState<Mode>(() => {
     const t = consumeLibraryTab();
-    return t === "tools" ? "tools" : t === "guide" ? "guide" : t === "admin" ? "reference" : "catalog";
+    return t === "tools" ? "tools" : t === "guide" ? "guide" : t === "kit" ? "kit" : t === "admin" ? "reference" : "catalog";
   });
 
   if (!isAdmin) {
@@ -56,6 +57,7 @@ export function LibraryView() {
           <button className={`drv-tab${mode === "catalog" ? " on" : ""}`} onClick={() => setMode("catalog")}>Control Room &amp; Modules</button>
           <button className={`drv-tab${mode === "tools" ? " on" : ""}`} onClick={() => setMode("tools")}>Tools</button>
           <button className={`drv-tab${mode === "guide" ? " on" : ""}`} onClick={() => setMode("guide")}>Quick Guide</button>
+          <button className={`drv-tab${mode === "kit" ? " on" : ""}`} onClick={() => setMode("kit")}>Kit Setup</button>
           <button className={`drv-tab${mode === "reference" ? " on" : ""}`} onClick={() => setMode("reference")}>Reference</button>
         </div>
       </div>
@@ -63,6 +65,7 @@ export function LibraryView() {
       {mode === "catalog" && <CategoryLibrary activeProject={null} />}
       {mode === "tools" && <ToolsSection />}
       {mode === "guide" && <QuickGuide />}
+      {mode === "kit" && <KitSetup />}
       {mode === "reference" && (
         <>
           <TeamSection activeProject={null} canTerminals={canTerminals} />
