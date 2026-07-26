@@ -58,7 +58,7 @@ const preload = read(path.join(repo, "src/preload/index.ts"));
 const mainIpc = read(path.join(repo, "src/main/ipc.ts"));
 const tools = read(path.join(repo, "src/main/tools.ts"));
 
-const superpowers = ["obsidian", "graphify", "ruflo", "cloud", "agents", "godmode", "google"];
+const superpowers = ["obsidian", "graphify", "ruflo", "cloud", "agents", "godmode", "google", "llmhub"];
 for (const id of superpowers) {
   const present = registry.includes(`id: "${id}"`);
   const hasActionBlock = present && registry.includes(`id: "${id}"`) && registry.includes("actions:");
@@ -68,7 +68,7 @@ for (const id of superpowers) {
 const disabledCount = (registry.match(/disabledReason:/g) || []).length;
 add("registry", disabledCount ? "warn" : "ok", `${disabledCount} disabled quick action(s) remain`, "Prefer actionable setup/control fallback routes", disabledCount ? "missing backend or intentional guard" : "");
 
-for (const ch of ["TOOLS_STATUS", "TOOLS_ACTION", "GDRIVE_STATUS", "GDRIVE_AUTH", "GOOGLE_HEALTH", "AUDIT_LOG"]) {
+for (const ch of ["TOOLS_STATUS", "TOOLS_ACTION", "GDRIVE_STATUS", "GDRIVE_AUTH", "GOOGLE_HEALTH", "AUDIT_LOG", "SP_HEALTH", "SP_OPEN_DIGEST", "LLM_STATUS", "LLM_TEST"]) {
   const ok = shared.includes(ch) && preload.includes("window.dai") && mainIpc.includes(`CH.${ch}`);
   add(`ipc:${ch}`, ok ? "ok" : "error", ok ? "Shared/preload/main path present" : "IPC path incomplete", "Trace shared -> preload -> main handler", ok ? "" : "code");
 }
@@ -77,8 +77,11 @@ const vaultPath = path.join(HOME, "Documents", "Obsidian", "Antigravity-Brain");
 add("obsidian:vault", exists(vaultPath) ? "ok" : "setup-required", exists(vaultPath) ? "Vault path exists" : "Vault path missing", "Create or point settings at the real vault", exists(vaultPath) ? "" : "local vault");
 add("obsidian:app", command("open") ? "ok" : "error", "macOS open command availability", "macOS shell.openExternal handles obsidian://", "");
 
-const graphDigest = path.join(repo, "graphify-out", "_GRAPHIFY_DIGEST.md");
-add("grapevine:digest", exists(graphDigest) ? "ok" : "setup-required", exists(graphDigest) ? "Graphify digest exists" : "Graphify digest missing", "Run graphify pipeline or use Neuromap fallback", exists(graphDigest) ? "" : "graphify output");
+// Mirror main/superpowers.ts's digestTarget(): vault digest first, then repo report.
+const vaultDigest = path.join(HOME, "Documents", "Obsidian", "Antigravity-Brain", "01_PROJECTS", "dragons-alliance-ide", "graphify", "_GRAPHIFY_DIGEST.md");
+const repoReport = path.join(repo, "graphify-out", "GRAPH_REPORT.md");
+const digestFound = exists(vaultDigest) || exists(repoReport);
+add("grapevine:digest", digestFound ? "ok" : "setup-required", digestFound ? "Graphify digest exists" : "Graphify digest missing", "Run graphify pipeline or use Neuromap fallback", digestFound ? "" : "graphify output");
 
 const ruvectors = [
   path.join(repo, "ruvector.db"),

@@ -109,6 +109,11 @@ export const agentsBroadcast = () => {
   goto("agents")();
   setTimeout(() => window.dispatchEvent(new CustomEvent("dai:sector-action", { detail: "agents:focus-broadcast" })), 500);
 };
+/** Open Agents and select the first live transcript (mirrors sectorActions' a-inspect). */
+export const agentsInspect = () => {
+  goto("agents")();
+  setTimeout(() => window.dispatchEvent(new CustomEvent("dai:sector-action", { detail: "agents:select-first" })), 500);
+};
 
 /** LLM Hub: run the REAL provider detection and toast the honest summary. */
 export const llmDetect = () => async () => {
@@ -187,7 +192,7 @@ export const rufloIgnite = () => async () => {
 /** Arm a REAL command in a terminal AND toast what was launched (never silent). */
 export const armTermToast = (typed: string, cwd: string, title: string) => () => {
   armTerm(typed, cwd)();
-  pushToast({ kind: "info", title, detail: `running: ${typed}`, ttl: 3800 });
+  pushToast({ kind: "info", title, detail: `armed: ${typed} — press Enter in the terminal`, ttl: 3800 });
 };
 
 /** Open the real graph digest via IPC — honest toast when it isn't generated yet. */
@@ -313,7 +318,7 @@ export const SUPERPOWERS: SuperpowerDef[] = [
       { id: "ag-view", label: "Open Mission Control", run: goto("agents") },
       { id: "ag-launch", label: "Launch Claude Agent", run: deployTerm("claude", "~") },
       { id: "ag-broadcast", label: "Broadcast", run: agentsBroadcast },
-      { id: "ag-logs", label: "Inspect Live Transcripts", run: goto("agents") },
+      { id: "ag-logs", label: "Inspect Live Transcripts", run: agentsInspect },
       { id: "ag-swarm", label: "Open Swarm Map (Neuromap)", run: goto("neuromap") },
       { id: "ag-assign", label: "Assign Sector", disabledReason: "pending backend — sector tagging not built yet" },
     ],
@@ -329,7 +334,7 @@ export const SUPERPOWERS: SuperpowerDef[] = [
     actions: [
       { id: "cl-launch", label: "Launch Claude Session", run: deployTerm("claude", "~") },
       { id: "cl-term", label: "Open Terminal", run: goto("ide") },
-      { id: "cl-continue", label: "Continue Session", disabledReason: "pending backend — session resume not wired yet" },
+      { id: "cl-continue", label: "Continue Session", run: armTerm("claude --continue", "~") },
       { id: "cl-stop", label: "Stop Session (Agents)", run: goto("agents") },
       { id: "cl-metrics", label: "View Tokens (Metrics)", run: goto("metrics") },
       { id: "cl-tips", label: "Claude Tips", run: openLibraryGuide },

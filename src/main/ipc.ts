@@ -70,21 +70,12 @@ export function registerIpc(win: BrowserWindow, getTerms: () => LiveTerm[]): voi
   ipcMain.handle(CH.RADAR_STATUS, () => radarStatus());
   ipcMain.on(CH.RADAR_REFRESH, () => refreshRadar());
   ipcMain.on(CH.TOOLS_ACTION, (_e, id: string) => {
-    const HOME = os.homedir();
     if (id === "open-obsidian") {
       shell.openExternal("obsidian://open?vault=Antigravity-Brain");
     } else if (id === "open-graphify") {
-      const dir = path.join(HOME, "code", "dragons-alliance-ide", "graphify-out");
-      const digest = path.join(dir, "_GRAPHIFY_DIGEST.md");
-      if (fsN.existsSync(digest)) {
-        execFile("open", [digest]);
-        auditLog("graphify-digest-open", digest);
-      } else if (fsN.existsSync(dir)) {
-        shell.showItemInFolder(dir);
-        auditLog("graphify-digest-missing", `digest not found, opened output dir instead: ${dir}`);
-      } else {
-        auditLog("graphify-digest-missing", "no graphify-out dir yet — run the graphify pipeline first");
-      }
+      // Delegate to the single source of truth (vault digest, then repo report;
+      // honest audit log either way) instead of a duplicate, stale-path check.
+      openGraphDigest();
     }
   });
   // ---- superpowers: real engine health probes + digest open ----
